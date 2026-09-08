@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Termin buchen – Bregenz Barbershop</title>
+<meta name="description" content="Online einen Termin im Bregenz Barbershop buchen: Leistung wählen, freie Zeit aussuchen, fertig.">
+<link rel="canonical" href="https://bregenz-barbershop.at/booking.html">
+<meta name="robots" content="noindex, follow">
+<meta name="theme-color" content="#0E0D0C">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Nur Barlow: die Display-Schrift wird auf der Buchungsseite nicht gebraucht
+     und spart eine Datei genau dort, wo Time-to-Interactive zählt. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/assets/css/site.css">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="min-h-screen">
+<a class="skip-link" href="#main">Zum Inhalt springen</a>
+
+<header class="border-b border-line">
+  <div class="mx-auto flex h-[72px] w-full max-w-[560px] items-center justify-between gap-4 px-4">
+    <a href="/" class="inline-flex min-h-[48px] items-center gap-2 text-sm font-medium text-fg-body transition-colors hover:text-accent">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+      Zurück zur Website
+    </a>
+    <a href="tel:+436812039790" class="tnum inline-flex min-h-[48px] items-center text-sm font-medium text-fg-muted transition-colors hover:text-accent">
+      0681 20397906
+    </a>
+  </div>
+</header>
+
+<main id="main" class="mx-auto w-full max-w-[560px] px-4 pb-24 pt-8">
+
+  <h1 class="font-sans text-2xl font-semibold text-fg">Termin buchen</h1>
+
+  <!-- Fortschritt: Text + Balken, immer sichtbar. -->
+  <div class="mt-6" data-progress>
+    <div class="flex items-baseline justify-between gap-3">
+      <p class="text-sm font-medium text-fg-body">
+        Schritt <span data-step-current class="tnum">1</span> von <span class="tnum">5</span>
+      </p>
+      <p class="text-sm text-fg-muted" data-step-name>Leistung</p>
+    </div>
+    <div class="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-surface">
+      <div data-progress-bar class="h-full rounded-full bg-accent transition-[width] duration-200" style="width:20%"></div>
+    </div>
+    <ol class="sr-only" data-step-list>
+      <li aria-current="step">Leistung</li><li>Mitarbeiter</li><li>Termin</li><li>Ihre Daten</li><li>Bestätigung</li>
+    </ol>
+  </div>
+
+  <!-- Globale Fehlermeldung (z. B. Google Kalender nicht erreichbar). -->
+  <div data-global-error hidden role="alert"
+       class="mt-6 rounded-lg border border-danger/40 bg-danger/10 p-4 text-[15px] text-fg-body">
+    <p data-global-error-text></p>
+    <button type="button" data-global-retry class="btn-secondary mt-4">Erneut versuchen</button>
+  </div>
+
+  <!-- ============ SCHRITT 1: LEISTUNG ============ -->
+  <section data-step="1" class="mt-8">
+    <h2 class="font-sans text-lg font-semibold text-fg">Welche Leistung?</h2>
+
+    <div data-services-loading class="mt-4 space-y-3" aria-live="polite" aria-busy="true">
+      <div class="h-[92px] animate-pulse rounded-lg bg-surface"></div>
+      <div class="h-[92px] animate-pulse rounded-lg bg-surface"></div>
+      <div class="h-[92px] animate-pulse rounded-lg bg-surface"></div>
+    </div>
+
+    <ul data-services hidden role="list" class="mt-4 space-y-3"></ul>
+
+    <p data-services-empty hidden class="card mt-4 text-[15px] text-fg-body">
+      Zurzeit sind keine Leistungen online buchbar. Bitte ruf uns kurz an:
+      <a class="text-accent underline underline-offset-4" href="tel:+436812039790">0681 20397906</a>.
+    </p>
+  </section>
+
+  <!-- ============ SCHRITT 2: MITARBEITER ============ -->
+  <section data-step="2" hidden class="mt-8">
+    <h2 class="font-sans text-lg font-semibold text-fg">Bei wem?</h2>
+
+    <div data-employees-loading hidden class="mt-4 space-y-3" aria-live="polite" aria-busy="true">
+      <div class="h-[72px] animate-pulse rounded-lg bg-surface"></div>
+      <div class="h-[72px] animate-pulse rounded-lg bg-surface"></div>
+    </div>
+
+    <ul data-employees hidden role="list" class="mt-4 space-y-3"></ul>
+
+    <p data-employees-empty hidden class="card mt-4 text-[15px] text-fg-body">
+      Für diese Leistung ist zurzeit niemand online buchbar. Bitte ruf uns an:
+      <a class="text-accent underline underline-offset-4" href="tel:+436812039790">0681 20397906</a>.
+    </p>
+
+    <button type="button" data-back class="btn-ghost mt-6">Zurück</button>
+  </section>
+
+  <!-- ============ SCHRITT 3: DATUM + UHRZEIT ============ -->
+  <section data-step="3" hidden class="mt-8">
+    <h2 class="font-sans text-lg font-semibold text-fg">Wann passt es dir?</h2>
+
+    <div class="mt-4">
+      <label class="field-label" for="booking-date">Datum</label>
+      <input class="input tnum" type="date" id="booking-date" data-date name="date">
+      <p class="field-hint">Alle Zeiten in der Zeitzone Europe/Vienna.</p>
+    </div>
+
+    <div class="mt-6">
+      <h3 class="font-sans text-base font-semibold text-fg">Freie Zeiten</h3>
+
+      <div data-slots-loading hidden class="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4" aria-live="polite" aria-busy="true">
+        <div class="h-12 animate-pulse rounded-sm bg-surface"></div>
+        <div class="h-12 animate-pulse rounded-sm bg-surface"></div>
+        <div class="h-12 animate-pulse rounded-sm bg-surface"></div>
+        <div class="h-12 animate-pulse rounded-sm bg-surface"></div>
+        <div class="h-12 animate-pulse rounded-sm bg-surface"></div>
+        <div class="h-12 animate-pulse rounded-sm bg-surface"></div>
+      </div>
+
+      <div data-slots hidden role="group" aria-label="Verfügbare Uhrzeiten"
+           class="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4"></div>
+
+      <p data-slots-empty hidden class="card mt-3 text-[15px] text-fg-body">
+        An diesem Tag sind keine Termine mehr frei.
+        <span data-next-free></span>
+      </p>
+
+      <p data-slots-live class="sr-only" aria-live="polite"></p>
+    </div>
+
+    <div class="mt-8 flex flex-wrap gap-3">
+      <button type="button" data-back class="btn-ghost">Zurück</button>
+      <button type="button" data-next-3 class="btn-primary" disabled>Weiter</button>
+    </div>
+  </section>
+
+  <!-- ============ SCHRITT 4: KUNDENDATEN ============ -->
+  <section data-step="4" hidden class="mt-8">
+    <h2 class="font-sans text-lg font-semibold text-fg">Deine Daten</h2>
+
+    <form data-form novalidate class="mt-4 space-y-5">
+      <div>
+        <label class="field-label" for="customer-name">Name <span aria-hidden="true" class="text-accent">*</span></label>
+        <input class="input" type="text" id="customer-name" name="name" required autocomplete="name"
+               aria-describedby="customer-name-err">
+        <p class="field-error" id="customer-name-err" hidden></p>
+      </div>
+      <div>
+        <label class="field-label" for="customer-phone">Telefonnummer <span aria-hidden="true" class="text-accent">*</span></label>
+        <input class="input" type="tel" id="customer-phone" name="phone" required inputmode="tel" autocomplete="tel"
+               aria-describedby="customer-phone-hint customer-phone-err">
+        <p class="field-hint" id="customer-phone-hint">Für Rückfragen, falls etwas dazwischenkommt.</p>
+        <p class="field-error" id="customer-phone-err" hidden></p>
+      </div>
+      <div>
+        <label class="field-label" for="customer-email">E-Mail</label>
+        <input class="input" type="email" id="customer-email" name="email" autocomplete="email"
+               aria-describedby="customer-email-hint customer-email-err">
+        <p class="field-hint" id="customer-email-hint">Optional — für die Terminbestätigung.</p>
+        <p class="field-error" id="customer-email-err" hidden></p>
+      </div>
+      <div>
+        <label class="field-label" for="customer-note">Anmerkung</label>
+        <textarea class="input min-h-[96px] py-3" id="customer-note" name="note" rows="3"></textarea>
+        <p class="field-hint">Optional.</p>
+      </div>
+
+      <div class="card">
+        <p class="kicker mb-2">Zusammenfassung</p>
+        <dl class="space-y-1.5 text-[15px]" data-summary></dl>
+      </div>
+
+      <div class="flex flex-wrap gap-3">
+        <button type="button" data-back class="btn-ghost">Zurück</button>
+        <button type="submit" data-submit class="btn-primary">
+          <span data-submit-label>Termin verbindlich buchen</span>
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <!-- ============ SCHRITT 5: BESTÄTIGUNG ============ -->
+  <section data-step="5" hidden class="mt-8">
+    <div class="card">
+      <p class="badge" style="background:rgba(74,222,128,.16);color:#4ADE80">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>
+        Termin bestätigt
+      </p>
+      <h2 class="mt-4 font-sans text-xl font-semibold text-fg">Bis bald im Salon!</h2>
+      <dl class="mt-5 space-y-1.5 text-[15px]" data-confirmation></dl>
+      <p class="mt-5 text-[15px] text-fg-muted">
+        Jahnstraße 9, 6900 Bregenz. Bitte melde dich telefonisch, wenn du den Termin nicht wahrnehmen kannst.
+      </p>
+      <div class="mt-6 flex flex-wrap gap-3">
+        <a data-ics href="#" download="termin.ics" class="btn-secondary">Zum Kalender hinzufügen</a>
+        <a href="/" class="btn-ghost">Zur Startseite</a>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="border-t border-line">
+  <div class="mx-auto flex w-full max-w-[560px] flex-wrap items-center justify-between gap-3 px-4 py-6 text-[13px] text-fg-muted">
+    <p>&copy; <span data-year>2026</span> Bregenz Barbershop</p>
+    <a class="hover:text-accent" href="tel:+436812039790">0681 20397906</a>
+  </div>
+</footer>
+
+<script src="/assets/js/site.js" defer></script>
+<script src="/assets/js/booking.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+{
+  "name": "bregenz-barbershop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Website + Buchungssystem für Bregenz Barbershop, Jahnstraße 9, 6900 Bregenz",
+  "scripts": {
+    "dev": "concurrently -k -n css,api -c yellow,cyan \"npm:dev:css\" \"npm:api\"",
+    "dev:css": "tailwindcss -i ./src/css/input.css -o ./public/assets/css/site.css --watch",
+    "build": "tailwindcss -i ./src/css/input.css -o ./public/assets/css/site.css --minify",
+    "vercel-build": "npm run build",
+    "db:migrate": "node scripts/migrate.js",
+    "db:seed": "node scripts/seed.js",
+    "api": "node scripts/dev-api.js"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "http-server": "^14.1.1",
+    "tailwindcss": "^3.4.17"
+  },
+  "dependencies": {
+    "googleapis": "^178.0.0",
+    "pg": "^8.23.0"
+  },
+  "type": "module"
+}

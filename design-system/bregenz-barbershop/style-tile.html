@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bregenz Barbershop — Design System v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap">
+<style>
+:root{
+  color-scheme:dark;
+  --color-bg:#0E0D0C;--color-surface:#1A1816;--color-surface-2:#22201D;
+  --color-fg:#FFFFFF;--color-fg-body:#D6D3D1;--color-fg-muted:#A8A29E;
+  --color-accent:#D4AF37;--color-accent-hover:#E0B44C;--color-on-accent:#0E0D0C;
+  --color-border:#2A2724;--color-border-strong:#6B6560;
+  --color-ring:#D4AF37;--color-destructive:#F87171;
+  --radius-sm:4px;--radius-md:6px;--radius-lg:10px;--radius-xl:14px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--color-bg);color:var(--color-fg-body);
+  font:400 16px/1.6 Barlow,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+p,li{hyphens:auto;hyphenate-limit-chars:8 4 4}
+h1,h2,h3,.lead{hyphens:manual}
+.wrap{max-width:1200px;margin:0 auto;padding:0 16px}
+@media(min-width:768px){.wrap{padding:0 24px}}
+section{padding-block:72px}
+@media(min-width:768px){section{padding-block:104px}}
+.disp{font-family:'Barlow Condensed',Oswald,sans-serif;font-weight:700;text-transform:uppercase;
+  letter-spacing:.02em;line-height:1.03;color:var(--color-fg);margin:0}
+h1.disp{font-size:44px;max-inline-size:16ch;line-height:1.02;text-wrap:balance}
+@media(min-width:768px){h1.disp{font-size:84px}}
+h2.disp{font-size:30px}
+@media(min-width:768px){h2.disp{font-size:46px}}
+.kicker{font:500 12px/1 Barlow,sans-serif;text-transform:uppercase;letter-spacing:.22em;
+  color:var(--color-accent);margin:0 0 12px}
+@media(min-width:768px){.kicker{font-size:13px}}
+.rule{height:2px;width:48px;background:var(--color-accent);border:0;margin:20px 0 32px}
+.lead{color:var(--color-fg-body);max-inline-size:52ch;margin:0}
+.gold{color:var(--color-accent)}
+/* hero */
+.hero{position:relative;min-height:520px;display:flex;align-items:flex-end;
+  background:linear-gradient(rgba(14,13,12,.35),rgba(14,13,12,.92)),
+    repeating-linear-gradient(115deg,#2b2521 0 3px,#221d1a 3px 7px),#241f1b;
+  border-bottom:1px solid var(--color-border)}
+.hero .wrap{padding-block:56px;width:100%}
+@media(min-width:768px){.hero{min-height:600px}.hero .wrap{padding-block:88px}}
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:48px;
+  padding:12px 24px;border-radius:var(--radius-md);border:0;cursor:pointer;text-decoration:none;
+  font:600 15px/1 Barlow,sans-serif;text-transform:uppercase;letter-spacing:.06em;
+  transition:background-color 200ms ease,color 200ms ease}
+.btn:focus-visible{outline:3px solid var(--color-accent);outline-offset:3px}
+.btn-primary{background:var(--color-accent);color:var(--color-on-accent)}
+.btn-primary:hover{background:var(--color-accent-hover)}
+.btn-secondary{background:transparent;color:var(--color-accent);border:1px solid var(--color-accent)}
+.btn-secondary:hover{background:var(--color-accent);color:var(--color-on-accent)}
+.btns{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
+/* generic grid + cards */
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
+.card{background:var(--color-surface);border:1px solid var(--color-border);
+  border-radius:var(--radius-lg);padding:24px;transition:background-color 200ms ease,border-color 200ms ease}
+.card:hover{background:var(--color-surface-2);border-color:var(--color-border-strong)}
+/* swatches */
+.sw{border:1px solid var(--color-border);border-radius:var(--radius-lg);overflow:hidden;background:var(--color-surface)}
+.sw .chip{height:64px;display:flex;align-items:center;justify-content:center;font:600 13px Barlow,sans-serif}
+.sw .meta{padding:10px 12px;font-size:13px;line-height:1.4}
+.sw .meta b{display:block;color:var(--color-fg);font-weight:600}
+.sw .meta span{color:var(--color-fg-muted);font-variant-numeric:tabular-nums}
+/* service cards */
+.svcgrid{display:grid;gap:12px;grid-template-columns:1fr}
+@media(min-width:700px){.svcgrid{grid-template-columns:1fr 1fr}}
+.svc{display:flex;flex-direction:column;gap:8px}
+.svc .top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.svc h3{font:600 19px/1.3 Barlow,sans-serif;color:var(--color-fg);margin:0;min-width:0}
+.svc .price{font:600 20px/1 Barlow,sans-serif;color:var(--color-accent);
+  font-variant-numeric:tabular-nums;white-space:nowrap;flex-shrink:0}
+.svc p{margin:0;color:var(--color-fg-muted);font-size:15px}
+.svc .m{font:500 13px Barlow,sans-serif;color:var(--color-fg-muted);text-transform:uppercase;letter-spacing:.08em}
+.svc .btn{margin-top:8px;align-self:flex-start}
+/* slots */
+.slots{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));max-width:560px}
+.slot{min-height:48px;border-radius:var(--radius-sm);border:1px solid var(--color-border-strong);
+  background:var(--color-surface);color:var(--color-fg);font:500 16px Barlow,sans-serif;
+  font-variant-numeric:tabular-nums;cursor:pointer;transition:background-color 200ms ease}
+.slot:hover{background:var(--color-surface-2)}
+.slot:focus-visible{outline:3px solid var(--color-accent);outline-offset:3px}
+.slot[aria-pressed=true]{background:var(--color-accent);color:var(--color-on-accent);
+  border-color:var(--color-accent);font-weight:600}
+.slot[disabled]{background:#252422;color:var(--color-fg-muted);border-color:var(--color-border);
+  text-decoration:line-through;cursor:not-allowed}
+/* badges */
+.badges{display:flex;flex-wrap:wrap;gap:8px}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;
+  font:600 13px Barlow,sans-serif;white-space:nowrap;min-width:0}
+.badge svg{flex-shrink:0}
+/* form */
+.field{max-width:420px}
+label{display:block;font:500 14px Barlow,sans-serif;color:var(--color-fg);margin-bottom:6px}
+.input{width:100%;min-height:48px;padding:12px 16px;font-size:16px;font-family:Barlow,sans-serif;
+  background:var(--color-surface);color:var(--color-fg);border:1px solid var(--color-border-strong);
+  border-radius:var(--radius-sm);transition:border-color 200ms ease}
+.input::placeholder{color:var(--color-fg-muted)}
+.input:focus-visible{border-color:var(--color-accent);outline:3px solid var(--color-accent);outline-offset:1px}
+.hint{font-size:13px;color:var(--color-fg-muted);margin:6px 0 0}
+/* hours */
+.hours{max-width:420px}
+.hrow{display:flex;justify-content:space-between;gap:16px;padding:10px 12px;
+  border-bottom:1px solid var(--color-border);font-variant-numeric:tabular-nums}
+.hrow.today{background:var(--color-surface-2);color:var(--color-fg);font-weight:600;border-radius:var(--radius-sm)}
+.hrow .d{color:inherit}
+/* type table */
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--color-border);vertical-align:baseline}
+th{font:500 12px Barlow,sans-serif;text-transform:uppercase;letter-spacing:.14em;color:var(--color-accent)}
+td{color:var(--color-fg-body)}
+td span{font-variant-numeric:tabular-nums;color:var(--color-fg-muted)}
+.scroller{overflow-x:auto}
+.divider{height:1px;background:rgba(212,175,55,.3);border:0;margin:0}
+.warn{border:1px solid rgba(248,113,113,.4);background:rgba(248,113,113,.08);
+  border-radius:var(--radius-lg);padding:20px;max-width:64ch}
+.warn b{color:var(--color-destructive)}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <p class="kicker">Jahnstraße 9 · 6900 Bregenz</p>
+    <h1 class="disp">Dein Schnitt.<br><span class="gold">Dein Stil.</span></h1>
+    <p class="lead" style="margin-top:24px">Präzise Haarschnitte, saubere Konturen und klassische Bartpflege — Old-School Handwerk mitten in Bregenz.</p>
+    <div class="btns">
+      <a class="btn btn-primary" href="#">Termin buchen →</a>
+      <a class="btn btn-secondary" href="tel:+436812039790">0681 20397906</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <section>
+    <p class="kicker">Farbpalette</p>
+    <h2 class="disp">Warmes Schwarz + Gold</h2><hr class="rule">
+    <div class="grid">
+      <div class="sw"><div class="chip" style="background:#0E0D0C;color:#D6D3D1;border-bottom:1px solid #2A2724">#0E0D0C</div><div class="meta"><b>Background</b><span>Weiß darauf · 19,42:1</span></div></div>
+      <div class="sw"><div class="chip" style="background:#1A1816;color:#D6D3D1;border-bottom:1px solid #2A2724">#1A1816</div><div class="meta"><b>Surface</b><span>Body darauf · 11,89:1</span></div></div>
+      <div class="sw"><div class="chip" style="background:#D4AF37;color:#0E0D0C">#D4AF37</div><div class="meta"><b>Accent / Gold</b><span>auf BG · 9,23:1</span></div></div>
+      <div class="sw"><div class="chip" style="background:#D4AF37;color:#0E0D0C;font-weight:700">Dunkles Label</div><div class="meta"><b>On Accent #0E0D0C</b><span>9,23:1 · Weiß wäre 2,10:1</span></div></div>
+      <div class="sw"><div class="chip" style="background:#D6D3D1;color:#0E0D0C">#D6D3D1</div><div class="meta"><b>Body Text</b><span>auf BG · 13,03:1</span></div></div>
+      <div class="sw"><div class="chip" style="background:#A8A29E;color:#0E0D0C">#A8A29E</div><div class="meta"><b>Muted Text</b><span>auf BG · 7,70:1</span></div></div>
+      <div class="sw"><div class="chip" style="background:#6B6560;color:#FFFFFF">#6B6560</div><div class="meta"><b>Border Strong</b><span>Formularrand · 3,38:1</span></div></div>
+      <div class="sw"><div class="chip" style="background:#2A2724;color:#D6D3D1">#2A2724</div><div class="meta"><b>Border</b><span>nur dekorativ · 1,31:1</span></div></div>
+    </div>
+    <div class="warn" style="margin-top:24px">
+      <b>Zurückgezogen:</b> das alte Gold <code>#A16207</code> erreicht auf <code>#0E0D0C</code> nur <b>3,94:1</b> und fällt als Text wie als Fläche durch. Ersetzt durch <code>#D4AF37</code>.
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <section>
+    <p class="kicker">Typografie</p>
+    <h2 class="disp">Barlow Condensed + Barlow</h2><hr class="rule">
+    <div class="scroller"><table>
+      <tr><th>Token</th><th>Mobil</th><th>Desktop</th><th>Beispiel</th></tr>
+      <tr><td>hero</td><td><span>44px</span></td><td><span>84px</span></td><td class="disp" style="font-size:34px">Dein Schnitt</td></tr>
+      <tr><td>h2</td><td><span>30px</span></td><td><span>46px</span></td><td class="disp" style="font-size:26px">Öffnungszeiten</td></tr>
+      <tr><td>h3</td><td><span>19px</span></td><td><span>22px</span></td><td style="font-size:19px;font-weight:600;color:var(--color-fg)">Herren – Bart</td></tr>
+      <tr><td>body</td><td><span>16px</span></td><td><span>17px</span></td><td>Terminvereinbarung online</td></tr>
+      <tr><td>kicker</td><td><span>12px</span></td><td><span>13px</span></td><td><span class="kicker" style="margin:0">Unsere Arbeit</span></td></tr>
+      <tr><td>price</td><td><span>20px</span></td><td><span>24px</span></td><td><span class="gold" style="font-weight:600;font-size:20px">25,00 €</span></td></tr>
+    </table></div>
+    <p class="hint" style="margin-top:16px;max-width:64ch">Großbuchstaben nur für Hero, H2, Kicker, Navigation und Buttons — niemals für Fließtext oder deutsche Strings über ~40 Zeichen.</p>
+  </section>
+
+  <hr class="divider">
+
+  <section>
+    <p class="kicker">Preisliste</p>
+    <h2 class="disp">Leistungen</h2><hr class="rule">
+    <div class="svcgrid">
+      <div class="card svc">
+        <div class="top"><h3>Herren – Haarschnitt</h3><span class="price">25,00 €</span></div>
+        <p>Klassischer Schnitt inklusive Konturen und Finish.</p>
+        <p class="m">30 Min. · Abo</p>
+        <a class="btn btn-secondary" href="#">Buchen</a>
+      </div>
+      <div class="card svc">
+        <div class="top"><h3>Haarschnitt + Augenbrauen mit Messer</h3><span class="price">25,00 €</span></div>
+        <p>Angebot: Schnitt und Augenbrauenkontur mit dem Messer.</p>
+        <p class="m">40 Min. · Abo</p>
+        <a class="btn btn-secondary" href="#">Buchen</a>
+      </div>
+      <div class="card svc">
+        <div class="top"><h3>Herren – Bart</h3><span class="price">15,00 €</span></div>
+        <p>Bartschnitt, Kontur und Pflege.</p>
+        <p class="m">15 Min. · Abo</p>
+        <a class="btn btn-secondary" href="#">Buchen</a>
+      </div>
+      <div class="card svc">
+        <div class="top"><h3>Kinder – Haarschnitt bis 10 Jahre</h3><span class="price">18,00 €</span></div>
+        <p>Für die Kleinen, in Ruhe und ohne Hektik.</p>
+        <p class="m">15 Min. · Abo</p>
+        <a class="btn btn-secondary" href="#">Buchen</a>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <section>
+    <p class="kicker">Buchung</p>
+    <h2 class="disp">Zeitfenster</h2><hr class="rule">
+    <p class="hint" style="margin:0 0 16px">Frei · Gewählt · Belegt — nie nur über Farbe unterschieden.</p>
+    <div class="slots">
+      <button class="slot">09:00</button>
+      <button class="slot">09:30</button>
+      <button class="slot" aria-pressed="true">10:00</button>
+      <button class="slot" disabled aria-disabled="true">10:30</button>
+      <button class="slot" disabled aria-disabled="true">11:00</button>
+      <button class="slot">11:30</button>
+      <button class="slot">12:00</button>
+      <button class="slot" disabled aria-disabled="true">12:30</button>
+    </div>
+    <div class="field" style="margin-top:32px">
+      <label for="tel">Telefonnummer</label>
+      <input class="input" id="tel" type="tel" inputmode="tel" autocomplete="tel" placeholder="0681 20397906" aria-describedby="tel-h">
+      <p class="hint" id="tel-h">Für Rückfragen zum Termin.</p>
+    </div>
+    <div class="btns"><a class="btn btn-primary" href="#">Termin bestätigen</a></div>
+  </section>
+
+  <hr class="divider">
+
+  <section>
+    <p class="kicker">Kontakt</p>
+    <h2 class="disp">Öffnungszeiten</h2><hr class="rule">
+    <div class="hours">
+      <div class="hrow today"><span class="d">Montag</span><span>09:00 – 19:00</span></div>
+      <div class="hrow"><span class="d">Dienstag – Freitag</span><span>09:00 – 19:00</span></div>
+      <div class="hrow"><span class="d">Samstag</span><span>09:00 – 18:00</span></div>
+      <div class="hrow"><span class="d">Sonntag</span><span>Geschlossen</span></div>
+    </div>
+    <div class="badges" style="margin-top:20px">
+      <span class="badge" style="background:rgba(74,222,128,.16);color:#4ADE80"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>Jetzt geöffnet</span>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <section>
+    <p class="kicker">Admin</p>
+    <h2 class="disp">Buchungsstatus</h2><hr class="rule">
+    <div class="badges">
+      <span class="badge" style="background:rgba(251,191,36,.16);color:#FBBF24"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Offen</span>
+      <span class="badge" style="background:rgba(74,222,128,.16);color:#4ADE80"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>Bestätigt</span>
+      <span class="badge" style="background:rgba(248,113,113,.16);color:#F87171"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></svg>Storniert</span>
+      <span class="badge" style="background:rgba(168,162,158,.16);color:#A8A29E"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 12l5 5L20 7"/></svg>Erledigt</span>
+      <span class="badge" style="background:rgba(251,113,133,.16);color:#FB7185"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3 2.7-5 6-5M16 8l5 5M21 8l-5 5"/></svg>Nicht erschienen</span>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+  <section>
+    <div class="card" style="text-align:center;padding:56px 24px">
+      <p class="kicker">Bereit?</p>
+      <h2 class="disp">Jetzt Termin sichern</h2>
+      <p class="lead" style="margin:20px auto 0">Mo–Fr 09:00–19:00 · Sa 09:00–18:00 · So geschlossen</p>
+      <div class="btns" style="justify-content:center">
+        <a class="btn btn-primary" href="#">Termin buchen →</a>
+      </div>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

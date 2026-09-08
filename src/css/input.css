@@ -1,0 +1,136 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------------------------------------------------------------------------
+   Bregenz Barbershop — design tokens (MASTER.md v2, dark-first)
+   Dark only: no prefers-color-scheme block, no light theme. See MASTER.md.
+   --------------------------------------------------------------------------- */
+@layer base {
+  :root {
+    color-scheme: dark;
+    --header-h: 72px;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+  }
+
+  body {
+    @apply bg-bg text-fg-body font-sans antialiased;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+
+  @screen md {
+    body { font-size: 17px; }
+  }
+
+  /* Scoped hyphenation: German compounds overflow narrow columns, but a
+     hyphenated heading looks like a typo. See MASTER.md → German-language rules. */
+  p, li, dd { hyphens: auto; -webkit-hyphens: auto; hyphenate-limit-chars: 8 4 4; }
+  h1, h2, h3, h4, .lead { hyphens: manual; -webkit-hyphens: manual; }
+
+  /* Anchor targets must clear the fixed header. */
+  :target { scroll-margin-top: calc(var(--header-h) + 16px); }
+  [id] { scroll-margin-top: calc(var(--header-h) + 16px); }
+
+  /* Gold focus ring, 3px. A 1px ring is invisible on a dark page. */
+  :focus-visible {
+    outline: 3px solid theme('colors.accent.DEFAULT');
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  ::selection { background: theme('colors.accent.DEFAULT'); color: theme('colors.accent.on'); }
+
+  img, video { max-width: 100%; height: auto; }
+
+  /* Preflight setzt [hidden]{display:none}, aber Utilities wie .grid oder .flex
+     stehen später im Stylesheet und haben dieselbe Spezifität — sie gewinnen und
+     das Element bleibt sichtbar. Das Skelett stand dadurch unter den geladenen
+     Zeiten. Der Zustand wird im JS über .hidden gesteuert, also muss das Attribut
+     hier gewinnen. */
+  [hidden] { display: none !important; }
+}
+
+@layer components {
+  .container-x { @apply mx-auto w-full max-w-container px-4 md:px-6; }
+
+  .section { @apply py-[72px] md:py-[104px]; }
+
+  .kicker {
+    @apply font-sans text-kicker font-medium uppercase text-accent;
+    margin-bottom: 0.75rem;
+  }
+
+  .display {
+    @apply font-display font-bold uppercase text-fg;
+  }
+  .h1 { @apply display text-hero md:text-hero-lg max-w-head text-balance; }
+  .h2 { @apply display text-h2 md:text-h2-lg; }
+
+  .rule { @apply mt-5 mb-8 h-0.5 w-12 border-0 bg-accent; }
+  .hairline { @apply h-px w-full border-0; background: rgba(212,175,55,.3); }
+
+  .lead { @apply max-w-prose text-fg-body; }
+
+  /* Buttons — min 48px touch target, uppercase + tracking (never uppercase without it). */
+  .btn {
+    @apply inline-flex min-h-[48px] cursor-pointer items-center justify-center gap-2.5
+           rounded-md px-6 py-3 font-sans text-[15px] font-semibold uppercase leading-none
+           tracking-[0.06em] no-underline transition-colors duration-200;
+  }
+  /* Gold fill takes a DARK label. White on #D4AF37 is 2.10:1 — a hard WCAG failure. */
+  .btn-primary { @apply btn bg-accent text-accent-on hover:bg-accent-hover; }
+  .btn-secondary { @apply btn border border-accent bg-transparent text-accent hover:bg-accent hover:text-accent-on; }
+  .btn-ghost { @apply btn border border-line-strong bg-transparent text-fg-body hover:border-accent hover:text-accent; }
+
+  .card {
+    @apply rounded-lg border border-line bg-surface p-6 transition-colors duration-200;
+  }
+  .card-hover { @apply hover:border-line-strong hover:bg-surface-2; }
+
+  .field-label { @apply mb-1.5 block font-sans text-sm font-medium text-fg; }
+  .input {
+    @apply min-h-[48px] w-full rounded-sm border border-line-strong bg-surface px-4 py-3
+           font-sans text-base text-fg transition-colors duration-200
+           placeholder:text-fg-muted focus:border-accent;
+  }
+  .input[aria-invalid='true'] { @apply border-danger; }
+  .field-hint { @apply mt-1.5 text-[13px] text-fg-muted; }
+  .field-error { @apply mt-1.5 text-[13px] font-medium text-danger; }
+
+  .badge {
+    @apply inline-flex min-w-0 items-center gap-1.5 whitespace-nowrap rounded-full
+           px-3 py-1.5 font-sans text-[13px] font-semibold;
+  }
+
+  /* Skip link — first focusable element, visible only on focus. */
+  .skip-link {
+    @apply absolute left-4 z-[100] -translate-y-32 rounded-md bg-accent px-4 py-3
+           font-semibold text-accent-on transition-transform focus:translate-y-4;
+    top: 0;
+  }
+}
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+  .tnum { font-variant-numeric: tabular-nums; }
+
+  /* Scroll reveal. Elements are visible by default; JS adds .reveal only when it
+     will actually run, so no-JS and crawlers never see a blank page. */
+  .reveal { opacity: 0; transform: translateY(14px); }
+  @media (prefers-reduced-motion: no-preference) {
+    .reveal { transition: opacity 400ms ease-out, transform 400ms ease-out; }
+  }
+  .reveal.is-visible { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .reveal { opacity: 1; transform: none; }
+  }
+}
