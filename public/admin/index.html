@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@700&display=swap">
-<link rel="stylesheet" href="/assets/css/site.css">
+<link rel="stylesheet" href="/assets/css/site.css?v=2">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 </head>
 <body class="min-h-screen">
@@ -30,12 +30,18 @@
 
 <!-- Anmeldung / Ersteinrichtung. Welche der beiden Ansichten erscheint,
      entscheidet der Server über GET /api/admin/setup — nicht dieses Skript. -->
-<div data-gate hidden class="mx-auto w-full max-w-[440px] px-4 py-16">
-  <p class="kicker">Bregenz Barbershop</p>
+<div data-gate hidden class="mx-auto w-full max-w-[320px] px-4 pb-24 pt-24 md:pt-32">
+  <!-- Wortmarke wie in der Kopfzeile der Website, darunter die Bereichsangabe. -->
+  <div class="mb-10 text-center">
+    <p class="font-display text-2xl font-bold uppercase tracking-wide text-fg">
+      Bregenz <span class="text-accent">Barbershop</span>
+    </p>
+    <p class="mt-2 text-kicker font-medium uppercase text-fg-muted">Verwaltung</p>
+  </div>
 
   <section data-view="login" hidden>
-    <h1 class="font-display text-h2 font-bold uppercase text-fg">Anmelden</h1>
-    <hr class="rule">
+    <h1 class="text-center font-display text-2xl font-bold uppercase text-fg">Anmelden</h1>
+    <hr class="rule mx-auto">
     <form data-form="login" novalidate>
       <div class="mb-4">
         <label class="field-label" for="login-email">E-Mail-Adresse</label>
@@ -51,8 +57,8 @@
   </section>
 
   <section data-view="setup" hidden>
-    <h1 class="font-display text-h2 font-bold uppercase text-fg">Ersteinrichtung</h1>
-    <hr class="rule">
+    <h1 class="text-center font-display text-2xl font-bold uppercase text-fg">Ersteinrichtung</h1>
+    <hr class="rule mx-auto">
     <p class="lead mb-6 text-[15px]">
       Für diesen Betrieb gibt es noch kein Inhaberkonto. Lege es jetzt an — danach
       ist dieses Formular dauerhaft gesperrt.
