@@ -3,12 +3,17 @@
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
-DO $$ BEGIN
-  CREATE TYPE user_role      AS ENUM ('OWNER', 'ADMIN', 'EMPLOYEE', 'CLIENT');
-  CREATE TYPE entity_status  AS ENUM ('ACTIVE', 'INACTIVE');
-  CREATE TYPE booking_status AS ENUM ('PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED', 'NO_SHOW');
-  CREATE TYPE booking_source AS ENUM ('WEBSITE', 'MANUAL');
-  CREATE TYPE absence_kind   AS ENUM ('VACATION', 'SICK', 'OTHER');
+-- Jeder Typ in einem eigenen Block: sonst bricht der erste bereits vorhandene
+-- Typ den ganzen Block ab und ein spaeter ergaenzter Typ wuerde nie angelegt.
+DO $$ BEGIN CREATE TYPE user_role      AS ENUM ('OWNER', 'ADMIN', 'EMPLOYEE', 'CLIENT');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE entity_status  AS ENUM ('ACTIVE', 'INACTIVE');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE booking_status AS ENUM ('PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED', 'NO_SHOW');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE booking_source AS ENUM ('WEBSITE', 'MANUAL');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE absence_kind   AS ENUM ('VACATION', 'SICK', 'OTHER');
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 CREATE TABLE IF NOT EXISTS business (
@@ -133,7 +138,9 @@ DO $$ BEGIN
       employee_id WITH =,
       tstzrange(start_time, end_time, '[)') WITH &&
     ) WHERE (status IN ('PENDING', 'CONFIRMED'));
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+-- duplicate_table, weil eine EXCLUDE-Constraint auch einen Index anlegt: beim
+-- zweiten Lauf meldet Postgres den Index, nicht die Constraint.
+EXCEPTION WHEN duplicate_object OR duplicate_table THEN NULL; END $$;
 
 CREATE TABLE IF NOT EXISTS google_integration (
   id                    uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -179,3 +186,28 @@ CREATE TABLE IF NOT EXISTS review (
   fetched_at  timestamptz NOT NULL DEFAULT now(),
   UNIQUE (business_id, external_id)
 );
+
+-- Sessions für /admin. Im Cookie steht ein Zufallstoken, in der Datenbank nur
+-- dessen SHA-256-Hash: ein Datenbankleck gibt damit keine gültige Session her.
+CREATE TABLE IF NOT EXISTS app_session (
+  id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id      uuid NOT NULL REFERENCES app_user(id) ON DELETE CASCADE,
+  token_hash   bytea NOT NULL UNIQUE,
+  csrf_token   text  NOT NULL,
+  user_agent   text,
+  created_at   timestamptz NOT NULL DEFAULT now(),
+  last_seen_at timestamptz NOT NULL DEFAULT now(),
+  expires_at   timestamptz NOT NULL
+);
+CREATE INDEX IF NOT EXISTS app_session_user_idx    ON app_session (user_id);
+CREATE INDEX IF NOT EXISTS app_session_expires_idx ON app_session (expires_at);
+
+-- Genau ein aktiver OWNER je Betrieb. Der Setup-Flow ist damit nicht nur in der
+-- Anwendung gesperrt, sondern auch in der Datenbank: ein zweiter Benutzer kann
+-- sich nicht selbst zum Inhaber machen (promt.md §4).
+CREATE UNIQUE INDEX IF NOT EXISTS app_user_single_owner_idx
+  ON app_user (business_id) WHERE role = 'OWNER' AND status = 'ACTIVE';
+
+-- Ein Mitarbeiter hängt höchstens an einem Benutzerkonto.
+CREATE UNIQUE INDEX IF NOT EXISTS employee_user_idx
+  ON employee (user_id) WHERE user_id IS NOT NULL;

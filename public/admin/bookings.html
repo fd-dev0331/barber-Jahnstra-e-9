@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Termine – Bregenz Barbershop</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0E0D0C">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@700&display=swap">
+<link rel="stylesheet" href="/assets/css/site.css">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="min-h-screen">
+<a class="skip-link" href="#main">Zum Inhalt springen</a>
+
+<header data-shell hidden class="border-b border-line bg-surface">
+  <div class="mx-auto w-full max-w-container px-4">
+    <div class="flex h-16 items-center justify-between gap-4">
+      <a href="/admin" class="font-display text-lg font-bold uppercase tracking-wide text-fg">Barbershop <span class="text-accent">Verwaltung</span></a>
+      <div class="flex items-center gap-3 text-sm">
+        <p data-user class="hidden sm:block"></p>
+        <button type="button" data-logout class="btn-ghost min-h-[40px] px-4 py-2 text-[13px]">Abmelden</button>
+      </div>
+    </div>
+    <nav data-nav aria-label="Verwaltung" class="-mb-px flex gap-1 overflow-x-auto"></nav>
+  </div>
+</header>
+
+<main id="main" data-shell hidden class="mx-auto w-full max-w-container px-4 py-8">
+  <h1 class="font-display text-h2 font-bold uppercase text-fg">Termine</h1>
+  <hr class="rule">
+
+  <div class="mb-6 flex flex-wrap items-end gap-3">
+    <div>
+      <label class="field-label" for="filter-from">Von</label>
+      <input class="input min-h-[44px] py-2" id="filter-from" type="date" data-filter="from">
+    </div>
+    <div>
+      <label class="field-label" for="filter-to">Bis</label>
+      <input class="input min-h-[44px] py-2" id="filter-to" type="date" data-filter="to">
+    </div>
+    <div>
+      <label class="field-label" for="filter-status">Status</label>
+      <select class="input min-h-[44px] py-2" id="filter-status" data-filter="status">
+        <option value="">Alle</option>
+        <option value="CONFIRMED">Bestätigt</option>
+        <option value="PENDING">Offen</option>
+        <option value="CANCELLED">Storniert</option>
+        <option value="COMPLETED">Erledigt</option>
+        <option value="NO_SHOW">Nicht erschienen</option>
+      </select>
+    </div>
+    <div class="min-w-[180px] flex-1">
+      <label class="field-label" for="filter-q">Suche</label>
+      <input class="input min-h-[44px] py-2" id="filter-q" type="search" placeholder="Name, Telefon, Referenz" data-filter="q">
+    </div>
+    <button type="button" class="btn-secondary min-h-[44px] px-5 py-2" data-reload>Filtern</button>
+    <button type="button" class="btn-primary min-h-[44px] px-5 py-2" data-new>Termin eintragen</button>
+  </div>
+
+  <div data-list class="grid gap-3"></div>
+
+  <dialog data-dialog class="w-[min(560px,92vw)] rounded-lg border border-line bg-surface p-0 text-fg-body backdrop:bg-black/70">
+    <form data-form method="dialog" class="p-6">
+      <h2 class="font-display text-xl font-bold uppercase text-fg">Termin eintragen</h2>
+      <p class="field-hint mb-5">Der Termin wird genauso geprüft und in den Kalender geschrieben wie eine Buchung über die Website.</p>
+
+      <div class="mb-4">
+        <label class="field-label" for="m-service">Leistung</label>
+        <select class="input" id="m-service" name="serviceId" required></select>
+      </div>
+      <div class="mb-4">
+        <label class="field-label" for="m-employee">Mitarbeiter</label>
+        <select class="input" id="m-employee" name="employeeId" required></select>
+      </div>
+      <div class="mb-4 grid gap-4 sm:grid-cols-2">
+        <div>
+          <label class="field-label" for="m-date">Datum</label>
+          <input class="input" id="m-date" name="date" type="date" required>
+        </div>
+        <div>
+          <label class="field-label" for="m-time">Uhrzeit</label>
+          <input class="input" id="m-time" name="time" type="time" step="300" required>
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="field-label" for="m-name">Kundin / Kunde</label>
+        <input class="input" id="m-name" name="customerName" required>
+      </div>
+      <div class="mb-4 grid gap-4 sm:grid-cols-2">
+        <div>
+          <label class="field-label" for="m-phone">Telefon</label>
+          <input class="input" id="m-phone" name="customerPhone" type="tel" required>
+        </div>
+        <div>
+          <label class="field-label" for="m-email">E-Mail (optional)</label>
+          <input class="input" id="m-email" name="customerEmail" type="email">
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="field-label" for="m-note">Anmerkung</label>
+        <input class="input" id="m-note" name="note">
+      </div>
+      <label class="mb-5 flex items-center gap-3 text-[15px] text-fg-body">
+        <input type="checkbox" name="allowOutsideHours" class="h-5 w-5 accent-[#D4AF37]">
+        Außerhalb der Arbeitszeit eintragen
+      </label>
+
+      <p data-error class="field-error mb-4" hidden></p>
+      <div class="flex justify-end gap-3">
+        <button type="button" class="btn-ghost min-h-[44px] px-5 py-2" data-cancel>Abbrechen</button>
+        <button type="submit" class="btn-primary min-h-[44px] px-5 py-2">Eintragen</button>
+      </div>
+    </form>
+  </dialog>
+</main>
+
+<p data-boot-error hidden class="mx-auto max-w-container px-4 py-16 text-fg-body">
+  Die Verwaltung ist gerade nicht erreichbar. Bitte lade die Seite neu.
+</p>
+
+<script type="module" src="/assets/js/admin/bookings.js"></script>
+</body>
+</html>

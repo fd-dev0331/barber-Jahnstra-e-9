@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Verwaltung – Bregenz Barbershop</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0E0D0C">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@700&display=swap">
+<link rel="stylesheet" href="/assets/css/site.css">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="min-h-screen">
+<a class="skip-link" href="#main">Zum Inhalt springen</a>
+
+<header data-shell hidden class="border-b border-line bg-surface">
+  <div class="mx-auto w-full max-w-container px-4">
+    <div class="flex h-16 items-center justify-between gap-4">
+      <a href="/admin" class="font-display text-lg font-bold uppercase tracking-wide text-fg">Barbershop <span class="text-accent">Verwaltung</span></a>
+      <div class="flex items-center gap-3 text-sm">
+        <p data-user class="hidden sm:block"></p>
+        <button type="button" data-logout class="btn-ghost min-h-[40px] px-4 py-2 text-[13px]">Abmelden</button>
+      </div>
+    </div>
+    <nav data-nav aria-label="Verwaltung" class="-mb-px flex gap-1 overflow-x-auto"></nav>
+  </div>
+</header>
+
+<!-- Anmeldung / Ersteinrichtung. Welche der beiden Ansichten erscheint,
+     entscheidet der Server über GET /api/admin/setup — nicht dieses Skript. -->
+<div data-gate hidden class="mx-auto w-full max-w-[440px] px-4 py-16">
+  <p class="kicker">Bregenz Barbershop</p>
+
+  <section data-view="login" hidden>
+    <h1 class="font-display text-h2 font-bold uppercase text-fg">Anmelden</h1>
+    <hr class="rule">
+    <form data-form="login" novalidate>
+      <div class="mb-4">
+        <label class="field-label" for="login-email">E-Mail-Adresse</label>
+        <input class="input" id="login-email" name="email" type="email" autocomplete="username" required>
+      </div>
+      <div class="mb-6">
+        <label class="field-label" for="login-password">Passwort</label>
+        <input class="input" id="login-password" name="password" type="password" autocomplete="current-password" required>
+      </div>
+      <p data-error class="field-error mb-4" hidden></p>
+      <button class="btn-primary w-full" type="submit">Anmelden</button>
+    </form>
+  </section>
+
+  <section data-view="setup" hidden>
+    <h1 class="font-display text-h2 font-bold uppercase text-fg">Ersteinrichtung</h1>
+    <hr class="rule">
+    <p class="lead mb-6 text-[15px]">
+      Für diesen Betrieb gibt es noch kein Inhaberkonto. Lege es jetzt an — danach
+      ist dieses Formular dauerhaft gesperrt.
+    </p>
+    <form data-form="setup" novalidate>
+      <div class="mb-4">
+        <label class="field-label" for="setup-business">Name des Betriebs</label>
+        <input class="input" id="setup-business" name="businessName" value="Bregenz Barbershop" required>
+      </div>
+      <div class="mb-4">
+        <label class="field-label" for="setup-name">Dein Name</label>
+        <input class="input" id="setup-name" name="ownerName" autocomplete="name" required>
+      </div>
+      <div class="mb-4">
+        <label class="field-label" for="setup-email">E-Mail-Adresse</label>
+        <input class="input" id="setup-email" name="email" type="email" autocomplete="username" required>
+      </div>
+      <div class="mb-6">
+        <label class="field-label" for="setup-password">Passwort</label>
+        <input class="input" id="setup-password" name="password" type="password" autocomplete="new-password" required>
+        <p class="field-hint">Mindestens 10 Zeichen.</p>
+      </div>
+      <p data-error class="field-error mb-4" hidden></p>
+      <button class="btn-primary w-full" type="submit">Inhaberkonto anlegen</button>
+    </form>
+  </section>
+</div>
+
+<main id="main" data-shell hidden class="mx-auto w-full max-w-container px-4 py-8">
+  <h1 class="font-display text-h2 font-bold uppercase text-fg">Übersicht</h1>
+  <hr class="rule">
+
+  <div data-hints class="mb-8 grid gap-3"></div>
+
+  <div data-counts class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"></div>
+
+  <section class="mt-10">
+    <h2 class="font-display text-xl font-bold uppercase text-fg">Heute</h2>
+    <div data-today class="mt-4 grid gap-3"></div>
+  </section>
+
+  <section class="mt-10">
+    <h2 class="font-display text-xl font-bold uppercase text-fg">Als Nächstes</h2>
+    <div data-upcoming class="mt-4 grid gap-3"></div>
+  </section>
+</main>
+
+<p data-boot-error hidden class="mx-auto max-w-container px-4 py-16 text-fg-body">
+  Die Verwaltung ist gerade nicht erreichbar. Bitte lade die Seite neu.
+</p>
+
+<script type="module" src="/assets/js/admin/dashboard.js"></script>
+</body>
+</html>
