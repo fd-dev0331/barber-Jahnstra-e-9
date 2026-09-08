@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Leistungen – Bregenz Barbershop</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0E0D0C">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@700&display=swap">
+<link rel="stylesheet" href="/assets/css/site.css">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="min-h-screen">
+<a class="skip-link" href="#main">Zum Inhalt springen</a>
+
+<header data-shell hidden class="border-b border-line bg-surface">
+  <div class="mx-auto w-full max-w-container px-4">
+    <div class="flex h-16 items-center justify-between gap-4">
+      <a href="/admin" class="font-display text-lg font-bold uppercase tracking-wide text-fg">Barbershop <span class="text-accent">Verwaltung</span></a>
+      <div class="flex items-center gap-3 text-sm">
+        <p data-user class="hidden sm:block"></p>
+        <button type="button" data-logout class="btn-ghost min-h-[40px] px-4 py-2 text-[13px]">Abmelden</button>
+      </div>
+    </div>
+    <nav data-nav aria-label="Verwaltung" class="-mb-px flex gap-1 overflow-x-auto"></nav>
+  </div>
+</header>
+
+<main id="main" data-shell hidden class="mx-auto w-full max-w-container px-4 py-8">
+  <h1 class="font-display text-h2 font-bold uppercase text-fg">Leistungen</h1>
+  <hr class="rule">
+
+  <div class="mb-6 flex justify-end">
+    <button type="button" class="btn-primary min-h-[44px] px-5 py-2" data-new>Leistung anlegen</button>
+  </div>
+
+  <div data-list class="grid gap-3"></div>
+
+  <dialog data-dialog class="w-[min(560px,92vw)] rounded-lg border border-line bg-surface p-0 text-fg-body backdrop:bg-black/70">
+    <form data-form method="dialog" class="p-6">
+      <h2 data-dialog-title class="font-display text-xl font-bold uppercase text-fg">Leistung</h2>
+
+      <div class="mt-5">
+        <label class="field-label" for="s-name">Name</label>
+        <input class="input" id="s-name" name="name" required>
+      </div>
+      <div class="mt-4">
+        <label class="field-label" for="s-description">Beschreibung</label>
+        <input class="input" id="s-description" name="description">
+      </div>
+      <div class="mt-4 grid gap-4 sm:grid-cols-2">
+        <div>
+          <label class="field-label" for="s-category">Kategorie</label>
+          <input class="input" id="s-category" name="category">
+        </div>
+        <div>
+          <label class="field-label" for="s-sort">Reihenfolge</label>
+          <input class="input" id="s-sort" name="sortOrder" type="number" min="0" max="9999" value="100">
+        </div>
+      </div>
+      <div class="mt-4 grid gap-4 sm:grid-cols-2">
+        <div>
+          <label class="field-label" for="s-duration">Dauer (Minuten)</label>
+          <input class="input" id="s-duration" name="durationMinutes" type="number" min="5" max="480" step="5" required>
+        </div>
+        <div>
+          <label class="field-label" for="s-price">Preis (Euro)</label>
+          <input class="input" id="s-price" name="price" type="number" min="0" step="0.5" required>
+        </div>
+      </div>
+
+      <p data-error class="field-error mt-5" hidden></p>
+      <div class="mt-6 flex justify-end gap-3">
+        <button type="button" class="btn-ghost min-h-[44px] px-5 py-2" data-cancel>Abbrechen</button>
+        <button type="submit" class="btn-primary min-h-[44px] px-5 py-2">Speichern</button>
+      </div>
+    </form>
+  </dialog>
+</main>
+
+<p data-boot-error hidden class="mx-auto max-w-container px-4 py-16 text-fg-body">
+  Die Verwaltung ist gerade nicht erreichbar. Bitte lade die Seite neu.
+</p>
+
+<script type="module" src="/assets/js/admin/services.js"></script>
+</body>
+</html>

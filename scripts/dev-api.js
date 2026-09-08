@@ -36,15 +36,39 @@ function decorate(res) {
   return res;
 }
 
-async function handleApi(req, res, name) {
-  const file = path.join(API_DIR, `${name}.js`);
-  if (!fs.existsSync(file)) {
+/* Auflösung wie auf Vercel: erst die exakte Datei, sonst die naechstgelegene
+   Catch-all-Route [...name].js. Deren Segmente landen in req.query, genau wie
+   die Vercel-Runtime es tut — die Handler brauchen dadurch keine Sonderlocke. */
+function resolveApi(segments) {
+  if (segments.some((s) => !s || s === '.' || s === '..')) return null;
+
+  const direct = `${path.join(API_DIR, ...segments)}.js`;
+  if (direct.startsWith(API_DIR) && fs.existsSync(direct)) return { file: direct, params: {} };
+
+  for (let i = segments.length - 1; i >= 0; i -= 1) {
+    const dir = path.join(API_DIR, ...segments.slice(0, i));
+    if (!dir.startsWith(API_DIR) || !fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) continue;
+    const match = fs.readdirSync(dir).find((f) => /^\[\.\.\..+\]\.js$/.test(f));
+    if (match) {
+      return { file: path.join(dir, match), params: { [match.slice(4, -4)]: segments.slice(i) } };
+    }
+  }
+  return null;
+}
+
+async function handleApi(req, res, segments) {
+  const route = resolveApi(segments);
+  if (!route) {
     res.statusCode = 404;
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     return res.end(JSON.stringify({ error: 'not_found', message: 'Endpunkt nicht gefunden.' }));
   }
+
+  const search = new URL(req.url, 'http://localhost').searchParams;
+  req.query = { ...Object.fromEntries(search), ...route.params };
+
   // Cache-Busting, damit Änderungen ohne Neustart greifen.
-  const mod = await import(`${pathToFileURL(file).href}?t=${Date.now()}`);
+  const mod = await import(`${pathToFileURL(route.file).href}?t=${Date.now()}`);
   return mod.default(req, decorate(res));
 }
 
@@ -60,8 +84,9 @@ function serveStatic(req, res, urlPath) {
 
   let file = full;
   if (!fs.existsSync(file) || fs.statSync(file).isDirectory()) {
-    // cleanUrls wie in vercel.json: /preise -> /preise.html
+    // cleanUrls wie in vercel.json: /preise -> /preise.html, /admin -> /admin/index.html
     if (fs.existsSync(`${full}.html`)) file = `${full}.html`;
+    else if (fs.existsSync(path.join(full, 'index.html'))) file = path.join(full, 'index.html');
     else {
       res.statusCode = 404;
       res.setHeader('Content-Type', 'text/html; charset=utf-8');
@@ -79,8 +104,8 @@ const server = http.createServer(async (req, res) => {
   const urlPath = new URL(req.url, `http://localhost:${PORT}`).pathname;
   try {
     if (urlPath.startsWith('/api/')) {
-      const name = urlPath.slice(5).replace(/\/+$/, '');
-      return await handleApi(req, res, name);
+      const segments = urlPath.slice(5).split('/').filter(Boolean).map(decodeURIComponent);
+      return await handleApi(req, res, segments);
     }
     return serveStatic(req, res, urlPath);
   } catch (err) {
