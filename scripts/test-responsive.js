@@ -4,7 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const PAGES = ['index.html', 'preise.html', 'galerie.html', 'kontakt.html', 'booking.html'];
+const PAGES = ['index.html', 'galerie.html', 'booking.html'];
 let issues = 0;
 
 // Feste Pixelbreiten sind die häufigste Overflow-Ursache. max-w-[...] ist davon

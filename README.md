@@ -40,10 +40,10 @@ Der Dev-Server muss dafür laufen.
 
 ```
 public/           Ausgelieferte Website (Vercel outputDirectory)
-  index.html      Start
-  preise.html     Preise & Leistungen
-  galerie.html    Galerie mit Lightbox
-  kontakt.html    Kontakt & Anfahrt
+  index.html      Start — eine Seite mit den Ankern #home, #ueber-uns,
+                  #preise, #oeffnungszeiten und #kontakt; die Kopfzeile
+                  verlinkt diese Abschnitte
+  galerie.html    Galerie mit Lightbox (eigene Seite, nicht auf der Startseite)
   booking.html    Buchung (eigener JS-Bundle, keine Display-Schrift)
   assets/js/      site.js (gemeinsam) · home.js · gallery.js · booking.js
 api/              Vercel Functions
@@ -133,10 +133,14 @@ eine (`201`), die andere bekommt `409`.
 
 ## Offen / vom Kunden benötigt
 
-- **Echte Fotos.** Der Entwurf lebt von Bildern; aktuell stehen überall
-  Platzhalter in `public/assets/img/placeholder/`. Der Instagram-Account hat
-  Bilder, die Treatwell-Galerie ist leer. Einheitlicher Weißabgleich über den
-  ganzen Satz, sonst wirkt das dunkle Raster zusammengewürfelt.
+- **Echte Fotos in voller Auflösung.** Hero, Über-uns-Bild und die neun
+  Galeriekacheln stammen aus dem öffentlichen Instagram-Profil
+  (`public/assets/img/`, Stand 08.09.2026) und sind als Zwischenlösung gedacht.
+  Die Reel-Vorschaubilder liegen nur in 360 × 640 px vor — für den Hero sichtbar
+  weich. Mit `INSTAGRAM_ACCESS_TOKEN` (Graph API) oder Originaldateien vom
+  Kunden lassen sie sich 1:1 ersetzen; Dateinamen bleiben gleich. Einheitlicher
+  Weißabgleich über den ganzen Satz, sonst wirkt das dunkle Raster
+  zusammengewürfelt.
 - **Telefonnummer in E.164 bestätigen.** `+436812039790` ist aus `0681 20397906`
   abgeleitet und **nicht verifiziert**.
 - **Pausen und Urlaubszeiten.** Aktuell sind Mo–Fr 09–19 und Sa 09–18 ohne Pause

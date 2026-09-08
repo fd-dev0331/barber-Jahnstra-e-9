@@ -1,5 +1,5 @@
-/* Home-page behaviour: opening-hours state, consent-gated map, Google reviews,
-   Instagram gallery preview. No booking or admin code is loaded here. */
+/* Home-page behaviour: opening-hours state, consent-gated map, Google reviews.
+   No booking or admin code is loaded here; die Galerie lebt auf /galerie.html. */
 (() => {
   'use strict';
 
@@ -136,33 +136,4 @@
       });
   }
 
-  /* ---------- Instagram gallery preview ----------
-     Replaces the static fallback tiles when the backend cache has posts.
-     The tile markup is identical either way, so switching from manual uploads
-     to the API needs no frontend change (info.md §33). */
-  const preview = document.querySelector('[data-gallery-preview]');
-  if (preview) {
-    const esc = window.BB.esc;
-    window.BB.getJSON('/api/gallery?limit=6')
-      .then((data) => {
-        const items = Array.isArray(data?.items) ? data.items : [];
-        if (!items.length) return; // keep fallback tiles
-        preview.innerHTML = items
-          .slice(0, 6)
-          .map(
-            (it) => `
-            <li>
-              <a href="/galerie.html" class="block overflow-hidden rounded-sm border border-line">
-                <img src="${esc(it.thumbnail || it.src)}" alt="${esc(it.alt || 'Arbeit aus dem Bregenz Barbershop')}"
-                     width="800" height="800" loading="lazy" decoding="async"
-                     class="aspect-square w-full object-cover">
-              </a>
-            </li>`
-          )
-          .join('');
-      })
-      .catch(() => {
-        /* Keep the static fallback tiles. */
-      });
-  }
 })();
