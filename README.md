@@ -71,7 +71,8 @@ Kontrastwert. **Nicht ohne Nachrechnen ändern.**
 
 | Variable | Pflicht | Zweck |
 |---|---|---|
-| `DATABASE_URL` | ja | PostgreSQL-Verbindung |
+| `DATABASE_URL` | ja | PostgreSQL-Verbindung. Ersatzweise wird `POSTGRES_URL` akzeptiert, das die Supabase-Integration auf Vercel selbst anlegt. |
+| `POSTGRES_URL_NON_POOLING` | für Supabase | Direkte Verbindung ohne Pooler. `db:migrate` und `db:seed` nutzen sie automatisch, falls vorhanden. |
 | `TOKEN_ENCRYPTION_KEY` | für Google | 32 Byte base64, verschlüsselt die OAuth-Tokens |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` / `GOOGLE_REDIRECT_URI` | für Google | OAuth 2.0 |
 | `INSTAGRAM_ACCESS_TOKEN` / `INSTAGRAM_USER_ID` | optional | Galerie-Sync |
@@ -126,6 +127,11 @@ eine (`201`), die andere bekommt `409`.
 2. Environment Variables aus der Tabelle oben eintragen.
 3. PostgreSQL bereitstellen (Neon, Supabase oder eigener Server) und
    `npm run db:migrate && npm run db:seed` gegen die Produktionsdatenbank laufen lassen.
+   Bei der Supabase-Integration auf Vercel entsteht kein `DATABASE_URL`, sondern
+   `POSTGRES_URL` (gepoolt) und `POSTGRES_URL_NON_POOLING` (direkt). Beides wird
+   erkannt: die Anwendung nimmt die gepoolte Verbindung, Migration und Seed die
+   direkte — `CREATE EXTENSION pgcrypto`/`btree_gist` in `db/schema.sql` läuft
+   über den Transaction-Pooler nicht zuverlässig.
 4. Domain verbinden. Danach in allen Seiten `https://bregenz-barbershop.at`
    durch die echte Domain ersetzen (`canonical`, Open Graph, `sitemap.xml`, JSON-LD).
 
