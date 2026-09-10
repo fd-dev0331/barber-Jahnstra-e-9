@@ -49,7 +49,7 @@ function openingIntervals(weekday) {
     .sort((a, b) => a[0].localeCompare(b[0]));
   const merged = [];
   for (const [start, end] of shifts) {
-    const last = merged.at(-1);
+    const last = merged[merged.length - 1];
     if (last && start <= last[1]) last[1] = end > last[1] ? end : last[1];
     else merged.push([start, end]);
   }

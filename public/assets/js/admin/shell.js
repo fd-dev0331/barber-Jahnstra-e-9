@@ -201,9 +201,13 @@ function bindShellEvents() {
   });
 
   // Ab 1024px gibt es die Seitenleiste; ein offenes Menü wäre dann doppelt.
-  window.matchMedia('(min-width: 1024px)').addEventListener('change', (event) => {
+  const desktop = window.matchMedia('(min-width: 1024px)');
+  const closeOnDesktop = (event) => {
     if (event.matches && menuDialog?.open) menuDialog.close();
-  });
+  };
+  // Safari < 14 kennt an MediaQueryList nur addListener.
+  if (desktop.addEventListener) desktop.addEventListener('change', closeOnDesktop);
+  else desktop.addListener(closeOnDesktop);
 }
 
 let activePage = null;

@@ -79,7 +79,8 @@ export function toast(message, kind = 'ok') {
   host.textContent = message;
   host.hidden = false;
   // Ein modaler Dialog liegt in der obersten Ebene — der Toast muss mit hinein.
-  const openDialog = [...document.querySelectorAll('dialog[open]')].at(-1);
+  const openDialogs = document.querySelectorAll('dialog[open]');
+  const openDialog = openDialogs[openDialogs.length - 1];
   (openDialog ?? document.body).append(host);
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => { host.hidden = true; }, kind === 'error' ? 6000 : 3500);
@@ -251,7 +252,7 @@ export function validate(form, rules) {
 
     if (message) {
       fieldError(field, message);
-      first ??= field;
+      if (!first) first = field;
     }
   }
   first?.focus();
