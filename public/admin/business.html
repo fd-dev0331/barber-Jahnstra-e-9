@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bregenz Barbershop</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#1A1816">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/assets/css/admin.css?v=1">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+<a class="skip-link" href="#main" data-i18n="common.skipToContent"></a>
+<noscript><p class="p-6 text-fg-body">JavaScript erforderlich · Требуется JavaScript · JavaScript gerekli</p></noscript>
+
+<header data-shell data-app-header class="adm-header" hidden></header>
+<div data-shell class="adm-layout" hidden>
+  <aside data-app-sidebar class="adm-sidebar"></aside>
+  <main id="main" class="adm-main">
+    <div class="adm-container max-w-[960px]">
+      <div class="adm-page-head">
+        <div>
+          <h1 class="adm-h1" data-i18n="nav.business"></h1>
+          <p class="adm-subtitle" data-i18n="business.subtitle"></p>
+        </div>
+      </div>
+
+      <div data-error></div>
+
+      <form data-business-form novalidate class="grid gap-4" hidden>
+        <p class="adm-form-error" data-form-error role="alert" hidden></p>
+
+        <section class="adm-card" aria-labelledby="contact-title">
+          <div class="adm-card-head"><h2 id="contact-title" class="adm-h2" data-i18n="business.sectionContact"></h2></div>
+          <div class="adm-card-pad grid gap-4">
+            <div class="adm-grid-2">
+              <div>
+                <label class="adm-label" for="b-name" data-i18n="business.name"></label>
+                <input class="adm-input" id="b-name" name="name" maxlength="120" autocomplete="organization">
+              </div>
+              <div>
+                <label class="adm-label" for="b-email" data-i18n="business.email"></label>
+                <input class="adm-input" id="b-email" name="email" type="email" inputmode="email" maxlength="200" autocomplete="email">
+              </div>
+            </div>
+            <div>
+              <label class="adm-label" for="b-address" data-i18n="business.address"></label>
+              <input class="adm-input" id="b-address" name="address" maxlength="200" autocomplete="street-address">
+            </div>
+            <div class="adm-grid-2">
+              <div>
+                <label class="adm-label" for="b-phone" data-i18n="business.phone"></label>
+                <input class="adm-input" id="b-phone" name="phone" type="tel" maxlength="40" autocomplete="tel">
+              </div>
+              <div>
+                <label class="adm-label" for="b-instagram" data-i18n="business.instagram"></label>
+                <input class="adm-input" id="b-instagram" name="instagram" maxlength="200" autocomplete="url" placeholder="https://www.instagram.com/…">
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="adm-card" aria-labelledby="booking-title">
+          <div class="adm-card-head"><h2 id="booking-title" class="adm-h2" data-i18n="business.sectionBooking"></h2></div>
+          <div class="adm-card-pad grid gap-4">
+            <div>
+              <label class="adm-label" for="b-timezone" data-i18n="business.timezone"></label>
+              <select class="adm-input" id="b-timezone" name="timezone"></select>
+              <p class="adm-hint" data-i18n="business.timezoneHint"></p>
+            </div>
+            <div class="adm-grid-3">
+              <div>
+                <label class="adm-label" for="b-step" data-i18n="business.slotStep"></label>
+                <input class="adm-input tnum" id="b-step" name="slotStepMinutes" type="number" min="5" max="120" step="5" inputmode="numeric">
+              </div>
+              <div>
+                <label class="adm-label" for="b-lead" data-i18n="business.leadTime"></label>
+                <input class="adm-input tnum" id="b-lead" name="leadTimeMinutes" type="number" min="0" max="10080" inputmode="numeric">
+              </div>
+              <div>
+                <label class="adm-label" for="b-advance" data-i18n="business.maxAdvance"></label>
+                <input class="adm-input tnum" id="b-advance" name="maxAdvanceDays" type="number" min="1" max="365" inputmode="numeric">
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div class="flex justify-end">
+          <button type="submit" class="adm-btn-primary" data-i18n="common.save"></button>
+        </div>
+      </form>
+
+      <section class="adm-card mt-6" aria-labelledby="hours-title">
+        <div class="adm-card-head">
+          <h2 id="hours-title" class="adm-h2" data-i18n="business.openingHours"></h2>
+          <a class="adm-link text-[13px]" href="/admin/employees" data-i18n="business.editHours"></a>
+        </div>
+        <div class="adm-card-pad grid gap-3">
+          <p class="adm-hint mt-0" data-i18n="business.openingHoursNote"></p>
+          <div data-hours></div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+
+<div data-boot class="grid min-h-[60vh] place-items-center"><p class="text-sm text-fg-muted" data-i18n="common.loading"></p></div>
+<p data-boot-error hidden class="mx-auto max-w-xl px-4 py-16 text-center text-fg-body" data-i18n="common.bootError"></p>
+
+<script type="module" src="/assets/js/admin/business.js"></script>
+</body>
+</html>

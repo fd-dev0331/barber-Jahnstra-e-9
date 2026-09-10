@@ -3,6 +3,7 @@ node_modules/
 
 # Build output
 public/assets/css/site.css
+public/assets/css/admin.css
 .next/
 out/
 dist/

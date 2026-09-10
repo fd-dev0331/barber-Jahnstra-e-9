@@ -1,76 +1,80 @@
-/* /admin/settings — Betriebsdaten, eigenes Passwort, Konten.
-   Der Abschnitt „Konten“ ist dem Inhaber vorbehalten; das Backend prüft das
-   ebenfalls, hier wird er nur ausgeblendet. */
-import { api, requireSession, escapeHtml, toast, handleError, isOwner, ROLE_LABEL } from './core.js';
+/* /admin/settings — Konto, Sprache der Verwaltung, Passwort, Benutzerkonten, Abmelden.
 
-const businessForm = document.querySelector('[data-form="business"]');
-const passwordForm = document.querySelector('[data-form="password"]');
+   Für jede Rolle erreichbar: das eigene Passwort darf jeder ändern
+   (POST /api/admin/password). Die Konten sieht nur der Inhaber; das Backend
+   verweigert sie allen anderen ohnehin mit 403. */
+import { t, getLanguage, setLanguage, LANGUAGES, onLanguageChange } from './i18n.js';
+import { api, ApiError, session, isOwner, roleLabel, escapeHtml } from './core.js';
+import {
+  icon, activeBadge, toast, handleError, confirmDialog, emptyState, errorState, skeletonList, bindDialog,
+  validate, clearErrors, showFormError, setBusy,
+} from './ui.js';
+import { requireSession } from './shell.js';
+
+const passwordForm = document.querySelector('[data-password-form]');
 const usersBox = document.querySelector('[data-users]');
 const userDialog = document.querySelector('[data-user-dialog]');
-const userForm = userDialog.querySelector('[data-form]');
+const userForm = userDialog.querySelector('[data-user-form]');
 
-let employees = [];
+const state = { users: null, employees: [], usersError: null };
 
-async function loadBusiness() {
-  const { business } = await api('/settings');
-  for (const [key, value] of Object.entries({
-    name: business.name,
-    timezone: business.timezone,
-    address: business.address,
-    phone: business.phone,
-    email: business.email,
-    instagram: business.instagram ?? '',
-    slotStepMinutes: business.slotStepMinutes,
-    leadTimeMinutes: business.leadTimeMinutes,
-    maxAdvanceDays: business.maxAdvanceDays,
-  })) {
-    if (businessForm[key]) businessForm[key].value = value ?? '';
-  }
+/* -------------------------------------------------------------- Konto */
+
+function renderAccount() {
+  const { user, employee } = session;
+  document.querySelector('[data-account]').innerHTML = `<dl class="adm-dl">
+    <dt>${escapeHtml(t('employees.name'))}</dt><dd>${escapeHtml(user.name)}</dd>
+    <dt>${escapeHtml(t('login.email'))}</dt><dd class="break-all">${escapeHtml(user.email)}</dd>
+    <dt>${escapeHtml(t('settings.role'))}</dt><dd><span class="adm-badge st-gold">${escapeHtml(roleLabel(user.role))}</span></dd>
+    <dt>${escapeHtml(t('settings.linkedEmployee'))}</dt>
+    <dd>${employee ? escapeHtml(employee.name) : `<span class="text-fg-muted">${escapeHtml(t('settings.noLinkedEmployee'))}</span>`}</dd>
+  </dl>`;
 }
 
-businessForm.addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const errorBox = document.querySelector('[data-error="business"]');
-  errorBox.hidden = true;
-  try {
-    await api('/settings', {
-      method: 'PATCH',
-      body: {
-        name: businessForm.name.value,
-        timezone: businessForm.timezone.value,
-        address: businessForm.address.value,
-        phone: businessForm.phone.value,
-        email: businessForm.email.value,
-        instagram: businessForm.instagram.value || null,
-        slotStepMinutes: Number(businessForm.slotStepMinutes.value),
-        leadTimeMinutes: Number(businessForm.leadTimeMinutes.value),
-        maxAdvanceDays: Number(businessForm.maxAdvanceDays.value),
-      },
-    });
-    toast('Gespeichert.');
-  } catch (err) {
-    errorBox.textContent = err.message;
-    errorBox.hidden = false;
-  }
+/* ------------------------------------------------------------- Sprache */
+
+function renderLanguages() {
+  const current = getLanguage();
+  document.querySelector('[data-languages]').innerHTML = LANGUAGES.map((language) => `
+    <label class="flex min-h-[52px] cursor-pointer items-center gap-3 rounded-md border px-3 transition-colors ${language.code === current
+      ? 'border-accent bg-accent/10 text-fg' : 'border-line-strong text-fg-body hover:border-accent'}">
+      <input type="radio" name="language" value="${language.code}" class="adm-check" ${language.code === current ? 'checked' : ''}>
+      <span class="min-w-0 flex-1" lang="${language.code}">${escapeHtml(language.label)}</span>
+      <span class="text-xs font-semibold text-fg-muted">${language.code.toUpperCase()}</span>
+    </label>`).join('');
+}
+
+document.querySelector('[data-languages]').addEventListener('change', (event) => {
+  if (event.target.name !== 'language') return;
+  setLanguage(event.target.value);
+  toast(t('settings.languageSaved'));
 });
+
+/* ------------------------------------------------------------- Passwort */
 
 passwordForm.addEventListener('submit', async (event) => {
   event.preventDefault();
-  const errorBox = document.querySelector('[data-error="password"]');
-  errorBox.hidden = true;
+  const f = passwordForm.elements;
+  const ok = validate(passwordForm, [
+    { name: 'currentPassword', required: true },
+    { name: 'newPassword', required: true, min: 10, max: 200 },
+    { name: 'repeatPassword', required: true, check: (v) => (v !== f.newPassword.value ? t('validation.passwordMismatch') : null) },
+  ]);
+  if (!ok) return;
+
+  const submit = passwordForm.querySelector('button[type="submit"]');
+  setBusy(submit, true);
   try {
     await api('/password', {
       method: 'POST',
-      body: {
-        currentPassword: passwordForm.currentPassword.value,
-        newPassword: passwordForm.newPassword.value,
-      },
+      body: { currentPassword: f.currentPassword.value, newPassword: f.newPassword.value },
     });
     passwordForm.reset();
-    toast('Passwort geändert. Andere Sitzungen wurden abgemeldet.');
+    toast(t('settings.passwordChanged'));
   } catch (err) {
-    errorBox.textContent = err.message;
-    errorBox.hidden = false;
+    showFormError(passwordForm, err);
+  } finally {
+    setBusy(submit, false);
   }
 });
 
@@ -78,81 +82,160 @@ passwordForm.addEventListener('submit', async (event) => {
 
 function userRow(user) {
   const inactive = user.status === 'INACTIVE';
-  return `<div class="flex flex-wrap items-center justify-between gap-3 rounded-sm border border-line bg-surface-2 px-4 py-3 ${inactive ? 'opacity-70' : ''}">
+  const locked = user.role === 'OWNER' || user.isSelf;
+  return `<div class="flex flex-wrap items-center justify-between gap-3 rounded-md border border-line bg-surface-2 px-3 py-3 sm:px-4">
     <div class="min-w-0">
-      <p class="font-semibold text-fg">${escapeHtml(user.name)}${user.isSelf ? ' (du)' : ''}</p>
-      <p class="text-[13px] text-fg-muted">
-        ${escapeHtml(user.email)} · ${escapeHtml(ROLE_LABEL[user.role] ?? user.role)}
-        ${user.employee ? ` · verknüpft mit ${escapeHtml(user.employee.name)}` : ''}
+      <p class="break-words font-semibold text-fg">${escapeHtml(user.name)}${user.isSelf ? ` <span class="font-normal text-fg-muted">(${escapeHtml(t('settings.you'))})</span>` : ''}</p>
+      <p class="break-all text-[13px] text-fg-muted">${escapeHtml(user.email)}</p>
+      <p class="mt-1.5 flex flex-wrap items-center gap-1.5">
+        <span class="adm-badge st-gold">${escapeHtml(roleLabel(user.role))}</span>
+        ${activeBadge(!inactive)}
+        ${user.employee ? `<span class="text-xs text-fg-muted">${escapeHtml(t('settings.linkedWith', { name: user.employee.name }))}</span>` : ''}
       </p>
     </div>
-    ${user.role === 'OWNER' || user.isSelf
-      ? `<span class="badge bg-surface text-fg-muted">${inactive ? 'gesperrt' : 'aktiv'}</span>`
-      : `<button type="button" class="btn-ghost min-h-[36px] px-3 py-1.5 text-[13px]" data-toggle-user="${user.id}" data-next="${inactive ? 'ACTIVE' : 'INACTIVE'}">
-          ${inactive ? 'Entsperren' : 'Sperren'}
-        </button>`}
+    ${locked ? '' : `<button type="button" class="${inactive ? 'adm-btn-secondary' : 'adm-btn-ghost'} adm-btn-sm"
+        data-toggle-user="${user.id}" data-next="${inactive ? 'ACTIVE' : 'INACTIVE'}">
+        ${icon(inactive ? 'checkCircle' : 'lock')}<span>${escapeHtml(t(inactive ? 'settings.unlock' : 'settings.lock'))}</span>
+      </button>`}
   </div>`;
 }
 
+function renderUsers() {
+  if (state.usersError) {
+    usersBox.innerHTML = errorState(state.usersError);
+    return;
+  }
+  if (!state.users) {
+    usersBox.innerHTML = skeletonList(2);
+    return;
+  }
+  usersBox.innerHTML = state.users.length ? state.users.map(userRow).join('') : emptyState({ title: t('settings.noUsers') });
+}
+
 async function loadUsers() {
-  const [{ users }, { employees: list }] = await Promise.all([api('/users'), api('/employees')]);
-  employees = list;
-  usersBox.innerHTML = users.map(userRow).join('');
+  state.usersError = null;
+  try {
+    const [{ users }, { employees }] = await Promise.all([api('/users'), api('/employees')]);
+    state.users = users;
+    state.employees = employees;
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 401) return handleError(err);
+    state.usersError = err;
+  }
+  renderUsers();
+  return undefined;
 }
 
 usersBox.addEventListener('click', async (event) => {
+  if (event.target.closest('[data-retry]')) return loadUsers();
   const button = event.target.closest('[data-toggle-user]');
-  if (!button) return;
+  if (!button) return undefined;
+  const user = state.users.find((u) => u.id === button.dataset.toggleUser);
+  const lock = button.dataset.next === 'INACTIVE';
+  if (lock) {
+    const confirmed = await confirmDialog({
+      title: t('settings.lockTitle', { name: user.name }),
+      message: t('settings.lockMessage'),
+      confirmLabel: t('settings.lock'),
+      danger: true,
+    });
+    if (!confirmed) return undefined;
+  }
+  setBusy(button, true);
   try {
-    await api(`/users/${button.dataset.toggleUser}`, { method: 'PATCH', body: { status: button.dataset.next } });
-    toast(button.dataset.next === 'INACTIVE' ? 'Konto gesperrt.' : 'Konto entsperrt.');
+    await api(`/users/${user.id}`, { method: 'PATCH', body: { status: button.dataset.next } });
+    toast(t(lock ? 'settings.locked' : 'settings.unlocked', { name: user.name }));
     await loadUsers();
   } catch (err) {
+    setBusy(button, false);
     handleError(err);
   }
+  return undefined;
 });
 
-document.querySelector('[data-new-user]')?.addEventListener('click', () => {
+function renderUserSelects() {
+  const role = userForm.elements.role;
+  const roleValue = role.value || 'EMPLOYEE';
+  role.innerHTML = ['EMPLOYEE', 'ADMIN'].map((r) => `<option value="${r}">${escapeHtml(roleLabel(r))}</option>`).join('');
+  role.value = roleValue;
+
+  const employee = userForm.elements.employeeId;
+  const employeeValue = employee.value;
+  // Ein Mitarbeitereintrag hängt höchstens an einem Konto (employee_user_idx).
+  const taken = new Set((state.users ?? []).map((u) => u.employee?.id).filter(Boolean));
+  employee.innerHTML = `<option value="">${escapeHtml(t('settings.noLinkedEmployee'))}</option>${state.employees
+    .filter((e) => !taken.has(e.id))
+    .map((e) => `<option value="${e.id}">${escapeHtml(e.name)}${e.status === 'INACTIVE' ? ` (${escapeHtml(t('common.inactive'))})` : ''}</option>`)
+    .join('')}`;
+  employee.value = employeeValue;
+}
+
+document.querySelector('[data-new-user]').addEventListener('click', () => {
+  clearErrors(userForm);
   userForm.reset();
-  userForm.querySelector('[data-error]').hidden = true;
-  userForm.employeeId.innerHTML = ['<option value="">— keiner —</option>']
-    .concat(employees.map((e) => `<option value="${e.id}">${escapeHtml(e.name)}</option>`))
-    .join('');
+  renderUserSelects();
   userDialog.showModal();
+  userForm.elements.name.focus();
 });
 
 userForm.addEventListener('submit', async (event) => {
   event.preventDefault();
-  const errorBox = userForm.querySelector('[data-error]');
-  errorBox.hidden = true;
+  const f = userForm.elements;
+  const ok = validate(userForm, [
+    { name: 'name', required: true, min: 2, max: 120 },
+    { name: 'email', required: true, email: true, max: 200 },
+    { name: 'password', required: true, min: 10, max: 200 },
+    { name: 'employeeId', check: (v) => (!v && f.role.value === 'EMPLOYEE' ? t('settings.employeeLinkRequired') : null) },
+  ]);
+  if (!ok) return;
+
+  const submit = userForm.querySelector('button[type="submit"]');
+  setBusy(submit, true);
   try {
     await api('/users', {
       method: 'POST',
       body: {
-        name: userForm.name.value,
-        email: userForm.email.value,
-        password: userForm.password.value,
-        role: userForm.role.value,
-        employeeId: userForm.employeeId.value || null,
+        name: f.name.value.trim(),
+        email: f.email.value.trim(),
+        password: f.password.value,
+        role: f.role.value,
+        employeeId: f.employeeId.value || null,
       },
     });
     userDialog.close();
-    toast('Konto angelegt.');
+    toast(t('settings.userCreated'));
     await loadUsers();
   } catch (err) {
-    errorBox.textContent = err.message;
-    errorBox.hidden = false;
+    showFormError(userForm, err);
+  } finally {
+    setBusy(submit, false);
+  }
+});
+bindDialog(userDialog);
+
+/* ---------------------------------------------------------------- Start */
+
+onLanguageChange(() => {
+  renderAccount();
+  renderLanguages();
+  clearErrors(passwordForm);
+  if (isOwner(session.user)) {
+    renderUsers();
+    if (userDialog.open) {
+      renderUserSelects();
+      clearErrors(userForm);
+    }
   }
 });
 
-userDialog.querySelector('[data-cancel]').addEventListener('click', () => userDialog.close());
-
 (async () => {
-  const user = await requireSession('/admin/settings');
+  const user = await requireSession('settings');
   if (!user) return;
-  await loadBusiness();
+  renderAccount();
+  renderLanguages();
   if (isOwner(user)) {
     document.querySelector('[data-owner-only]').hidden = false;
+    renderUsers();
     await loadUsers();
   }
 })().catch(handleError);

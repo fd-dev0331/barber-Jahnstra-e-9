@@ -3,52 +3,63 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Google – Bregenz Barbershop</title>
+<title>Bregenz Barbershop</title>
 <meta name="robots" content="noindex, nofollow">
-<meta name="theme-color" content="#0E0D0C">
+<meta name="theme-color" content="#1A1816">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@700&display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=2">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/assets/css/admin.css?v=1">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 </head>
-<body class="min-h-screen">
-<a class="skip-link" href="#main">Zum Inhalt springen</a>
+<body>
+<a class="skip-link" href="#main" data-i18n="common.skipToContent"></a>
+<noscript><p class="p-6 text-fg-body">JavaScript erforderlich · Требуется JavaScript · JavaScript gerekli</p></noscript>
 
-<header data-shell hidden class="border-b border-line bg-surface">
-  <div class="mx-auto w-full max-w-container px-4">
-    <div class="flex h-16 items-center justify-between gap-4">
-      <a href="/admin" class="font-display text-lg font-bold uppercase tracking-wide text-fg">Barbershop <span class="text-accent">Verwaltung</span></a>
-      <div class="flex items-center gap-3 text-sm">
-        <p data-user class="hidden sm:block"></p>
-        <button type="button" data-logout class="btn-ghost min-h-[40px] px-4 py-2 text-[13px]">Abmelden</button>
+<header data-shell data-app-header class="adm-header" hidden></header>
+<div data-shell class="adm-layout" hidden>
+  <aside data-app-sidebar class="adm-sidebar"></aside>
+  <main id="main" class="adm-main">
+    <div class="adm-container max-w-[1040px]">
+      <div class="adm-page-head">
+        <div>
+          <h1 class="adm-h1" data-i18n="nav.google"></h1>
+          <p class="adm-subtitle" data-i18n="google.subtitle"></p>
+        </div>
       </div>
+
+      <div data-status class="mb-6"></div>
+
+      <div class="grid gap-6 lg:grid-cols-2">
+        <section class="adm-card min-w-0" aria-labelledby="calendars-title">
+          <div class="adm-card-head"><h2 id="calendars-title" class="adm-h2" data-i18n="google.calendars"></h2></div>
+          <div class="adm-card-pad" data-calendars></div>
+        </section>
+
+        <section class="adm-card min-w-0" aria-labelledby="assign-title">
+          <div class="adm-card-head"><h2 id="assign-title" class="adm-h2" data-i18n="google.assignTitle"></h2></div>
+          <div class="adm-card-pad grid gap-3">
+            <p class="adm-hint mt-0" data-i18n="google.assignHint"></p>
+            <div data-assign class="grid gap-2.5"></div>
+          </div>
+        </section>
+      </div>
+
+      <details class="adm-card mt-6 min-w-0">
+        <summary class="flex min-h-[52px] cursor-pointer items-center px-4 text-sm font-semibold text-fg sm:px-5" data-i18n="google.setupTitle"></summary>
+        <div class="grid gap-3 border-t border-line px-4 py-4 text-sm text-fg-body sm:px-5" data-setup-help></div>
+      </details>
+
+      <p class="mt-4 flex items-start gap-2 text-xs text-fg-muted">
+        <svg class="mt-0.5 shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg>
+        <span data-i18n="google.securityNote"></span>
+      </p>
     </div>
-    <nav data-nav aria-label="Verwaltung" class="-mb-px flex gap-1 overflow-x-auto"></nav>
-  </div>
-</header>
+  </main>
+</div>
 
-<main id="main" data-shell hidden class="mx-auto w-full max-w-container px-4 py-8">
-  <h1 class="font-display text-h2 font-bold uppercase text-fg">Google Kalender</h1>
-  <hr class="rule">
-
-  <div data-status class="grid gap-4"></div>
-
-  <section class="mt-10">
-    <h2 class="font-display text-xl font-bold uppercase text-fg">Kalender je Mitarbeiter</h2>
-    <p class="field-hint mb-4">Ein Google-Konto des Betriebs, pro Mitarbeiter ein eigener Kalender.</p>
-    <div data-assign class="grid gap-3"></div>
-  </section>
-
-  <section class="mt-10">
-    <h2 class="font-display text-xl font-bold uppercase text-fg">Einrichtung in der Google Cloud Console</h2>
-    <div data-setup-help class="mt-4 grid gap-3 text-[15px] text-fg-body"></div>
-  </section>
-</main>
-
-<p data-boot-error hidden class="mx-auto max-w-container px-4 py-16 text-fg-body">
-  Die Verwaltung ist gerade nicht erreichbar. Bitte lade die Seite neu.
-</p>
+<div data-boot class="grid min-h-[60vh] place-items-center"><p class="text-sm text-fg-muted" data-i18n="common.loading"></p></div>
+<p data-boot-error hidden class="mx-auto max-w-xl px-4 py-16 text-center text-fg-body" data-i18n="common.bootError"></p>
 
 <script type="module" src="/assets/js/admin/google.js"></script>
 </body>

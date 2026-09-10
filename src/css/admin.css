@@ -1,0 +1,307 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------------------------------------------------------------------------
+   Verwaltung (/admin) — eigenes Stylesheet, getrennt von site.css.
+
+   Die öffentliche Website lädt diese Datei nie; umgekehrt landen keine
+   Admin-Klassen im CSS der Website. Tokens kommen aus tailwind.config.js,
+   die Regeln für diesen Bereich aus design-system/bregenz-barbershop/pages/admin.md:
+   nur Barlow, keine Versal-Überschriften, 14px Fließtext, Eingaben 16px
+   (kein iOS-Zoom), Statusfarben immer mit Icon und Text.
+   --------------------------------------------------------------------------- */
+@layer base {
+  :root {
+    color-scheme: dark;
+    --adm-header-h: 60px;
+    --adm-sidebar-w: 248px;
+  }
+
+  @screen lg {
+    :root { --adm-header-h: 64px; }
+  }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    @apply bg-bg font-sans text-sm text-fg-body antialiased;
+    line-height: 1.5;
+  }
+
+  :focus-visible {
+    outline: 3px solid theme('colors.accent.DEFAULT');
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  ::selection { background: theme('colors.accent.DEFAULT'); color: theme('colors.accent.on'); }
+
+  /* Utilities wie .flex stehen später und hätten sonst Vorrang vor [hidden]. */
+  [hidden] { display: none !important; }
+
+  dialog::backdrop { background: rgba(0, 0, 0, 0.72); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+@layer components {
+  .skip-link {
+    @apply absolute left-4 top-0 z-[100] -translate-y-32 rounded-md bg-accent px-4 py-3
+           font-semibold text-accent-on focus:translate-y-4;
+  }
+
+  /* ------------------------------------------------------------ Kopfzeile */
+  .adm-header {
+    @apply sticky top-0 z-40 border-b border-line bg-surface;
+    height: var(--adm-header-h);
+  }
+  .adm-header-inner { @apply flex h-full items-center gap-2 px-3 sm:gap-3 sm:px-4 lg:px-6; }
+
+  .adm-brand { @apply flex min-w-0 flex-1 items-center gap-2.5 text-fg no-underline; }
+  .adm-brand-mark {
+    @apply grid h-9 w-9 shrink-0 place-items-center rounded-md border border-accent/60 text-accent;
+  }
+  .adm-brand-mark svg { @apply h-5 w-5; }
+  .adm-brand-text { @apply min-w-0; }
+  .adm-brand-name { @apply block truncate text-[15px] font-semibold leading-tight text-fg; }
+  .adm-brand-sub { @apply block truncate text-xs leading-tight text-fg-muted; }
+
+  .adm-user { @apply hidden min-w-0 items-center gap-2 text-right lg:flex; }
+  .adm-user-name { @apply block max-w-[200px] truncate text-sm font-medium text-fg; }
+
+  /* --------------------------------------------------------- Sprachwahl */
+  .adm-lang { @apply relative shrink-0; }
+  .adm-lang-button {
+    @apply inline-flex h-11 min-w-[44px] items-center justify-center gap-1 rounded-md border
+           border-line-strong bg-transparent px-2.5 text-[13px] font-semibold tracking-wide text-fg
+           transition-colors hover:border-accent hover:text-accent;
+  }
+  .adm-lang-button svg { @apply h-4 w-4 shrink-0; }
+  .adm-lang-button[aria-expanded='true'] { @apply border-accent text-accent; }
+  .adm-lang-menu {
+    @apply absolute right-0 z-50 w-48 rounded-lg border border-line-strong bg-surface-2 p-1 shadow-lg;
+    top: calc(100% + 6px);
+  }
+  .adm-lang-option {
+    @apply flex min-h-[44px] w-full items-center gap-3 rounded-md px-3 text-left text-sm text-fg-body
+           transition-colors hover:bg-surface hover:text-fg focus:bg-surface;
+  }
+  .adm-lang-option[aria-checked='true'] { @apply text-accent; }
+  .adm-lang-code { @apply w-6 shrink-0 text-xs font-semibold text-fg-muted; }
+  .adm-lang-option[aria-checked='true'] .adm-lang-code { @apply text-accent; }
+
+  /* --------------------------------------------------------------- Layout */
+  .adm-sidebar { @apply hidden; }
+  .adm-main { @apply min-w-0 px-4 pb-20 pt-5 sm:px-5 lg:px-8 lg:pt-7; }
+  .adm-container { @apply mx-auto w-full max-w-[1400px]; }
+
+  @screen lg {
+    .adm-layout {
+      display: grid;
+      grid-template-columns: var(--adm-sidebar-w) minmax(0, 1fr);
+    }
+    .adm-sidebar {
+      @apply block overflow-y-auto border-r border-line bg-surface px-3 py-4;
+      position: sticky;
+      top: var(--adm-header-h);
+      height: calc(100vh - var(--adm-header-h));
+    }
+  }
+
+  .adm-nav { @apply grid gap-0.5; }
+  .adm-nav-link {
+    @apply flex min-h-[44px] items-center gap-3 rounded-md px-3 text-sm font-medium text-fg-muted
+           no-underline transition-colors hover:bg-surface-2 hover:text-fg;
+  }
+  .adm-nav-link svg { @apply h-[18px] w-[18px] shrink-0; }
+  .adm-nav-link[aria-current='page'] {
+    @apply bg-accent/10 text-accent;
+    box-shadow: inset 3px 0 0 theme('colors.accent.DEFAULT');
+  }
+
+  /* Mobiles Menü als Bottom-Sheet (admin.md: Drawer von unten, daumennah). */
+  .adm-sheet {
+    @apply w-full max-w-none rounded-t-xl border border-b-0 border-line-strong bg-surface p-0 text-fg-body;
+    margin: auto 0 0 0;
+    max-height: 88vh;
+    max-height: 88dvh;
+  }
+  .adm-sheet[open] { @apply flex flex-col; }
+
+  /* ----------------------------------------------------------- Seitenkopf */
+  .adm-page-head { @apply mb-5 flex flex-wrap items-end justify-between gap-x-4 gap-y-3; }
+  .adm-page-head > :first-child { @apply min-w-0; }
+  .adm-h1 { @apply text-[22px] font-semibold leading-tight text-fg sm:text-2xl; }
+  .adm-subtitle { @apply mt-1 text-sm text-fg-muted; }
+  .adm-h2 { @apply text-base font-semibold leading-snug text-fg; }
+  .adm-actions { @apply flex flex-wrap items-center gap-2; }
+
+  /* ------------------------------------------------------------- Flächen */
+  .adm-card { @apply rounded-lg border border-line bg-surface; }
+  .adm-card-pad { @apply p-4 sm:p-5; }
+  .adm-card-head { @apply flex flex-wrap items-center justify-between gap-3 border-b border-line px-4 py-3 sm:px-5; }
+  .adm-divider { @apply border-t border-line; }
+
+  .adm-stat {
+    @apply flex min-w-0 flex-col gap-1.5 rounded-lg border border-line bg-surface p-4 text-fg-body
+           no-underline transition-colors hover:border-line-strong;
+  }
+  .adm-stat-label { @apply text-xs font-medium text-fg-muted; }
+  .adm-stat-value { @apply text-[28px] font-semibold leading-none text-fg; font-variant-numeric: tabular-nums; }
+  .adm-stat-foot { @apply text-xs text-fg-muted; }
+
+  .adm-callout { @apply flex items-start gap-3 rounded-lg border px-4 py-3 text-sm; }
+  .adm-callout svg { @apply mt-0.5 h-[18px] w-[18px] shrink-0; }
+  .adm-callout-warn { @apply border-warn/40 bg-warn/10 text-fg-body; }
+  .adm-callout-warn svg { @apply text-warn; }
+  .adm-callout-danger { @apply border-danger/40 bg-danger/10 text-fg-body; }
+  .adm-callout-danger svg { @apply text-danger; }
+  .adm-callout-info { @apply border-line-strong bg-surface-2 text-fg-body; }
+  .adm-callout-info svg { @apply text-accent; }
+  .adm-callout-ok { @apply border-ok/40 bg-ok/10 text-fg-body; }
+  .adm-callout-ok svg { @apply text-ok; }
+
+  /* -------------------------------------------------------------- Knöpfe */
+  .adm-btn {
+    @apply inline-flex min-h-[44px] cursor-pointer select-none items-center justify-center gap-2
+           whitespace-nowrap rounded-md border px-4 text-sm font-semibold leading-none no-underline
+           transition-colors disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .adm-btn svg { @apply h-4 w-4 shrink-0; }
+  /* Goldene Fläche braucht dunkle Schrift: Weiß auf #D4AF37 hat nur 2.10:1. */
+  .adm-btn-primary { @apply adm-btn border-accent bg-accent text-accent-on hover:border-accent-hover hover:bg-accent-hover; }
+  .adm-btn-secondary { @apply adm-btn border-accent bg-transparent text-accent hover:bg-accent hover:text-accent-on; }
+  .adm-btn-ghost { @apply adm-btn border-line-strong bg-transparent text-fg-body hover:border-accent hover:text-accent; }
+  .adm-btn-danger { @apply adm-btn border-danger/60 bg-transparent text-danger hover:bg-danger/10; }
+  .adm-btn-sm { @apply min-h-[40px] px-3 text-[13px]; }
+  .adm-btn-block { @apply w-full; }
+
+  .adm-icon-btn {
+    @apply inline-grid h-11 w-11 shrink-0 cursor-pointer place-items-center rounded-md border border-line-strong
+           bg-transparent text-fg-body transition-colors hover:border-accent hover:text-accent;
+  }
+  .adm-icon-btn svg { @apply h-5 w-5; }
+  .adm-icon-btn-plain { @apply border-transparent; }
+
+  .adm-link { @apply font-medium text-accent underline-offset-2 hover:underline; }
+
+  /* ------------------------------------------------------------- Formulare */
+  .adm-label { @apply mb-1.5 block text-[13px] font-medium text-fg; }
+  .adm-input {
+    @apply block min-h-[44px] w-full min-w-0 rounded-md border border-line-strong bg-bg px-3 py-2
+           text-base text-fg transition-colors placeholder:text-fg-muted focus:border-accent;
+  }
+  textarea.adm-input { @apply min-h-[88px] leading-normal; }
+  .adm-input[aria-invalid='true'] { @apply border-danger; }
+  .adm-input:disabled { @apply cursor-not-allowed opacity-60; }
+  .adm-hint { @apply mt-1.5 text-xs text-fg-muted; }
+  .adm-field-error { @apply mt-1.5 text-xs font-medium text-danger; }
+  .adm-form-error { @apply rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-sm text-danger; }
+  .adm-check { @apply h-5 w-5 shrink-0 cursor-pointer accent-[#D4AF37]; }
+  .adm-check-row { @apply flex min-h-[44px] cursor-pointer items-center gap-3 text-sm text-fg-body; }
+  .adm-fieldset { @apply min-w-0 border-0 p-0; }
+  .adm-legend { @apply mb-2 text-sm font-semibold text-fg; }
+  .adm-grid-2 { @apply grid gap-4 sm:grid-cols-2; }
+  .adm-grid-3 { @apply grid gap-4 sm:grid-cols-3; }
+
+  /* ----------------------------------------------------------- Segmente */
+  .adm-seg { @apply flex max-w-full flex-wrap gap-0.5 rounded-md border border-line-strong bg-bg p-0.5; }
+  .adm-seg-btn {
+    @apply min-h-[40px] flex-1 cursor-pointer whitespace-nowrap rounded px-3 text-[13px] font-semibold
+           text-fg-muted transition-colors hover:text-fg;
+  }
+  .adm-seg-btn[aria-pressed='true'] { @apply bg-surface-2 text-accent; }
+
+  /* ------------------------------------------------------------ Statusse */
+  .adm-badge {
+    @apply inline-flex min-w-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1
+           text-xs font-semibold leading-none;
+  }
+  .adm-badge svg { @apply h-3.5 w-3.5 shrink-0; }
+
+  /* ------------------------------------------------------------ Tabellen */
+  .adm-table-wrap { @apply overflow-x-auto rounded-lg border border-line bg-surface; }
+  .adm-table { @apply w-full border-collapse text-left text-sm; }
+  .adm-table th {
+    @apply whitespace-nowrap border-b border-line px-3 py-2.5 text-xs font-medium text-fg-muted;
+  }
+  .adm-table td { @apply border-b border-line px-3 py-2 align-middle; height: 52px; }
+  .adm-table tbody tr:last-child td { @apply border-b-0; }
+  .adm-table tbody tr:hover td { @apply bg-surface-2; }
+  .adm-table .num { @apply whitespace-nowrap text-right; font-variant-numeric: tabular-nums; }
+
+  .adm-list { @apply grid gap-2.5; }
+  .adm-item { @apply rounded-lg border border-line bg-surface p-4; }
+
+  /* ------------------------------------------------------------- Dialoge */
+  .adm-dialog {
+    @apply rounded-lg border border-line-strong bg-surface p-0 text-fg-body shadow-lg;
+    width: calc(100vw - 24px);
+    max-width: min(640px, calc(100vw - 24px));
+    max-height: calc(100vh - 24px);
+    max-height: calc(100dvh - 24px);
+  }
+  .adm-dialog-wide { max-width: min(880px, calc(100vw - 24px)); }
+  .adm-dialog-narrow { max-width: min(460px, calc(100vw - 24px)); }
+  .adm-dialog[open] { @apply flex flex-col; }
+  .adm-dialog > form { @apply flex min-h-0 flex-1 flex-col; }
+  .adm-dialog-head { @apply flex items-start justify-between gap-3 border-b border-line py-2 pl-4 pr-2 sm:pl-5; }
+  .adm-dialog-title { @apply min-w-0 pt-2.5 text-lg font-semibold leading-snug text-fg; }
+  .adm-dialog-body { @apply min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-5; }
+  .adm-dialog-foot { @apply flex flex-wrap items-center justify-end gap-2 border-t border-line px-4 py-3 sm:px-5; }
+
+  /* --------------------------------------------------------------- Zustände */
+  .adm-skel { @apply rounded bg-surface-2 motion-safe:animate-pulse; }
+  .adm-empty { @apply rounded-lg border border-dashed border-line px-4 py-8 text-center; }
+  .adm-empty-title { @apply text-sm font-semibold text-fg; }
+  .adm-empty-text { @apply mx-auto mt-1 max-w-md text-sm text-fg-muted; }
+
+  .adm-toast {
+    @apply fixed bottom-4 left-1/2 z-[60] w-max -translate-x-1/2 rounded-md px-4 py-3 text-sm font-medium shadow-lg;
+    max-width: calc(100vw - 32px);
+  }
+
+  .adm-dl { @apply grid gap-x-4 gap-y-2 text-sm; grid-template-columns: minmax(0, auto) minmax(0, 1fr); }
+  .adm-dl dt { @apply text-fg-muted; }
+  .adm-dl dd { @apply min-w-0 break-words text-fg; }
+
+  .adm-chip {
+    @apply inline-flex min-h-[40px] cursor-pointer items-center rounded-md border border-line-strong px-3 text-[13px]
+           font-semibold text-fg-body transition-colors hover:border-accent hover:text-accent;
+    font-variant-numeric: tabular-nums;
+  }
+  .adm-chip[aria-pressed='true'] { @apply border-accent bg-accent text-accent-on; }
+
+  .adm-code { @apply break-all rounded bg-bg px-1.5 py-0.5 font-mono text-[13px] text-fg; }
+}
+
+@layer utilities {
+  .tnum { font-variant-numeric: tabular-nums; }
+}
+
+/* Statusfarben stehen bewusst außerhalb von @layer: das JavaScript setzt sie als
+   `st-${status}` zusammen, und Klassen in einem Layer, die im Quelltext nicht
+   wörtlich vorkommen, würde Tailwind aus dem Build entfernen.
+   Werte und Kontraste aus admin.md (gemessen gegen die zusammengesetzte Fläche). */
+.st-pending { background: rgba(251, 191, 36, 0.16); color: #FBBF24; }
+.st-confirmed, .st-active, .st-ok { background: rgba(74, 222, 128, 0.16); color: #4ADE80; }
+.st-cancelled, .st-danger { background: rgba(248, 113, 113, 0.16); color: #F87171; }
+.st-completed, .st-inactive, .st-neutral { background: rgba(168, 162, 158, 0.16); color: #A8A29E; }
+.st-no_show { background: rgba(251, 113, 133, 0.16); color: #FB7185; }
+.st-gold { background: rgba(212, 175, 55, 0.14); color: #D4AF37; }
+
+.adm-lang-option svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+/* Rasterzellen dürfen schmaler werden als ihr längster nicht umbrechender Text
+   (truncate). Sonst weitet ein langer Kundenname die implizite Spalte und damit
+   bei 320px die ganze Seite. */
+.adm-main .grid > *,
+.adm-dialog .grid > *,
+.adm-sheet .grid > * { min-width: 0; }

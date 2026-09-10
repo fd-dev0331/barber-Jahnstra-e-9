@@ -3,48 +3,66 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kalender – Bregenz Barbershop</title>
+<title>Bregenz Barbershop</title>
 <meta name="robots" content="noindex, nofollow">
-<meta name="theme-color" content="#0E0D0C">
+<meta name="theme-color" content="#1A1816">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@700&display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=2">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/assets/css/admin.css?v=1">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 </head>
-<body class="min-h-screen">
-<a class="skip-link" href="#main">Zum Inhalt springen</a>
+<body>
+<a class="skip-link" href="#main" data-i18n="common.skipToContent"></a>
+<noscript><p class="p-6 text-fg-body">JavaScript erforderlich · Требуется JavaScript · JavaScript gerekli</p></noscript>
 
-<header data-shell hidden class="border-b border-line bg-surface">
-  <div class="mx-auto w-full max-w-container px-4">
-    <div class="flex h-16 items-center justify-between gap-4">
-      <a href="/admin" class="font-display text-lg font-bold uppercase tracking-wide text-fg">Barbershop <span class="text-accent">Verwaltung</span></a>
-      <div class="flex items-center gap-3 text-sm">
-        <p data-user class="hidden sm:block"></p>
-        <button type="button" data-logout class="btn-ghost min-h-[40px] px-4 py-2 text-[13px]">Abmelden</button>
+<header data-shell data-app-header class="adm-header" hidden></header>
+<div data-shell class="adm-layout" hidden>
+  <aside data-app-sidebar class="adm-sidebar"></aside>
+  <main id="main" class="adm-main">
+    <div class="adm-container">
+      <div class="adm-page-head">
+        <div>
+          <h1 class="adm-h1" data-i18n="nav.calendar"></h1>
+          <p class="adm-subtitle" data-timezone></p>
+        </div>
       </div>
+
+      <div class="adm-card adm-card-pad mb-4 grid gap-3">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="adm-seg w-full sm:w-auto" role="group" data-i18n-attr="aria-label:calendar.viewLabel">
+            <button type="button" class="adm-seg-btn" data-mode="day" data-i18n="calendar.day"></button>
+            <button type="button" class="adm-seg-btn" data-mode="week" data-i18n="calendar.week"></button>
+            <button type="button" class="adm-seg-btn" data-mode="upcoming" data-i18n="calendar.upcoming"></button>
+          </div>
+          <div data-employee-filter hidden class="w-full sm:w-56">
+            <label class="sr-only" for="c-employee" data-i18n="bookings.colEmployee"></label>
+            <select class="adm-input" id="c-employee" name="employeeId"></select>
+          </div>
+        </div>
+        <div data-nav class="flex flex-wrap items-center gap-2">
+          <button type="button" class="adm-icon-btn" data-prev>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg>
+          </button>
+          <button type="button" class="adm-icon-btn" data-next>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+          </button>
+          <button type="button" class="adm-btn-ghost adm-btn-sm" data-today data-i18n="calendar.today"></button>
+          <p data-range class="tnum min-w-0 flex-1 basis-full text-sm font-semibold text-fg sm:basis-auto" aria-live="polite"></p>
+          <div class="w-full sm:w-44">
+            <label class="sr-only" for="c-date" data-i18n="calendar.jumpTo"></label>
+            <input class="adm-input" id="c-date" type="date" data-date>
+          </div>
+        </div>
+      </div>
+
+      <div data-calendar></div>
     </div>
-    <nav data-nav aria-label="Verwaltung" class="-mb-px flex gap-1 overflow-x-auto"></nav>
-  </div>
-</header>
+  </main>
+</div>
 
-<main id="main" data-shell hidden class="mx-auto w-full max-w-container px-4 py-8">
-  <h1 class="font-display text-h2 font-bold uppercase text-fg">Kalender</h1>
-  <hr class="rule">
-
-  <div class="mb-6 flex flex-wrap items-center gap-3">
-    <button type="button" class="btn-ghost min-h-[44px] px-4 py-2" data-prev>← Woche</button>
-    <p data-range class="tnum min-w-[220px] text-center font-semibold text-fg"></p>
-    <button type="button" class="btn-ghost min-h-[44px] px-4 py-2" data-next>Woche →</button>
-    <button type="button" class="btn-secondary min-h-[44px] px-4 py-2" data-today>Heute</button>
-  </div>
-
-  <div data-week class="grid gap-4 md:grid-cols-7"></div>
-</main>
-
-<p data-boot-error hidden class="mx-auto max-w-container px-4 py-16 text-fg-body">
-  Die Verwaltung ist gerade nicht erreichbar. Bitte lade die Seite neu.
-</p>
+<div data-boot class="grid min-h-[60vh] place-items-center"><p class="text-sm text-fg-muted" data-i18n="common.loading"></p></div>
+<p data-boot-error hidden class="mx-auto max-w-xl px-4 py-16 text-center text-fg-body" data-i18n="common.bootError"></p>
 
 <script type="module" src="/assets/js/admin/calendar.js"></script>
 </body>

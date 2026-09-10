@@ -3,112 +3,123 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Verwaltung – Bregenz Barbershop</title>
+<title>Bregenz Barbershop</title>
 <meta name="robots" content="noindex, nofollow">
-<meta name="theme-color" content="#0E0D0C">
+<meta name="theme-color" content="#1A1816">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@700&display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=2">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/assets/css/admin.css?v=1">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 </head>
-<body class="min-h-screen">
-<a class="skip-link" href="#main">Zum Inhalt springen</a>
-
-<header data-shell hidden class="border-b border-line bg-surface">
-  <div class="mx-auto w-full max-w-container px-4">
-    <div class="flex h-16 items-center justify-between gap-4">
-      <a href="/admin" class="font-display text-lg font-bold uppercase tracking-wide text-fg">Barbershop <span class="text-accent">Verwaltung</span></a>
-      <div class="flex items-center gap-3 text-sm">
-        <p data-user class="hidden sm:block"></p>
-        <button type="button" data-logout class="btn-ghost min-h-[40px] px-4 py-2 text-[13px]">Abmelden</button>
-      </div>
-    </div>
-    <nav data-nav aria-label="Verwaltung" class="-mb-px flex gap-1 overflow-x-auto"></nav>
-  </div>
-</header>
+<body>
+<a class="skip-link" href="#main" data-i18n="common.skipToContent"></a>
+<noscript><p class="p-6 text-fg-body">JavaScript erforderlich · Требуется JavaScript · JavaScript gerekli</p></noscript>
 
 <!-- Anmeldung / Ersteinrichtung. Welche der beiden Ansichten erscheint,
      entscheidet der Server über GET /api/admin/setup — nicht dieses Skript. -->
-<div data-gate hidden class="mx-auto w-full max-w-[320px] px-4 pb-24 pt-24 md:pt-32">
-  <!-- Wortmarke wie in der Kopfzeile der Website, darunter die Bereichsangabe. -->
-  <div class="mb-10 text-center">
-    <p class="font-display text-2xl font-bold uppercase tracking-wide text-fg">
-      Bregenz <span class="text-accent">Barbershop</span>
-    </p>
-    <p class="mt-2 text-kicker font-medium uppercase text-fg-muted">Verwaltung</p>
-  </div>
+<div data-gate hidden class="flex min-h-screen flex-col">
+  <header class="adm-header">
+    <div class="adm-header-inner">
+      <div class="adm-brand">
+        <span class="adm-brand-mark" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M8.1 8.1 20 20M8.1 15.9 20 4"/></svg></span>
+        <span class="adm-brand-text">
+          <span class="adm-brand-name">Bregenz Barbershop</span>
+          <span class="adm-brand-sub" data-i18n="shell.adminArea"></span>
+        </span>
+      </div>
+      <div data-lang-slot></div>
+    </div>
+  </header>
 
-  <section data-view="login" hidden>
-    <h1 class="text-center font-display text-2xl font-bold uppercase text-fg">Anmelden</h1>
-    <hr class="rule mx-auto">
-    <form data-form="login" novalidate>
-      <div class="mb-4">
-        <label class="field-label" for="login-email">E-Mail-Adresse</label>
-        <input class="input" id="login-email" name="email" type="email" autocomplete="username" required>
-      </div>
-      <div class="mb-6">
-        <label class="field-label" for="login-password">Passwort</label>
-        <input class="input" id="login-password" name="password" type="password" autocomplete="current-password" required>
-      </div>
-      <p data-error class="field-error mb-4" hidden></p>
-      <button class="btn-primary w-full" type="submit">Anmelden</button>
-    </form>
-  </section>
+  <main id="gate-main" class="flex flex-1 justify-center px-4 pb-16 pt-10 sm:pt-20">
+    <div class="w-full max-w-[420px]">
+      <section data-view="login" hidden class="adm-card adm-card-pad">
+        <h1 class="adm-h1" data-i18n="login.title"></h1>
+        <p class="adm-subtitle" data-i18n="login.subtitle"></p>
+        <form data-form="login" novalidate class="mt-6 grid gap-4">
+          <p class="adm-form-error" data-form-error role="alert" hidden></p>
+          <div>
+            <label class="adm-label" for="login-email" data-i18n="login.email"></label>
+            <input class="adm-input" id="login-email" name="email" type="email" inputmode="email" autocomplete="username">
+          </div>
+          <div>
+            <label class="adm-label" for="login-password" data-i18n="login.password"></label>
+            <input class="adm-input" id="login-password" name="password" type="password" autocomplete="current-password">
+          </div>
+          <button class="adm-btn-primary adm-btn-block mt-2" type="submit" data-i18n="login.submit"></button>
+          <p class="adm-hint text-center" data-i18n="login.forgotHint"></p>
+        </form>
+      </section>
 
-  <section data-view="setup" hidden>
-    <h1 class="text-center font-display text-2xl font-bold uppercase text-fg">Ersteinrichtung</h1>
-    <hr class="rule mx-auto">
-    <p class="lead mb-6 text-[15px]">
-      Für diesen Betrieb gibt es noch kein Inhaberkonto. Lege es jetzt an — danach
-      ist dieses Formular dauerhaft gesperrt.
-    </p>
-    <form data-form="setup" novalidate>
-      <div class="mb-4">
-        <label class="field-label" for="setup-business">Name des Betriebs</label>
-        <input class="input" id="setup-business" name="businessName" value="Bregenz Barbershop" required>
-      </div>
-      <div class="mb-4">
-        <label class="field-label" for="setup-name">Dein Name</label>
-        <input class="input" id="setup-name" name="ownerName" autocomplete="name" required>
-      </div>
-      <div class="mb-4">
-        <label class="field-label" for="setup-email">E-Mail-Adresse</label>
-        <input class="input" id="setup-email" name="email" type="email" autocomplete="username" required>
-      </div>
-      <div class="mb-6">
-        <label class="field-label" for="setup-password">Passwort</label>
-        <input class="input" id="setup-password" name="password" type="password" autocomplete="new-password" required>
-        <p class="field-hint">Mindestens 10 Zeichen.</p>
-      </div>
-      <p data-error class="field-error mb-4" hidden></p>
-      <button class="btn-primary w-full" type="submit">Inhaberkonto anlegen</button>
-    </form>
-  </section>
+      <section data-view="setup" hidden class="adm-card adm-card-pad">
+        <h1 class="adm-h1" data-i18n="setup.title"></h1>
+        <p class="adm-subtitle" data-i18n="setup.subtitle"></p>
+        <form data-form="setup" novalidate class="mt-6 grid gap-4">
+          <p class="adm-form-error" data-form-error role="alert" hidden></p>
+          <div>
+            <label class="adm-label" for="setup-business" data-i18n="setup.businessName"></label>
+            <input class="adm-input" id="setup-business" name="businessName" value="Bregenz Barbershop" autocomplete="organization">
+          </div>
+          <div>
+            <label class="adm-label" for="setup-name" data-i18n="setup.ownerName"></label>
+            <input class="adm-input" id="setup-name" name="ownerName" autocomplete="name">
+          </div>
+          <div>
+            <label class="adm-label" for="setup-email" data-i18n="login.email"></label>
+            <input class="adm-input" id="setup-email" name="email" type="email" inputmode="email" autocomplete="username">
+          </div>
+          <div>
+            <label class="adm-label" for="setup-password" data-i18n="login.password"></label>
+            <input class="adm-input" id="setup-password" name="password" type="password" autocomplete="new-password" aria-describedby="setup-password-hint">
+            <p class="adm-hint" id="setup-password-hint" data-i18n="validation.passwordHint"></p>
+          </div>
+          <button class="adm-btn-primary adm-btn-block mt-2" type="submit" data-i18n="setup.submit"></button>
+        </form>
+      </section>
+    </div>
+  </main>
 </div>
 
-<main id="main" data-shell hidden class="mx-auto w-full max-w-container px-4 py-8">
-  <h1 class="font-display text-h2 font-bold uppercase text-fg">Übersicht</h1>
-  <hr class="rule">
+<header data-shell data-app-header class="adm-header" hidden></header>
+<div data-shell class="adm-layout" hidden>
+  <aside data-app-sidebar class="adm-sidebar"></aside>
+  <main id="main" class="adm-main">
+    <div class="adm-container">
+      <div class="adm-page-head">
+        <div>
+          <h1 class="adm-h1" data-i18n="nav.dashboard"></h1>
+          <p class="adm-subtitle" data-today-label></p>
+        </div>
+        <div class="adm-actions" data-quick></div>
+      </div>
 
-  <div data-hints class="mb-8 grid gap-3"></div>
+      <div data-error></div>
+      <div data-hints class="mb-5 grid gap-2.5 empty:hidden"></div>
+      <div data-stats class="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5"></div>
 
-  <div data-counts class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"></div>
+      <div class="mt-6 grid gap-6 xl:grid-cols-2">
+        <section class="min-w-0" aria-labelledby="today-title">
+          <div class="mb-3 flex items-center justify-between gap-3">
+            <h2 id="today-title" class="adm-h2" data-i18n="dashboard.today"></h2>
+            <a class="adm-link text-[13px]" href="/admin/calendar" data-i18n="dashboard.openCalendar"></a>
+          </div>
+          <div data-today></div>
+        </section>
+        <section class="min-w-0" aria-labelledby="upcoming-title">
+          <div class="mb-3 flex items-center justify-between gap-3">
+            <h2 id="upcoming-title" class="adm-h2" data-i18n="dashboard.upcoming"></h2>
+            <a class="adm-link text-[13px]" href="/admin/bookings?view=upcoming" data-i18n="dashboard.allBookings"></a>
+          </div>
+          <div data-upcoming></div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
 
-  <section class="mt-10">
-    <h2 class="font-display text-xl font-bold uppercase text-fg">Heute</h2>
-    <div data-today class="mt-4 grid gap-3"></div>
-  </section>
-
-  <section class="mt-10">
-    <h2 class="font-display text-xl font-bold uppercase text-fg">Als Nächstes</h2>
-    <div data-upcoming class="mt-4 grid gap-3"></div>
-  </section>
-</main>
-
-<p data-boot-error hidden class="mx-auto max-w-container px-4 py-16 text-fg-body">
-  Die Verwaltung ist gerade nicht erreichbar. Bitte lade die Seite neu.
-</p>
+<div data-boot class="grid min-h-[60vh] place-items-center"><p class="text-sm text-fg-muted" data-i18n="common.loading"></p></div>
+<p data-boot-error hidden class="mx-auto max-w-xl px-4 py-16 text-center text-fg-body" data-i18n="common.bootError"></p>
 
 <script type="module" src="/assets/js/admin/dashboard.js"></script>
 </body>

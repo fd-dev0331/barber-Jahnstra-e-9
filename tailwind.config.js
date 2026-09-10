@@ -3,9 +3,10 @@
 // Every colour value here has a computed contrast ratio recorded in that file. Do not "adjust" one
 // without re-checking the pair it is used in.
 module.exports = {
-  // Die Admin-Seiten bauen ihre Tabellen und Karten im JavaScript zusammen —
-  // ohne diesen Pfad fehlen im Build genau die Klassen, die nur dort vorkommen.
-  content: ['./public/**/*.html', './public/assets/js/**/*.js', './src/js/**/*.js'],
+  // Nur die öffentliche Website. Die Verwaltung hat ein eigenes Stylesheet
+  // (tailwind.admin.config.js -> admin.css), damit keine Admin-Klassen in
+  // site.css landen.
+  content: ['./public/*.html', './public/assets/js/*.js', './src/js/**/*.js'],
   theme: {
     extend: {
       colors: {

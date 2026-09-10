@@ -199,6 +199,21 @@ const staffBookings = await call(staff, '/api/admin/bookings');
 check('Mitarbeiter sieht ausschließlich eigene Termine',
   staffBookings.status === 200 && staffBookings.body.bookings.every((b) => b.employee.id === employeeId));
 
+// Dashboard: dieselbe Einschränkung wie die Terminliste, keine Google-Kontodaten.
+const staffOverview = await call(staff, '/api/admin/overview');
+const ownUpcoming = staffBookings.body.bookings
+  .filter((b) => ['PENDING', 'CONFIRMED'].includes(b.status) && new Date(b.start) >= new Date()).length;
+check('Mitarbeiter-Dashboard zeigt nur eigene Termine',
+  staffOverview.status === 200
+  && [...staffOverview.body.today, ...staffOverview.body.upcoming].every((b) => b.employee.id === employeeId)
+  && staffOverview.body.counts.upcoming_bookings === ownUpcoming,
+  `(${staffOverview.body.counts?.upcoming_bookings} statt ${ownUpcoming})`);
+check('Mitarbeiter-Dashboard enthält keine Google-Kontodaten',
+  staffOverview.body.google && !('email' in staffOverview.body.google) && !('lastError' in staffOverview.body.google));
+
+const staffSession = await call(staff, '/api/admin/session');
+check('Sitzung nennt den verknüpften Mitarbeiter', staffSession.body.employee?.id === employeeId);
+
 check('Inhaberkonto lässt sich nicht herabstufen',
   (await call(owner, `/api/admin/users/${(await call(owner, '/api/admin/users')).body.users.find((u) => u.role === 'OWNER').id}`, {
     method: 'PATCH', body: { role: 'EMPLOYEE' },

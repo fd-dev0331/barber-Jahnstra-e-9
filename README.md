@@ -28,7 +28,8 @@ docker exec it-simulator-db psql -U postgres -c "CREATE DATABASE barbershop"
 
 ```bash
 node scripts/test-booking.js      # 24 Prüfungen: Verfügbarkeit, Buchung, Validierung, ICS
-node scripts/test-admin.js        # 30 Prüfungen: Setup, Anmeldung, Rechte, Kündigung
+node scripts/test-admin.js        # 33 Prüfungen: Setup, Anmeldung, Rechte, Dashboard-Rechte, Kündigung
+node scripts/test-admin-i18n.js   # 62 Prüfungen: DE/RU/TR vollständig, Spracherkennung, Website bleibt deutsch
 node scripts/test-race.js         # gleichzeitige Buchungen desselben Slots
 node scripts/test-responsive.js   # feste Breiten, Viewport, Zoom
 ```
@@ -48,10 +49,13 @@ public/           Ausgelieferte Website (Vercel outputDirectory)
                   verlinkt diese Abschnitte
   galerie.html    Galerie mit Lightbox (eigene Seite, nicht auf der Startseite)
   booking.html    Buchung (eigener JS-Bundle, keine Display-Schrift)
-  admin/          Verwaltung: index (Anmeldung + Übersicht), bookings,
-                  calendar, employees, services, google, settings
+  admin/          Verwaltung: index (Anmeldung + Dashboard), bookings,
+                  calendar, employees, services, business, google, settings
   assets/js/      site.js (gemeinsam) · home.js · gallery.js · booking.js
-  assets/js/admin/ core.js (Session, API, Formate) + eine Datei je Admin-Seite
+  assets/js/admin/ core.js (API, Formate) · shell.js (Kopfzeile, Navigation,
+                  Sprachwahl) · ui.js (Dialoge, Zustände, Formularprüfung) ·
+                  i18n.js + i18n/{de,ru,tr}.js · eine Datei je Admin-Seite
+  assets/css/     site.css (Website) und admin.css (Verwaltung) — beide gebaut
 api/              Vercel Functions
   services.js     GET  Leistungen
   employees.js    GET  aktive Mitarbeiter (optional je Leistung)
@@ -123,15 +127,27 @@ Anwendung, sondern über einen partiellen Unique-Index in der Datenbank
 (`app_user_single_owner_idx`). Ein zweiter Benutzer kann sich nicht selbst zum
 Inhaber machen.
 
-| Seite | Inhalt |
-|---|---|
-| `/admin` | Termine heute, kommende Termine, Zahlen, Status der Google-Anbindung |
-| `/admin/bookings` | Liste mit Filtern, Statuswechsel, manueller Termin |
-| `/admin/calendar` | Wochenansicht |
-| `/admin/employees` | Anlegen, bearbeiten, deaktivieren, Arbeitszeiten, Pausen, Abwesenheiten, Kalenderzuordnung |
-| `/admin/services` | Leistungen inklusive Dauer und Preis |
-| `/admin/google` | Konto verbinden/trennen, Kalender je Mitarbeiter, Anleitung für die Cloud Console |
-| `/admin/settings` | Betriebsdaten, Zeitzone, Buchungsraster, eigenes Passwort, Konten |
+| Seite | Rolle | Inhalt |
+|---|---|---|
+| `/admin` | alle | Termine heute, kommende Termine, Zahlen, Google-Status, Schnellaktionen |
+| `/admin/bookings` | alle | Tabelle (ab 1280px) bzw. Karten, Filter, Suche, Details, Statuswechsel, Stornieren, manueller Termin mit freien Zeiten |
+| `/admin/calendar` | alle | Tag, Woche, kommende Termine — in der Zeitzone des Betriebs |
+| `/admin/employees` | ADMIN+ | Anlegen, bearbeiten, deaktivieren, reaktivieren, löschen (nur ohne Termine), Leistungen, Kalender, Arbeitszeiten, Pausen, Abwesenheiten |
+| `/admin/services` | ADMIN+ | Leistungen mit Dauer, Preis, Status und zuständigen Mitarbeitern |
+| `/admin/business` | ADMIN+ | Betriebsdaten, Zeitzone (Standard `Europe/Vienna`), Buchungsregeln, Öffnungszeiten (aus den Arbeitszeiten abgeleitet) |
+| `/admin/google` | ADMIN+ | Konto verbinden/neu verbinden/trennen, verfügbare Kalender, Kalender je Mitarbeiter |
+| `/admin/settings` | alle | Konto, Sprache, Passwort, Abmelden; Benutzerkonten nur für den Inhaber |
+
+**Sprachen der Verwaltung.** Deutsch, Русский, Türkçe — umschaltbar in der
+Kopfzeile, auf jeder Breite sichtbar. Die Wahl liegt in `localStorage`
+(`admin_language`); ohne Wahl gilt die Browsersprache, sonst Deutsch. Alle Texte
+stehen in `public/assets/js/admin/i18n/`; Fehlermeldungen der API werden über
+ihren Code übersetzt. **Die öffentliche Website bleibt ausschließlich deutsch**
+und lädt weder die Übersetzungen noch `admin.css`.
+
+**Leistungen und Mitarbeiter.** `employee_service` ist eine Whitelist je
+Leistung: ohne Einträge darf jeder aktive Mitarbeiter sie ausführen.
+`assignments.js` rechnet Änderungen in den Dialogen in genau diese Einträge um.
 
 **Rollen.** `OWNER` (alles inklusive Konten), `ADMIN` (alles außer Konten),
 `EMPLOYEE` (nur eigene Termine, kann nur für sich selbst eintragen). Geprüft wird

@@ -3,86 +3,110 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Leistungen – Bregenz Barbershop</title>
+<title>Bregenz Barbershop</title>
 <meta name="robots" content="noindex, nofollow">
-<meta name="theme-color" content="#0E0D0C">
+<meta name="theme-color" content="#1A1816">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@700&display=swap">
-<link rel="stylesheet" href="/assets/css/site.css?v=2">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/assets/css/admin.css?v=1">
 <link rel="icon" href="/favicon.svg" type="image/svg+xml">
 </head>
-<body class="min-h-screen">
-<a class="skip-link" href="#main">Zum Inhalt springen</a>
+<body>
+<a class="skip-link" href="#main" data-i18n="common.skipToContent"></a>
+<noscript><p class="p-6 text-fg-body">JavaScript erforderlich · Требуется JavaScript · JavaScript gerekli</p></noscript>
 
-<header data-shell hidden class="border-b border-line bg-surface">
-  <div class="mx-auto w-full max-w-container px-4">
-    <div class="flex h-16 items-center justify-between gap-4">
-      <a href="/admin" class="font-display text-lg font-bold uppercase tracking-wide text-fg">Barbershop <span class="text-accent">Verwaltung</span></a>
-      <div class="flex items-center gap-3 text-sm">
-        <p data-user class="hidden sm:block"></p>
-        <button type="button" data-logout class="btn-ghost min-h-[40px] px-4 py-2 text-[13px]">Abmelden</button>
+<header data-shell data-app-header class="adm-header" hidden></header>
+<div data-shell class="adm-layout" hidden>
+  <aside data-app-sidebar class="adm-sidebar"></aside>
+  <main id="main" class="adm-main">
+    <div class="adm-container">
+      <div class="adm-page-head">
+        <div>
+          <h1 class="adm-h1" data-i18n="nav.services"></h1>
+          <p class="adm-subtitle" data-i18n="services.subtitle"></p>
+        </div>
+        <div class="adm-actions">
+          <button type="button" class="adm-btn-primary" data-new>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            <span data-i18n="services.add"></span>
+          </button>
+        </div>
       </div>
+
+      <div data-list></div>
     </div>
-    <nav data-nav aria-label="Verwaltung" class="-mb-px flex gap-1 overflow-x-auto"></nav>
-  </div>
-</header>
+  </main>
+</div>
 
-<main id="main" data-shell hidden class="mx-auto w-full max-w-container px-4 py-8">
-  <h1 class="font-display text-h2 font-bold uppercase text-fg">Leistungen</h1>
-  <hr class="rule">
-
-  <div class="mb-6 flex justify-end">
-    <button type="button" class="btn-primary min-h-[44px] px-5 py-2" data-new>Leistung anlegen</button>
-  </div>
-
-  <div data-list class="grid gap-3"></div>
-
-  <dialog data-dialog class="w-[min(560px,92vw)] rounded-lg border border-line bg-surface p-0 text-fg-body backdrop:bg-black/70">
-    <form data-form method="dialog" class="p-6">
-      <h2 data-dialog-title class="font-display text-xl font-bold uppercase text-fg">Leistung</h2>
-
-      <div class="mt-5">
-        <label class="field-label" for="s-name">Name</label>
-        <input class="input" id="s-name" name="name" required>
+<dialog data-edit-dialog class="adm-dialog" aria-labelledby="service-title">
+  <form data-edit-form novalidate>
+    <div class="adm-dialog-head">
+      <h2 id="service-title" class="adm-dialog-title" data-edit-title></h2>
+      <button type="button" class="adm-icon-btn adm-icon-btn-plain" data-close data-i18n-attr="aria-label:common.close">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <div class="adm-dialog-body grid gap-4">
+      <p class="adm-form-error" data-form-error role="alert" hidden></p>
+      <div>
+        <label class="adm-label" for="s-name" data-i18n="services.name"></label>
+        <input class="adm-input" id="s-name" name="name" maxlength="120" autocomplete="off">
       </div>
-      <div class="mt-4">
-        <label class="field-label" for="s-description">Beschreibung</label>
-        <input class="input" id="s-description" name="description">
+      <div>
+        <label class="adm-label" for="s-description" data-i18n="services.description"></label>
+        <textarea class="adm-input" id="s-description" name="description" rows="2" maxlength="500"></textarea>
       </div>
-      <div class="mt-4 grid gap-4 sm:grid-cols-2">
+      <div class="adm-grid-2">
         <div>
-          <label class="field-label" for="s-category">Kategorie</label>
-          <input class="input" id="s-category" name="category">
+          <label class="adm-label" for="s-duration" data-i18n="services.durationMinutes"></label>
+          <input class="adm-input tnum" id="s-duration" name="durationMinutes" type="number" min="5" max="480" step="5" inputmode="numeric">
         </div>
         <div>
-          <label class="field-label" for="s-sort">Reihenfolge</label>
-          <input class="input" id="s-sort" name="sortOrder" type="number" min="0" max="9999" value="100">
+          <label class="adm-label" for="s-price" data-i18n="services.priceEuro"></label>
+          <input class="adm-input tnum" id="s-price" name="price" type="text" inputmode="decimal" autocomplete="off" placeholder="25,00">
         </div>
       </div>
-      <div class="mt-4 grid gap-4 sm:grid-cols-2">
+      <div class="adm-grid-2">
         <div>
-          <label class="field-label" for="s-duration">Dauer (Minuten)</label>
-          <input class="input" id="s-duration" name="durationMinutes" type="number" min="5" max="480" step="5" required>
+          <label class="adm-label" for="s-category" data-i18n="services.category"></label>
+          <input class="adm-input" id="s-category" name="category" maxlength="120" autocomplete="off">
         </div>
         <div>
-          <label class="field-label" for="s-price">Preis (Euro)</label>
-          <input class="input" id="s-price" name="price" type="number" min="0" step="0.5" required>
+          <label class="adm-label" for="s-sort" data-i18n="common.sortOrder"></label>
+          <input class="adm-input" id="s-sort" name="sortOrder" type="number" min="0" max="9999" inputmode="numeric">
         </div>
+      </div>
+      <div data-status-field hidden>
+        <label class="adm-label" for="s-status" data-i18n="services.status"></label>
+        <select class="adm-input" id="s-status" name="status"></select>
+        <p class="adm-hint" data-i18n="services.statusHint"></p>
       </div>
 
-      <p data-error class="field-error mt-5" hidden></p>
-      <div class="mt-6 flex justify-end gap-3">
-        <button type="button" class="btn-ghost min-h-[44px] px-5 py-2" data-cancel>Abbrechen</button>
-        <button type="submit" class="btn-primary min-h-[44px] px-5 py-2">Speichern</button>
-      </div>
-    </form>
-  </dialog>
-</main>
+      <fieldset class="adm-fieldset">
+        <legend class="adm-legend" data-i18n="services.employees"></legend>
+        <div class="grid gap-1">
+          <label class="adm-check-row">
+            <input type="radio" name="employeeMode" value="all" class="adm-check">
+            <span data-i18n="services.employeesAll"></span>
+          </label>
+          <label class="adm-check-row">
+            <input type="radio" name="employeeMode" value="selected" class="adm-check">
+            <span data-i18n="services.employeesSelected"></span>
+          </label>
+        </div>
+        <div data-employees class="mt-1 grid gap-x-4 border-l-2 border-line pl-4 sm:grid-cols-2"></div>
+      </fieldset>
+    </div>
+    <div class="adm-dialog-foot">
+      <button type="button" class="adm-btn-ghost" data-close data-i18n="common.cancel"></button>
+      <button type="submit" class="adm-btn-primary" data-i18n="common.save"></button>
+    </div>
+  </form>
+</dialog>
 
-<p data-boot-error hidden class="mx-auto max-w-container px-4 py-16 text-fg-body">
-  Die Verwaltung ist gerade nicht erreichbar. Bitte lade die Seite neu.
-</p>
+<div data-boot class="grid min-h-[60vh] place-items-center"><p class="text-sm text-fg-muted" data-i18n="common.loading"></p></div>
+<p data-boot-error hidden class="mx-auto max-w-xl px-4 py-16 text-center text-fg-body" data-i18n="common.bootError"></p>
 
 <script type="module" src="/assets/js/admin/services.js"></script>
 </body>
