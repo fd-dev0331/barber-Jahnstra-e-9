@@ -25,9 +25,12 @@
      GET    /api/admin/services                    POST / PATCH /:id / DELETE /:id
      GET    /api/admin/settings                    PATCH
      GET    /api/admin/users                       POST / PATCH /:id
-     GET    /api/admin/google                      POST /api/admin/google/calendar, /disconnect */
+     GET    /api/admin/google                      POST /api/admin/google/calendar, /disconnect
+     POST   /api/admin/media                       Bild hochladen (Galerie, Mitarbeiterfoto)
+     GET    /api/admin/gallery                     POST / PATCH /:id / DELETE /:id / POST /reorder */
 import { fail, methodNotAllowed, serverError, readJson, rateLimit } from '../../lib/http.js';
 import { requireUser, hasRole } from '../../lib/auth.js';
+import { ensureSchema } from '../../lib/schema.js';
 import { ValidationError } from '../../lib/admin/util.js';
 import { GoogleUnavailableError } from '../../lib/google.js';
 import * as account from '../../lib/admin/account.js';
@@ -36,6 +39,11 @@ import * as services from '../../lib/admin/services.js';
 import * as bookings from '../../lib/admin/bookings.js';
 import * as settings from '../../lib/admin/settings.js';
 import * as googleAdmin from '../../lib/admin/google.js';
+import * as media from '../../lib/admin/media.js';
+import * as gallery from '../../lib/admin/gallery.js';
+
+/** Bilder kommen als Base64 im JSON — nur dieser Endpunkt darf so groß sein. */
+const UPLOAD_LIMIT = 6_000_000;
 
 /**
  * Pfadsegmente nach /api/admin, egal ob Vercel sie liefert oder der Dev-Server.
@@ -68,8 +76,13 @@ export default async function handler(req, res) {
   const params = new URL(req.url, 'http://localhost').searchParams;
 
   try {
-    const body = ['POST', 'PATCH', 'PUT'].includes(req.method) ? await safeBody(req, res) : {};
+    const body = ['POST', 'PATCH', 'PUT'].includes(req.method)
+      ? await safeBody(req, res, resource === 'media' ? UPLOAD_LIMIT : undefined)
+      : {};
     if (body === undefined) return; // Antwort wurde schon gesendet
+
+    // Profilfelder, Galerie und Bilder brauchen die Schema-Ergänzungen (lib/schema.js).
+    if (['employees', 'gallery', 'media'].includes(resource)) await ensureSchema();
 
     /* ---------------------------------------------------- ohne Anmeldung */
 
@@ -147,6 +160,20 @@ export default async function handler(req, res) {
       return methodNotAllowed(res, ['GET', 'POST', 'PATCH', 'DELETE']);
     }
 
+    if (resource === 'media') {
+      if (req.method === 'POST' && !id) return await media.upload(req, res, body, manager);
+      return methodNotAllowed(res, ['POST']);
+    }
+
+    if (resource === 'gallery') {
+      if (req.method === 'GET' && !id) return await gallery.list(req, res, manager);
+      if (req.method === 'POST' && !id) return await gallery.create(req, res, body, manager);
+      if (req.method === 'POST' && id === 'reorder') return await gallery.reorder(req, res, body, manager);
+      if (req.method === 'PATCH' && id) return await gallery.update(req, res, body, manager, id);
+      if (req.method === 'DELETE' && id) return await gallery.remove(req, res, manager, id);
+      return methodNotAllowed(res, ['GET', 'POST', 'PATCH', 'DELETE']);
+    }
+
     if (resource === 'settings') {
       if (req.method === 'GET') return await settings.getSettings(req, res);
       if (req.method === 'PATCH') return await settings.updateSettings(req, res, body, manager);
@@ -183,11 +210,15 @@ export default async function handler(req, res) {
   }
 }
 
-async function safeBody(req, res) {
+async function safeBody(req, res, limit) {
   try {
-    return await readJson(req);
-  } catch {
-    fail(res, 400, 'invalid_body', 'Die Anfrage konnte nicht gelesen werden.');
+    return await readJson(req, limit ? { limit } : undefined);
+  } catch (err) {
+    if (err?.message === 'payload_too_large') {
+      fail(res, 413, 'image_too_large', 'Die Datei ist zu groß.');
+    } else {
+      fail(res, 400, 'invalid_body', 'Die Anfrage konnte nicht gelesen werden.');
+    }
     return undefined;
   }
 }

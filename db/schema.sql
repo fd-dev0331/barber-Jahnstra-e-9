@@ -211,3 +211,29 @@ CREATE UNIQUE INDEX IF NOT EXISTS app_user_single_owner_idx
 -- Ein Mitarbeiter hängt höchstens an einem Benutzerkonto.
 CREATE UNIQUE INDEX IF NOT EXISTS employee_user_idx
   ON employee (user_id) WHERE user_id IS NOT NULL;
+
+-- Bilder aus der Verwaltung (Galerie, Mitarbeiterfotos). Auf Vercel gibt es kein
+-- beschreibbares Dateisystem; die Bilder liegen deshalb in der Datenbank.
+-- Dieselben Anweisungen führt lib/schema.js beim ersten API-Aufruf aus, damit ein
+-- Deploy nicht auf eine manuelle Migration warten muss.
+CREATE TABLE IF NOT EXISTS media (
+  id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id  uuid NOT NULL REFERENCES business(id) ON DELETE CASCADE,
+  content_type text NOT NULL,
+  bytes        bytea NOT NULL,
+  byte_size    integer NOT NULL,
+  width        integer,
+  height       integer,
+  created_at   timestamptz NOT NULL DEFAULT now()
+);
+
+-- Öffentliches Profil je Mitarbeiter (Slider „Das Team" auf der Startseite).
+ALTER TABLE employee ADD COLUMN IF NOT EXISTS show_on_website  boolean NOT NULL DEFAULT true;
+ALTER TABLE employee ADD COLUMN IF NOT EXISTS headline         text;
+ALTER TABLE employee ADD COLUMN IF NOT EXISTS bio              text;
+ALTER TABLE employee ADD COLUMN IF NOT EXISTS languages        text;
+ALTER TABLE employee ADD COLUMN IF NOT EXISTS experience_years integer;
+ALTER TABLE employee ADD COLUMN IF NOT EXISTS photo_media_id   uuid REFERENCES media(id) ON DELETE SET NULL;
+
+-- Galeriebilder aus der Verwaltung verweisen auf ihr Bild in media.
+ALTER TABLE gallery_item ADD COLUMN IF NOT EXISTS media_id uuid REFERENCES media(id) ON DELETE SET NULL;

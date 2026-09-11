@@ -32,7 +32,7 @@ const htmlFiles = fs.readdirSync(ADMIN_HTML).filter((f) => f.endsWith('.html')).
 /* ------------------------------------------------------ benutzte Schlüssel */
 
 const NAMESPACES = ['common', 'nav', 'shell', 'roles', 'status', 'login', 'setup', 'validation', 'errors',
-  'dashboard', 'bookings', 'calendar', 'employees', 'services', 'business', 'google', 'settings'];
+  'dashboard', 'bookings', 'calendar', 'employees', 'services', 'gallery', 'business', 'google', 'settings'];
 const used = new Map(); // key -> Set(file)
 const use = (key, file) => {
   if (!used.has(key)) used.set(key, new Set());
@@ -75,7 +75,7 @@ for (const dir of ['lib', 'api']) {
 const dynamic = [
   ...['PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED', 'NO_SHOW'].map((s) => `status.${s}`),
   ...['OWNER', 'ADMIN', 'EMPLOYEE', 'CLIENT'].map((r) => `roles.${r}`),
-  ...['dashboard', 'bookings', 'calendar', 'employees', 'services', 'business', 'google', 'settings'].map((p) => `nav.${p}`),
+  ...['dashboard', 'bookings', 'calendar', 'employees', 'services', 'gallery', 'business', 'google', 'settings'].map((p) => `nav.${p}`),
   ...['CONFIRMED', 'COMPLETED', 'NO_SHOW', 'CANCELLED'].map((s) => `bookings.setStatus.${s}`),
   ...['VACATION', 'SICK', 'OTHER'].map((k) => `employees.absenceKinds.${k}`),
   ...['access_denied', 'state_mismatch', 'no_refresh_token', 'not_configured', 'generic'].map((c) => `google.callbackErrors.${c}`),

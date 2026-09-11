@@ -277,8 +277,17 @@
 
       <!-- ===================== 2. ÜBER UNS ===================== -->
       <section id="ueber-uns" class="section" data-reveal>
+        <!-- Team-Slider: home.js baut je Mitarbeiter eine Folie aus /api/business
+         (Profile aus der Verwaltung). Die Folie im HTML ist der Rückfall ohne
+         JavaScript oder Server. -->
+        <div class="container-x" data-team aria-roledescription="carousel" aria-label="Unser Team">
+          <div
+            data-team-track
+            class="flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
         <div
-          class="container-x grid items-center gap-10 md:grid-cols-2 md:gap-16"
+          class="grid w-full shrink-0 snap-start items-center gap-10 md:grid-cols-2 md:gap-16"
+          data-team-slide
         >
           <div class="order-2 md:order-1">
             <p class="kicker">Der Barbier</p>
@@ -350,6 +359,20 @@
               decoding="async"
               class="w-full rounded-lg border border-line object-cover"
             />
+          </div>
+        </div>
+          </div>
+
+          <div data-team-controls hidden class="mt-8 flex items-center justify-between gap-4">
+            <div class="flex flex-wrap" data-team-dots></div>
+            <div class="flex gap-2">
+              <button type="button" data-team-prev class="btn-ghost h-12 w-12 px-0" aria-label="Vorherige Person">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg>
+              </button>
+              <button type="button" data-team-next class="btn-ghost h-12 w-12 px-0" aria-label="Nächste Person">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -863,7 +886,7 @@
             <a href="/booking.html" class="btn-primary mt-8">Termin buchen</a>
           </div>
 
-          <!-- Karte wird erst auf Klick geladen: Performance + Cookie-Zustimmung. -->
+          <!-- Karte lädt automatisch, sobald der Abschnitt in die Nähe des Bildschirms kommt. -->
           <div>
             <div
               data-map
@@ -886,13 +909,9 @@
                   <path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z" />
                   <path d="M9 4v14M15 6v14" />
                 </svg>
-                <p class="text-[15px] text-fg-muted">
-                  Die Karte wird von Google Maps geladen. Dabei werden Daten an
-                  Google übertragen.
+                <p class="text-[15px] text-fg-muted" aria-live="polite">
+                  Karte wird geladen …
                 </p>
-                <button type="button" data-map-load class="btn-secondary">
-                  Karte laden
-                </button>
                 <a
                   class="text-sm text-fg-muted underline underline-offset-4 hover:text-accent"
                   href="https://www.google.com/maps/search/?api=1&amp;query=Jahnstra%C3%9Fe+9%2C+6900+Bregenz" data-biz-href="address"

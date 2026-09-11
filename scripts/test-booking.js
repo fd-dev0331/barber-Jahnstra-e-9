@@ -104,11 +104,5 @@ check('Ungültiges Datum -> 400', badDate.status === 400);
 const pastDate = await get(`/api/availability?date=2020-01-01&serviceId=${cut.id}&employeeId=${abo.id}`);
 check('Vergangenes Datum -> 400', pastDate.status === 400);
 
-console.log('\n▸ 10. Kalenderdatei');
-const ics = await fetch(`${BASE}/api/ics?reference=${created.body.booking.reference}`);
-const icsText = await ics.text();
-check('ICS wird ausgeliefert', ics.status === 200 && icsText.startsWith('BEGIN:VCALENDAR'));
-check('ICS enthält keine Telefonnummer', !icsText.includes('0664'));
-
 console.log(`\n${'─'.repeat(48)}\n  ${pass} bestanden, ${fail} fehlgeschlagen\n`);
 process.exit(fail ? 1 : 0);

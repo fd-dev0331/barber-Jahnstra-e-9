@@ -11,7 +11,7 @@ import {
 } from './core.js';
 import {
   icon, activeBadge, toast, handleError, confirmDialog, emptyState, errorState, skeletonList, bindDialog,
-  validate, clearErrors, showFormError, setBusy,
+  validate, clearErrors, showFormError, setBusy, uploadImage,
 } from './ui.js';
 import { requireSession } from './shell.js';
 import { whitelist, canPerform, normalizeSelection, planAssignments } from './assignments.js';
@@ -33,6 +33,7 @@ const state = {
   error: null,
   editing: null,
   absenceFor: null,
+  photo: null, // { mediaId, url } im offenen Dialog
 };
 
 const activeServices = () => state.services.filter((s) => s.status === 'ACTIVE');
@@ -80,9 +81,15 @@ function card(employee) {
 
   return `<article class="adm-card grid min-w-0 content-start gap-4 p-4 sm:p-5 ${inactive ? 'opacity-80' : ''}">
     <div class="flex items-start justify-between gap-3">
-      <div class="min-w-0">
-        <h2 class="truncate text-base font-semibold text-fg">${escapeHtml(employee.name)}</h2>
-        <p class="truncate text-[13px] text-fg-muted">${escapeHtml(employee.role || t('employees.noRole'))}</p>
+      <div class="flex min-w-0 items-center gap-3">
+        ${employee.photoUrl
+          ? `<img src="${escapeHtml(employee.photoUrl)}" alt="" loading="lazy" class="h-12 w-12 shrink-0 rounded-full border border-line object-cover">`
+          : `<span class="grid h-12 w-12 shrink-0 place-items-center rounded-full border border-line bg-bg text-fg-muted">${icon('user')}</span>`}
+        <div class="min-w-0">
+          <h2 class="truncate text-base font-semibold text-fg">${escapeHtml(employee.name)}</h2>
+          <p class="truncate text-[13px] text-fg-muted">${escapeHtml(employee.role || t('employees.noRole'))}</p>
+          <p class="mt-0.5 text-xs ${employee.showOnWebsite ? 'text-ok' : 'text-fg-muted'}">${escapeHtml(t(employee.showOnWebsite ? 'employees.onWebsite' : 'employees.notOnWebsite'))}</p>
+        </div>
       </div>
       <span class="shrink-0">${activeBadge(!inactive)}</span>
     </div>
@@ -297,6 +304,43 @@ function renderCalendarChoice(employee) {
     : state.googleConnected ? 'employees.calendarListUnavailable' : 'employees.calendarNotConnected');
 }
 
+/* ---------------------------------------------------------------- Profilfoto
+   Das Foto wird beim Auswählen hochgeladen; gespeichert wird die Zuordnung erst
+   mit "Speichern". Ein ersetztes Foto räumt das Backend selbst auf. */
+const photoPreview = editForm.querySelector('[data-photo-preview]');
+const photoInput = editForm.querySelector('[data-photo-input]');
+
+function renderPhoto(statusKey = 'employees.photoHint') {
+  photoPreview.innerHTML = state.photo
+    ? `<img src="${escapeHtml(state.photo.url)}" alt="" class="h-full w-full object-cover">`
+    : `<span class="text-fg-muted">${icon('user')}</span>`;
+  editForm.querySelector('[data-photo-remove]').hidden = !state.photo;
+  editForm.querySelector('[data-photo-status]').textContent = t(statusKey);
+}
+
+photoInput.addEventListener('change', async () => {
+  const [file] = photoInput.files;
+  photoInput.value = '';
+  if (!file) return;
+  editForm.querySelector('[data-photo-status]').textContent = t('employees.photoUploading');
+  photoInput.disabled = true;
+  try {
+    const media = await uploadImage(file);
+    state.photo = { mediaId: media.id, url: media.url };
+    renderPhoto('employees.photoReady');
+  } catch (err) {
+    renderPhoto();
+    showFormError(editForm, err);
+  } finally {
+    photoInput.disabled = false;
+  }
+});
+
+editForm.querySelector('[data-photo-remove]').addEventListener('click', () => {
+  state.photo = null;
+  renderPhoto();
+});
+
 function openEdit(employee) {
   state.editing = employee ?? null;
   clearErrors(editForm);
@@ -305,6 +349,13 @@ function openEdit(employee) {
   editForm.elements.name.value = employee?.name ?? '';
   editForm.elements.role.value = employee?.role ?? '';
   editForm.elements.sortOrder.value = employee?.sortOrder ?? 100;
+  editForm.elements.showOnWebsite.checked = employee ? employee.showOnWebsite : true;
+  editForm.elements.headline.value = employee?.headline ?? '';
+  editForm.elements.bio.value = employee?.bio ?? '';
+  editForm.elements.languages.value = employee?.languages ?? '';
+  editForm.elements.experienceYears.value = employee?.experienceYears ?? '';
+  state.photo = employee?.photoMediaId ? { mediaId: employee.photoMediaId, url: employee.photoUrl } : null;
+  renderPhoto();
   renderCalendarChoice(employee);
   renderServiceChoices(employee);
   // Neue Person: typische Woche vorschlagen, damit sie gleich buchbar ist.
@@ -346,6 +397,10 @@ editForm.addEventListener('submit', async (event) => {
     { name: 'name', required: true, min: 2, max: 120 },
     { name: 'role', max: 120 },
     { name: 'sortOrder', number: true, integer: true, minValue: 0, maxValue: 9999 },
+    { name: 'headline', max: 120 },
+    { name: 'bio', max: 2000 },
+    { name: 'languages', max: 120 },
+    { name: 'experienceYears', number: true, integer: true, minValue: 0, maxValue: 80 },
   ]);
   if (!ok) return;
 
@@ -361,6 +416,12 @@ editForm.addEventListener('submit', async (event) => {
     sortOrder: Number(editForm.elements.sortOrder.value || 100),
     googleCalendarId: editForm.elements.googleCalendarId.value || null,
     workingHours,
+    showOnWebsite: editForm.elements.showOnWebsite.checked,
+    headline: editForm.elements.headline.value.trim() || null,
+    bio: editForm.elements.bio.value.trim() || null,
+    languages: editForm.elements.languages.value.trim() || null,
+    experienceYears: editForm.elements.experienceYears.value === '' ? null : Number(editForm.elements.experienceYears.value),
+    photoMediaId: state.photo?.mediaId ?? null,
   };
 
   try {
@@ -533,6 +594,7 @@ onLanguageChange(() => {
     renderServiceChoices(state.editing);
     editForm.querySelectorAll('[data-service]').forEach((c) => { c.checked = checked.has(c.dataset.service); });
     renderHours(hours);
+    renderPhoto();
     clearErrors(editForm);
   }
   if (absenceDialog.open) {

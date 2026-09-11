@@ -27,7 +27,7 @@ docker exec it-simulator-db psql -U postgres -c "CREATE DATABASE barbershop"
 ## Tests
 
 ```bash
-node scripts/test-booking.js      # 24 Prüfungen: Verfügbarkeit, Buchung, Validierung, ICS
+node scripts/test-booking.js      # 22 Prüfungen: Verfügbarkeit, Buchung, Validierung
 node scripts/test-admin.js        # 33 Prüfungen: Setup, Anmeldung, Rechte, Dashboard-Rechte, Kündigung
 node scripts/test-admin-i18n.js   # 62 Prüfungen: DE/RU/TR vollständig, Spracherkennung, Website bleibt deutsch
 node scripts/test-race.js         # gleichzeitige Buchungen desselben Slots
@@ -63,7 +63,8 @@ api/              Vercel Functions
   bookings.js     POST Termin anlegen (mit Doppelbuchungsschutz)
   gallery.js      GET  Bilder aus dem Backend-Cache
   reviews.js      GET  echte Google-Rezensionen (leer, solange keine da sind)
-  ics.js          GET  Kalenderdatei zur Buchungsreferenz
+  business.js     GET  Kontakt, Öffnungszeiten, Preisliste, Team für die Website
+  media.js        GET  Bilder aus der Verwaltung (Galerie, Mitarbeiterfotos)
   admin/[...path].js  alle Admin-Endpunkte (eine Function, siehe unten)
   google/[...path].js OAuth 2.0: /api/google/start und /api/google/callback
 lib/              db · http · time · availability · google · crypto · business · auth

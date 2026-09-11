@@ -285,6 +285,54 @@ check('Deaktivierte Leistung verschwindet aus der Preisliste', !(await listed())
 check('Leistung ohne Termine lässt sich löschen',
   (await call(owner, `/api/admin/services/${syncId}`, { method: 'DELETE' })).status === 200);
 
+console.log('\n▸ 9. Bilder, Galerie, Team-Profil');
+// 1×1-PNG — ein echtes Bild, damit die Prüfung der Dateisignatur greift.
+const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+const pngUpload = (session) => call(session, '/api/admin/media', {
+  method: 'POST', body: { data: `data:image/png;base64,${PNG}`, width: 1, height: 1 },
+});
+
+check('Bild-Upload ohne Anmeldung: 401', (await call(null, '/api/admin/media', { method: 'POST', body: { data: PNG } })).status === 401);
+check('Kein Upload ohne echten Bildinhalt',
+  (await call(owner, '/api/admin/media', { method: 'POST', body: { data: Buffer.from('<svg onload=alert(1)>').toString('base64') } })).status === 400);
+
+const galleryMedia = (await pngUpload(owner)).body.media?.id;
+const served = await fetch(`${BASE}/api/media?id=${galleryMedia}`);
+check('Hochgeladenes Bild wird ausgeliefert', served.status === 200 && served.headers.get('content-type') === 'image/png');
+
+const galleryItem = await call(owner, '/api/admin/gallery', { method: 'POST', body: { mediaId: galleryMedia, alt: 'Testbild' } });
+check('Galeriebild wird angelegt', galleryItem.status === 201);
+const inPublicGallery = async () => (await anon('/api/gallery?limit=60')).body.items
+  .some((i) => i.src === `/api/media?id=${galleryMedia}`);
+check('Galeriebild erscheint auf der Website', await inPublicGallery());
+await call(owner, `/api/admin/gallery/${galleryItem.body.item.id}`, { method: 'PATCH', body: { status: 'INACTIVE' } });
+check('Ausgeblendetes Galeriebild verschwindet von der Website', !(await inPublicGallery()));
+
+const profilePhoto = (await pngUpload(owner)).body.media?.id;
+await call(owner, `/api/admin/employees/${employeeId}`, {
+  method: 'PATCH',
+  body: {
+    status: 'ACTIVE', showOnWebsite: true, headline: 'Test-Überschrift', bio: 'Absatz eins.\n\nAbsatz zwei.',
+    languages: 'DE, EN', experienceYears: 7, photoMediaId: profilePhoto,
+  },
+});
+const member = (await anon('/api/business')).body.team?.find((m) => m.id === employeeId);
+check('Mitarbeiterprofil erscheint im Team-Slider',
+  member?.headline === 'Test-Überschrift' && member.bio === 'Absatz eins.\n\nAbsatz zwei.'
+  && member.languages.join() === 'DE,EN' && member.experienceYears === 7
+  && member.photoUrl === `/api/media?id=${profilePhoto}` && member.workdays.length > 0);
+
+await call(owner, `/api/admin/employees/${employeeId}`, { method: 'PATCH', body: { showOnWebsite: false } });
+check('Profil „nicht auf der Website" verschwindet aus dem Team',
+  !(await anon('/api/business')).body.team.some((m) => m.id === employeeId));
+
+await call(owner, `/api/admin/employees/${employeeId}`, { method: 'PATCH', body: { photoMediaId: null, status: 'INACTIVE' } });
+check('Entferntes Profilfoto wird gelöscht', (await fetch(`${BASE}/api/media?id=${profilePhoto}`)).status === 404);
+
+const deletedItem = await call(owner, `/api/admin/gallery/${galleryItem.body.item.id}`, { method: 'DELETE' });
+check('Gelöschtes Galeriebild ist samt Datei weg',
+  deletedItem.status === 200 && (await fetch(`${BASE}/api/media?id=${galleryMedia}`)).status === 404);
+
 console.log('\n' + '─'.repeat(48));
 console.log(`  ${pass} bestanden, ${fail} fehlgeschlagen`);
 console.log('  Hinweis: Testmitarbeiter „Testperson", das Testkonto und der');

@@ -17,6 +17,7 @@ export const PAGES = [
   { id: 'calendar', href: '/admin/calendar', role: 'EMPLOYEE', icon: 'calendar' },
   { id: 'employees', href: '/admin/employees', role: 'ADMIN', icon: 'users' },
   { id: 'services', href: '/admin/services', role: 'ADMIN', icon: 'scissors' },
+  { id: 'gallery', href: '/admin/gallery', role: 'ADMIN', icon: 'image' },
   { id: 'business', href: '/admin/business', role: 'ADMIN', icon: 'store' },
   { id: 'google', href: '/admin/google', role: 'ADMIN', icon: 'calendarCheck' },
   { id: 'settings', href: '/admin/settings', role: 'EMPLOYEE', icon: 'settings' },

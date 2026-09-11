@@ -82,6 +82,52 @@
         </div>
       </fieldset>
 
+      <!-- Öffentliches Profil: erscheint im Team-Slider auf der Startseite. -->
+      <fieldset class="adm-fieldset grid gap-4">
+        <legend class="adm-legend" data-i18n="employees.sectionProfile"></legend>
+        <p class="adm-hint mt-0" data-i18n="employees.profileHint"></p>
+        <label class="adm-check-row">
+          <input type="checkbox" name="showOnWebsite" class="adm-check">
+          <span data-i18n="employees.showOnWebsite"></span>
+        </label>
+        <div class="grid gap-4 sm:grid-cols-[160px_minmax(0,1fr)]">
+          <div data-field>
+            <p class="adm-label" data-i18n="employees.photo"></p>
+            <div data-photo-preview class="grid aspect-[3/4] w-full max-w-[160px] place-items-center overflow-hidden rounded-md border border-line bg-bg"></div>
+            <div class="mt-2 flex flex-wrap gap-2">
+              <label class="adm-btn-ghost adm-btn-sm relative cursor-pointer focus-within:ring-2 focus-within:ring-accent">
+                <input type="file" accept="image/jpeg,image/png,image/webp" data-photo-input
+                  class="absolute inset-0 h-full w-full cursor-pointer opacity-0">
+                <span data-i18n="employees.photoChoose"></span>
+              </label>
+              <button type="button" class="adm-btn-ghost adm-btn-sm" data-photo-remove data-i18n="employees.photoRemove"></button>
+            </div>
+            <p class="adm-hint" data-photo-status aria-live="polite" data-i18n="employees.photoHint"></p>
+          </div>
+          <div class="grid content-start gap-4">
+            <div>
+              <label class="adm-label" for="e-headline" data-i18n="employees.headline"></label>
+              <input class="adm-input" id="e-headline" name="headline" maxlength="120" autocomplete="off" data-i18n-attr="placeholder:employees.headlinePlaceholder">
+            </div>
+            <div>
+              <label class="adm-label" for="e-bio" data-i18n="employees.bio"></label>
+              <textarea class="adm-input" id="e-bio" name="bio" rows="5" maxlength="2000"></textarea>
+              <p class="adm-hint" data-i18n="employees.bioHint"></p>
+            </div>
+            <div class="adm-grid-2">
+              <div>
+                <label class="adm-label" for="e-languages" data-i18n="employees.languages"></label>
+                <input class="adm-input" id="e-languages" name="languages" maxlength="120" autocomplete="off" placeholder="DE, EN, AR, TR">
+              </div>
+              <div>
+                <label class="adm-label" for="e-experience" data-i18n="employees.experienceYears"></label>
+                <input class="adm-input tnum" id="e-experience" name="experienceYears" type="number" min="0" max="80" inputmode="numeric">
+              </div>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
       <fieldset class="adm-fieldset">
         <legend class="adm-legend" data-i18n="employees.sectionServices"></legend>
         <p class="adm-hint mb-2 mt-0" data-i18n="employees.servicesHint"></p>

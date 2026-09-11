@@ -93,12 +93,13 @@
 
     if (badge && stateWrap) {
       // Icon + text, never colour alone (WCAG 1.4.1).
+      // Geöffnet grün, geschlossen rot — dieselben Statusfarben wie in der Verwaltung.
       const icon = isOpen
         ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>'
-        : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+        : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/></svg>';
       badge.innerHTML = `${icon}<span>${isOpen ? 'Jetzt geöffnet' : 'Gerade geschlossen'}</span>`;
-      badge.style.background = isOpen ? 'rgba(74,222,128,.16)' : 'rgba(168,162,158,.16)';
-      badge.style.color = isOpen ? '#4ADE80' : '#A8A29E';
+      badge.style.background = isOpen ? 'rgba(74,222,128,.16)' : 'rgba(248,113,113,.16)';
+      badge.style.color = isOpen ? '#4ADE80' : '#F87171';
       stateWrap.hidden = false;
     }
   }
@@ -165,6 +166,160 @@
     }
   }
 
+  /* ---------- Team-Slider ----------
+     Eine Folie je aktivem Mitarbeiter mit Profil aus der Verwaltung. Blättern per
+     Wischen (Scroll-Snap), Pfeiltasten-Knöpfen oder Punkten. Kein Autoplay: der
+     Text soll in Ruhe gelesen werden können. */
+  const team = document.querySelector('[data-team]');
+
+  const initials = (name) => String(name || '').split(/\s+/).filter(Boolean).slice(0, 2)
+    .map((part) => part[0]).join('').toUpperCase();
+
+  function workdaysText(days) {
+    const ordered = WEEK.filter((day) => days.includes(day));
+    if (!ordered.length) return null;
+    const positions = ordered.map((day) => WEEK.indexOf(day));
+    const consecutive = positions.every((pos, i) => i === 0 || pos === positions[i - 1] + 1);
+    return consecutive && ordered.length > 2
+      ? `${DAY_SHORT[ordered[0]]} – ${DAY_SHORT[ordered[ordered.length - 1]]}`
+      : ordered.map((day) => DAY_SHORT[day]).join(', ');
+  }
+
+  function tile(label, value, detail, wide) {
+    return `<div class="card${wide ? ' col-span-2 sm:col-span-1' : ''}">
+        <dt class="text-[13px] uppercase tracking-[0.12em] text-fg-muted">${esc(label)}</dt>
+        <dd class="mt-1 font-display text-2xl font-bold uppercase text-accent">${esc(value)}</dd>
+        ${detail ? `<dd class="mt-1 text-sm text-fg-muted">${esc(detail)}</dd>` : ''}
+      </div>`;
+  }
+
+  function teamSlide(member, index, total) {
+    const tiles = [];
+    if (member.languages?.length) {
+      tiles.push(['Sprachen', String(member.languages.length), member.languages.join(' · ')]);
+    }
+    if (member.workdays?.length) {
+      tiles.push(['Im Salon', `${member.workdays.length} ${member.workdays.length === 1 ? 'Tag' : 'Tage'}`, workdaysText(member.workdays)]);
+    }
+    if (Number.isInteger(member.experienceYears) && member.experienceYears > 0) {
+      tiles.push(['Erfahrung', `${member.experienceYears} ${member.experienceYears === 1 ? 'Jahr' : 'Jahre'}`, null]);
+    }
+    const paragraphs = String(member.bio || '').split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
+    const kicker = member.headline
+      ? [member.role, member.name].filter(Boolean).join(' · ')
+      : (member.role || 'Unser Team');
+
+    const photo = member.photoUrl
+      ? `<img src="${esc(member.photoUrl)}" alt="${esc(member.name)}" width="1050" height="1400" loading="lazy" decoding="async"
+           class="aspect-[3/4] w-full rounded-lg border border-line object-cover" />`
+      : `<div class="grid aspect-[3/4] w-full place-items-center rounded-lg border border-line bg-surface font-display text-7xl font-bold uppercase text-accent" aria-hidden="true">${esc(initials(member.name))}</div>`;
+
+    return `<article data-team-slide aria-roledescription="slide" aria-label="${index + 1} von ${total}: ${esc(member.name)}"
+        class="grid w-full shrink-0 snap-start items-center gap-10 md:grid-cols-2 md:gap-16">
+        <div class="order-2 md:order-1">
+          <p class="kicker">${esc(kicker)}</p>
+          <h2 class="h2">${esc(member.headline || member.name)}</h2>
+          <hr class="rule" />
+          ${paragraphs.map((p, i) => `<p class="lead${i ? ' mt-4' : ''}">${esc(p).replace(/\n/g, '<br />')}</p>`).join('')}
+          ${tiles.length ? `<dl class="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3">${tiles
+            .map(([label, value, detail], i) => tile(label, value, detail, tiles.length === 3 && i === 2)).join('')}</dl>` : ''}
+        </div>
+        <div class="order-1 md:order-2">${photo}</div>
+      </article>`;
+  }
+
+  function setupTeam(members) {
+    // Niemand mit Profil: die Folie aus dem HTML bleibt, statt einer leeren Sektion.
+    if (!team || !members.length) return;
+    const track = team.querySelector('[data-team-track]');
+    const controls = team.querySelector('[data-team-controls]');
+    const dots = team.querySelector('[data-team-dots]');
+    track.innerHTML = members.map((member, i) => teamSlide(member, i, members.length)).join('');
+    if (members.length < 2) {
+      controls.hidden = true;
+      return;
+    }
+
+    // Punkte mit 44-px-Trefferfläche; sichtbar ist nur der kleine Kreis.
+    dots.innerHTML = members.map((member, i) => `
+      <button type="button" data-team-dot="${i}" class="grid h-11 w-11 place-items-center" aria-label="${esc(member.name)} anzeigen">
+        <span class="h-3 w-3 rounded-full border border-accent transition-colors"></span>
+      </button>`).join('');
+
+    let current = 0;
+    // Während der eigenen, weichen Scroll-Animation nicht auf Zwischenstände reagieren.
+    let lockedUntil = 0;
+    const slides = () => Array.from(track.children);
+    const update = () => {
+      dots.querySelectorAll('[data-team-dot]').forEach((dot, i) => {
+        dot.setAttribute('aria-current', String(i === current));
+        dot.firstElementChild.classList.toggle('bg-accent', i === current);
+      });
+      slides().forEach((slide, i) => slide.setAttribute('aria-hidden', String(i !== current)));
+    };
+    const go = (index) => {
+      current = (index + members.length) % members.length;
+      lockedUntil = Date.now() + 700;
+      track.scrollTo({ left: current * track.clientWidth, behavior: window.BB.reduceMotion ? 'auto' : 'smooth' });
+      update();
+    };
+
+    team.querySelector('[data-team-prev]').addEventListener('click', () => go(current - 1));
+    team.querySelector('[data-team-next]').addEventListener('click', () => go(current + 1));
+    dots.addEventListener('click', (event) => {
+      const dot = event.target.closest('[data-team-dot]');
+      if (dot) go(Number(dot.dataset.teamDot));
+    });
+
+    let frame = 0;
+    track.addEventListener('scroll', () => {
+      if (Date.now() < lockedUntil) return;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(() => {
+        const index = Math.round(track.scrollLeft / Math.max(1, track.clientWidth));
+        if (index !== current && index >= 0 && index < members.length) {
+          current = index;
+          update();
+        }
+      });
+    }, { passive: true });
+    window.addEventListener('resize', () => track.scrollTo({ left: current * track.clientWidth }), { passive: true });
+
+    controls.hidden = false;
+    update();
+  }
+
+  /* ---------- Google Maps ----------
+     Lädt automatisch, ohne Klick. Das iframe steht sofort im DOM; loading="lazy"
+     lässt den Browser die Karte aber erst holen, wenn der Kontaktbereich in die
+     Nähe des Bildschirms kommt — die Karte ist das schwerste Element der Seite. */
+  const mapWrap = document.querySelector('[data-map]');
+  const mapSrc = () => `https://www.google.com/maps?q=${encodeURIComponent(`${address}, Österreich`)}&output=embed`;
+
+  function loadMap() {
+    if (!mapWrap || mapWrap.querySelector('iframe')) return;
+    const frame = document.createElement('iframe');
+    frame.src = mapSrc();
+    frame.title = `Karte: ${address}`;
+    frame.loading = 'lazy';
+    frame.referrerPolicy = 'no-referrer-when-downgrade';
+    frame.className = 'absolute inset-0 h-full w-full border-0';
+    frame.style.colorScheme = 'dark';
+    mapWrap.appendChild(frame);
+    frame.addEventListener('load', () => mapWrap.querySelector('[data-map-placeholder]')?.remove(), { once: true });
+  }
+
+  /** Adresse aus der Verwaltung kam erst nach dem Laden der Karte an. */
+  function refreshMap() {
+    const frame = mapWrap?.querySelector('iframe');
+    if (frame && frame.src !== mapSrc()) {
+      frame.src = mapSrc();
+      frame.title = `Karte: ${address}`;
+    }
+  }
+
+  loadMap();
+
   window.BB.business()
     .then((data) => {
       if (data?.business?.timezone) timezone = data.business.timezone;
@@ -174,31 +329,13 @@
         if (hoursList || badge || summary) renderHours(true);
       }
       if (Array.isArray(data?.services)) renderServices(data.services);
+      if (Array.isArray(data?.team)) setupTeam(data.team);
       if (data?.business) updateStructuredData(data.business);
+      refreshMap();
     })
     .catch(() => {
-      /* Rückfall: Öffnungszeiten und Preisliste aus dem HTML bleiben stehen. */
+      /* Rückfall: Öffnungszeiten, Preisliste und Team aus dem HTML bleiben stehen. */
     });
-
-  /* ---------- Google Maps: click to load ----------
-     Not on first paint — heaviest third-party asset on the site and it sets
-     cookies. See pages/home.md. */
-  const mapWrap = document.querySelector('[data-map]');
-  const mapBtn = document.querySelector('[data-map-load]');
-  if (mapWrap && mapBtn) {
-    mapBtn.addEventListener('click', () => {
-      const frame = document.createElement('iframe');
-      frame.src = `https://www.google.com/maps?q=${encodeURIComponent(`${address}, Österreich`)}&output=embed`;
-      frame.title = `Karte: ${address}`;
-      frame.loading = 'lazy';
-      frame.referrerPolicy = 'no-referrer-when-downgrade';
-      frame.className = 'absolute inset-0 h-full w-full border-0';
-      frame.style.colorScheme = 'dark';
-      mapWrap.querySelector('[data-map-placeholder]')?.remove();
-      mapWrap.appendChild(frame);
-      frame.focus();
-    });
-  }
 
   /* ---------- Google reviews ----------
      Rendered ONLY from real Google Business Profile data. If the endpoint is

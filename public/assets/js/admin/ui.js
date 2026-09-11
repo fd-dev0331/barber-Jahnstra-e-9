@@ -2,7 +2,48 @@
    Toast, Bestätigungsdialog, Lade-/Leer-/Fehlerzustände, Formularprüfung.
    Jeder Text kommt über t() aus den Wörterbüchern. */
 import { t } from './i18n.js';
-import { ApiError, errorMessage, escapeHtml, redirectToLogin } from './core.js';
+import { api, ApiError, errorMessage, escapeHtml, redirectToLogin } from './core.js';
+
+/* ---------------------------------------------------------------- Bilder
+   Fotos vom Telefon haben oft 5–10 MB. Vor dem Hochladen wird im Browser auf
+   höchstens 1600 px verkleinert und als JPEG gespeichert — das hält den Upload
+   klein und die Website schnell. Der Server prüft das Ergebnis trotzdem. */
+
+const IMAGE_TYPES = /^image\/(jpeg|png|webp)$/;
+
+export async function prepareImage(file, { maxSize = 1600, quality = 0.85 } = {}) {
+  if (!file || !IMAGE_TYPES.test(file.type)) throw new ApiError(0, 'invalid_image');
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((resolve, reject) => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => reject(new ApiError(0, 'invalid_image'));
+      image.src = url;
+    });
+    const scale = Math.min(1, maxSize / Math.max(img.naturalWidth, img.naturalHeight));
+    const width = Math.max(1, Math.round(img.naturalWidth * scale));
+    const height = Math.max(1, Math.round(img.naturalHeight * scale));
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext('2d');
+    // Transparente PNGs bekommen den Hintergrund der Website statt Schwarz.
+    context.fillStyle = '#1A1816';
+    context.fillRect(0, 0, width, height);
+    context.drawImage(img, 0, 0, width, height);
+    return { data: canvas.toDataURL('image/jpeg', quality), width, height };
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+/** Verkleinern und hochladen; liefert { id, url, width, height }. */
+export async function uploadImage(file) {
+  const { data, width, height } = await prepareImage(file);
+  const { media } = await api('/media', { method: 'POST', body: { data, width, height } });
+  return media;
+}
 
 /* ---------------------------------------------------------------- Icons */
 
@@ -45,6 +86,10 @@ const PATHS = {
   unlink: '<path d="M9 15l6-6"/><path d="M10.5 6.5 12 5a4.2 4.2 0 0 1 6 6l-1.5 1.5M13.5 17.5 12 19a4.2 4.2 0 0 1-6-6l1.5-1.5"/>',
   link: '<path d="M10 14a4.2 4.2 0 0 0 6 0l3-3a4.2 4.2 0 0 0-6-6l-1 1"/><path d="M14 10a4.2 4.2 0 0 0-6 0l-3 3a4.2 4.2 0 0 0 6 6l1-1"/>',
   external: '<path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+  image: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="m21 16-5-5-8 8"/>',
+  upload: '<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>',
+  arrowUp: '<path d="M12 19V5M6 11l6-6 6 6"/>',
+  arrowDown: '<path d="M12 5v14M6 13l6 6 6-6"/>',
 };
 
 export function icon(name) {

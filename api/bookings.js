@@ -140,7 +140,6 @@ export default async function handler(req, res) {
         status: booking.status,
         service: service.name,
         employee: employee.name,
-        icsUrl: `/api/ics?reference=${encodeURIComponent(booking.reference)}`,
       },
     });
   } catch (err) {

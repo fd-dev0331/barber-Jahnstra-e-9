@@ -9,8 +9,19 @@
    aktiver Mitarbeiter arbeitet — dieselbe Regel, nach der gebucht werden kann. */
 import { query } from '../lib/db.js';
 import { json, fail, methodNotAllowed, serverError } from '../lib/http.js';
+import { ensureSchema } from '../lib/schema.js';
+import { mediaUrl } from '../lib/admin/media.js';
 
 const hhmm = (value) => String(value).slice(0, 5);
+
+/** "DE · EN · AR", "Deutsch, Englisch" oder "DE EN AR" -> Liste. */
+function splitLanguages(value) {
+  const raw = String(value ?? '').trim();
+  if (!raw) return [];
+  let parts = raw.split(/\s*[,;·/|]\s*/).filter(Boolean);
+  if (parts.length === 1 && raw.split(/\s+/).every((token) => token.length <= 3)) parts = raw.split(/\s+/);
+  return parts.map((part) => part.trim()).filter(Boolean);
+}
 
 /** Überlappende oder aneinanderstoßende Schichten eines Tages zusammenfassen. */
 function mergeIntervals(intervals) {
@@ -27,6 +38,7 @@ function mergeIntervals(intervals) {
 export default async function handler(req, res) {
   if (req.method !== 'GET') return methodNotAllowed(res, ['GET']);
   try {
+    await ensureSchema();
     // Bewusst ohne den 60-s-Cache aus lib/business.js: eine Änderung in der
     // Verwaltung läuft in einer anderen Function-Instanz und leert ihn hier nicht.
     const { rows: businesses } = await query(
@@ -38,7 +50,7 @@ export default async function handler(req, res) {
 
     const [{ rows: hours }, { rows: services }, { rows: assignments }, { rows: employees }] = await Promise.all([
       query(
-        `SELECT wh.weekday, wh.start_time, wh.end_time
+        `SELECT wh.employee_id, wh.weekday, wh.start_time, wh.end_time
            FROM working_hours wh JOIN employee e ON e.id = wh.employee_id
           WHERE e.business_id = $1 AND e.status = 'ACTIVE' AND wh.is_break = false`,
         [business.id]
@@ -56,7 +68,9 @@ export default async function handler(req, res) {
         [business.id]
       ),
       query(
-        `SELECT id, name, status FROM employee WHERE business_id = $1 ORDER BY sort_order, name`,
+        `SELECT id, name, status, role_label, show_on_website, headline, bio, languages,
+                experience_years, photo_media_id
+           FROM employee WHERE business_id = $1 ORDER BY sort_order, name`,
         [business.id]
       ),
     ]);
@@ -87,6 +101,18 @@ export default async function handler(req, res) {
         timezone: business.timezone,
       },
       openingHours,
+      // Team-Slider: aktive Mitarbeiter, die auf der Website erscheinen sollen.
+      team: active.filter((e) => e.show_on_website !== false).map((e) => ({
+        id: e.id,
+        name: e.name,
+        role: e.role_label,
+        headline: e.headline,
+        bio: e.bio,
+        languages: splitLanguages(e.languages),
+        experienceYears: e.experience_years,
+        photoUrl: mediaUrl(e.photo_media_id),
+        workdays: [...new Set(hours.filter((h) => h.employee_id === e.id).map((h) => h.weekday))].sort((a, b) => a - b),
+      })),
       services: services.map((s) => ({
         id: s.id,
         slug: s.slug,

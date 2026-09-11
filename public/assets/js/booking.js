@@ -409,10 +409,6 @@
       <div class="flex justify-between gap-4"><dt class="text-fg-muted">Datum</dt><dd class="tnum text-right text-fg">${fmtDateLong(start.slice(0, 10))}</dd></div>
       <div class="flex justify-between gap-4"><dt class="text-fg-muted">Uhrzeit</dt><dd class="tnum text-right text-fg">${fmtTime(start)} Uhr</dd></div>
       ${b?.reference ? `<div class="flex justify-between gap-4"><dt class="text-fg-muted">Referenz</dt><dd class="tnum text-right text-fg">${esc(b.reference)}</dd></div>` : ''}`;
-
-    const ics = $('[data-ics]');
-    if (b?.icsUrl) ics.href = b.icsUrl;
-    else ics.hidden = true;
   }
 
   /* ---------------- Start ---------------- */
