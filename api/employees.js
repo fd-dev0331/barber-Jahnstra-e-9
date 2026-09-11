@@ -27,7 +27,8 @@ export default async function handler(req, res) {
       [business.id, serviceId || null]
     );
 
-    res.setHeader('Cache-Control', 'public, max-age=30, s-maxage=120');
+    // Kurz gecacht: ein deaktivierter Mitarbeiter soll schnell von der Buchungsseite verschwinden.
+    res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=30, stale-while-revalidate=60');
     json(res, 200, {
       employees: rows.map((e) => ({ id: e.id, name: e.name, role: e.role_label })),
     });

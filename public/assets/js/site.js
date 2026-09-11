@@ -185,4 +185,66 @@
       return res.json();
     },
   };
+
+  /* ---------- Stammdaten aus der Verwaltung ----------
+     Telefon, E-Mail, Adresse und Instagram werden im Betrieb gepflegt und über
+     /api/business eingesetzt. Das HTML enthält dieselben Angaben als Rückfall
+     (Crawler, kein JavaScript, Server nicht erreichbar). */
+  let businessRequest = null;
+  window.BB.business = () => {
+    if (!businessRequest) businessRequest = window.BB.getJSON('/api/business');
+    return businessRequest;
+  };
+
+  /** "0681 20397906" -> "tel:+4368120397906": österreichische Inlandsnummer. */
+  window.BB.telHref = (phone) => {
+    let digits = String(phone ?? '').replace(/[^\d+]/g, '');
+    if (digits.startsWith('00')) digits = `+${digits.slice(2)}`;
+    else if (digits.startsWith('0')) digits = `+43${digits.slice(1)}`;
+    return `tel:${digits}`;
+  };
+
+  const instagramUrl = (value) => (/^https?:\/\//i.test(value)
+    ? value
+    : `https://www.instagram.com/${String(value).replace(/^@/, '')}/`);
+  const instagramHandle = (value) => {
+    const match = /instagram\.com\/([^/?#]+)/i.exec(value);
+    return `@${(match ? match[1] : String(value)).replace(/^@/, '')}`;
+  };
+
+  const HREF = {
+    phone: (b) => (b.phone ? window.BB.telHref(b.phone) : null),
+    email: (b) => (b.email ? `mailto:${b.email}` : null),
+    address: (b) => (b.address
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(b.address)}`
+      : null),
+    instagram: (b) => (b.instagram ? instagramUrl(b.instagram) : null),
+  };
+  const TEXT = {
+    phone: (b) => b.phone,
+    email: (b) => b.email,
+    address: (b) => b.address,
+    'address-dotted': (b) => (b.address ? b.address.replace(/\s*,\s*/g, ' · ') : null),
+    instagram: (b) => (b.instagram ? instagramHandle(b.instagram) : null),
+  };
+
+  if (document.querySelector('[data-biz-href], [data-biz-text]')) {
+    window.BB.business()
+      .then(({ business }) => {
+        if (!business) return;
+        document.querySelectorAll('[data-biz-href]').forEach((link) => {
+          const href = HREF[link.dataset.bizHref]?.(business);
+          if (href) link.href = href;
+          // Nicht hinterlegt (z. B. kein Instagram): der Eintrag verschwindet.
+          else (link.closest('li') || link).hidden = true;
+        });
+        document.querySelectorAll('[data-biz-text]').forEach((node) => {
+          const text = TEXT[node.dataset.bizText]?.(business);
+          if (text) node.textContent = text;
+        });
+      })
+      .catch(() => {
+        /* Rückfall: die Angaben aus dem HTML bleiben stehen. */
+      });
+  }
 })();

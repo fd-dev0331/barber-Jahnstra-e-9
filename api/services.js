@@ -14,7 +14,8 @@ export default async function handler(req, res) {
         ORDER BY sort_order, name`,
       [business.id]
     );
-    res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=300, stale-while-revalidate=600');
+    // Kurz gecacht: Änderungen aus der Verwaltung sollen binnen Sekunden sichtbar sein.
+    res.setHeader('Cache-Control', 'public, max-age=0, s-maxage=30, stale-while-revalidate=60');
     json(res, 200, {
       services: rows.map((s) => ({
         id: s.id,

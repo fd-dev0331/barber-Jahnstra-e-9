@@ -37,13 +37,29 @@ import * as bookings from '../../lib/admin/bookings.js';
 import * as settings from '../../lib/admin/settings.js';
 import * as googleAdmin from '../../lib/admin/google.js';
 
-/** Pfadsegmente nach /api/admin, egal ob Vercel sie liefert oder der Dev-Server. */
+/**
+ * Pfadsegmente nach /api/admin, egal ob Vercel sie liefert oder der Dev-Server.
+ *
+ * Vercel ordnet dieser Datei in der Praxis nur EIN Segment zu: /api/admin/employees
+ * erreicht die Function, /api/admin/employees/<id> endete mit 404 NOT_FOUND, bevor
+ * hier irgendetwas lief — Bearbeiten, Deaktivieren und Löschen gingen deshalb nie.
+ * vercel.json schreibt solche Pfade auf /api/admin/<resource>?__rest=<rest> um;
+ * hier wird der Pfad aus URL, Runtime-Parameter und __rest wieder zusammengesetzt.
+ */
 function segments(req) {
-  const fromRuntime = req.query?.path;
-  if (Array.isArray(fromRuntime)) return fromRuntime.filter(Boolean);
-  if (typeof fromRuntime === 'string') return fromRuntime.split('/').filter(Boolean);
-  const { pathname } = new URL(req.url, 'http://localhost');
-  return pathname.replace(/^\/api\/admin\/?/, '').split('/').filter(Boolean).map(decodeURIComponent);
+  const url = new URL(req.url, 'http://localhost');
+  let parts;
+  if (/^\/api\/admin\/[^/]/.test(url.pathname) && !url.pathname.includes('[')) {
+    parts = url.pathname.replace(/^\/api\/admin\/?/, '').split('/').filter(Boolean).map(decodeURIComponent);
+  } else {
+    const fromRuntime = req.query?.path;
+    parts = (Array.isArray(fromRuntime) ? fromRuntime : String(fromRuntime ?? '').split('/')).filter(Boolean);
+  }
+  const rest = url.searchParams.get('__rest') ?? req.query?.__rest;
+  if (rest && parts.length <= 1) {
+    parts = [...parts, ...String(rest).split('/').filter(Boolean).map(decodeURIComponent)];
+  }
+  return parts;
 }
 
 export default async function handler(req, res) {

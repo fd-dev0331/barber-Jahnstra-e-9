@@ -256,6 +256,35 @@ check('Termin wird storniert', cancelled.status === 200);
 const stillThere = await call(owner, `/api/admin/employees/${employeeId}`, { method: 'DELETE' });
 check('Löschen bleibt gesperrt, solange stornierte Termine vorliegen', stillThere.status === 409);
 
+console.log('\n▸ 8. Website-Synchronisierung');
+const site = await anon('/api/business');
+check('Öffentliche Stammdaten sind abrufbar',
+  site.status === 200 && Boolean(site.body.business?.name) && site.body.openingHours?.length === 7);
+
+const originalPhone = (await call(owner, '/api/admin/settings')).body.business.phone;
+await call(owner, '/api/admin/settings', { method: 'PATCH', body: { phone: '0664 1111111' } });
+check('Geänderte Telefonnummer erscheint auf der Website',
+  (await anon('/api/business')).body.business?.phone === '0664 1111111');
+await call(owner, '/api/admin/settings', { method: 'PATCH', body: { phone: originalPhone ?? '' } });
+
+const syncService = await call(owner, '/api/admin/services', {
+  method: 'POST', body: { name: `Sync-Test ${Date.now()}`, durationMinutes: 20, priceCents: 1234 },
+});
+const syncId = syncService.body.service?.id;
+const listed = async () => (await anon('/api/business')).body.services.find((s) => s.id === syncId);
+check('Neue Leistung erscheint in der Preisliste', (await listed())?.priceCents === 1234);
+
+// So kommt ein Pfad mit ID auf Vercel an: vercel.json schreibt
+// /api/admin/services/<id> auf /api/admin/services?__rest=<id> um.
+const viaRewrite = await call(owner, `/api/admin/services?__rest=${syncId}`, { method: 'PATCH', body: { priceCents: 1500 } });
+check('Umgeschriebener Pfad (__rest wie auf Vercel) erreicht den Handler', viaRewrite.status === 200);
+check('Preisänderung erscheint in der Preisliste', (await listed())?.priceCents === 1500);
+
+await call(owner, `/api/admin/services/${syncId}`, { method: 'PATCH', body: { status: 'INACTIVE' } });
+check('Deaktivierte Leistung verschwindet aus der Preisliste', !(await listed()));
+check('Leistung ohne Termine lässt sich löschen',
+  (await call(owner, `/api/admin/services/${syncId}`, { method: 'DELETE' })).status === 200);
+
 console.log('\n' + '─'.repeat(48));
 console.log(`  ${pass} bestanden, ${fail} fehlgeschlagen`);
 console.log('  Hinweis: Testmitarbeiter „Testperson", das Testkonto und der');

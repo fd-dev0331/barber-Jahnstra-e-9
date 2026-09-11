@@ -4,6 +4,12 @@
   "outputDirectory": "public",
   "cleanUrls": true,
   "trailingSlash": false,
+  "rewrites": [
+    {
+      "source": "/api/admin/:resource/:rest(.*)",
+      "destination": "/api/admin/:resource?__rest=:rest"
+    }
+  ],
   "redirects": [
     {
       "source": "/preise.html",
