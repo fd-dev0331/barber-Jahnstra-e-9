@@ -1,5 +1,6 @@
-/* Galerie: Instagram-Daten aus dem Backend-Cache + native <dialog> Lightbox.
-   Ohne JS und ohne API bleiben die statischen Fallback-Kacheln stehen. */
+/* Galerie: Bilder aus der Verwaltung (/api/gallery) + native <dialog> Lightbox.
+   Gibt es keine Bilder — oder ist der Server nicht erreichbar —, erscheint der
+   Hinweis "Noch keine Bilder" statt Beispielbildern. */
 (() => {
   'use strict';
 
@@ -11,38 +12,28 @@
   const loading = document.querySelector('[data-gallery-loading]');
   const empty = document.querySelector('[data-gallery-empty]');
 
-  /* Aktueller Datensatz: zunächst aus dem statischen Markup gelesen, damit die
-     Lightbox auch ohne API funktioniert. */
-  let items = Array.from(grid.querySelectorAll('img')).map((img) => ({
-    src: img.getAttribute('src'),
-    full: img.getAttribute('src'),
-    alt: img.getAttribute('alt') || '',
-    type: 'IMAGE',
-    permalink: null,
-  }));
+  let items = [];
 
-  /* ---------------- Instagram-Daten ---------------- */
+  /* ---------------- Bilder aus der Verwaltung ---------------- */
   (async () => {
     loading.hidden = false;
     try {
-      const data = await window.BB.getJSON('/api/gallery?limit=40');
-      const fetched = Array.isArray(data?.items) ? data.items.filter((i) => i?.src) : [];
-      if (!fetched.length) return; // Fallback-Kacheln behalten
-      items = fetched.map((i) => ({
+      const data = await window.BB.getJSON('/api/gallery?limit=60');
+      items = (Array.isArray(data?.items) ? data.items.filter((i) => i?.src) : []).map((i) => ({
         src: i.thumbnail || i.src,
         full: i.src,
         alt: i.alt || 'Arbeit aus dem Bregenz Barbershop',
         type: i.type || 'IMAGE',
         permalink: i.permalink || null,
       }));
-      render();
     } catch {
-      /* API nicht erreichbar oder noch nicht deployed: statische Kacheln bleiben.
-         Das ist der vorgesehene Zustand, kein Fehler für Besucher. */
+      // Server nicht erreichbar: lieber der Hinweis als veraltete Beispielbilder.
+      items = [];
     } finally {
       loading.hidden = true;
       loading.removeAttribute('aria-busy');
     }
+    render();
   })();
 
   function render() {

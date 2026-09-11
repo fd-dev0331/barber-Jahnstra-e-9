@@ -237,3 +237,16 @@ ALTER TABLE employee ADD COLUMN IF NOT EXISTS photo_media_id   uuid REFERENCES m
 
 -- Galeriebilder aus der Verwaltung verweisen auf ihr Bild in media.
 ALTER TABLE gallery_item ADD COLUMN IF NOT EXISTS media_id uuid REFERENCES media(id) ON DELETE SET NULL;
+
+-- Eigene Schließtage (Betriebsurlaub, zusätzliche freie Tage).
+CREATE TABLE IF NOT EXISTS closure_day (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id uuid NOT NULL REFERENCES business(id) ON DELETE CASCADE,
+  day         date NOT NULL,
+  label       text,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  UNIQUE (business_id, day)
+);
+
+-- Gesetzliche Feiertage, an denen der Salon trotzdem öffnet (Schlüssel aus lib/holidays.js).
+ALTER TABLE business ADD COLUMN IF NOT EXISTS open_holidays text[] NOT NULL DEFAULT '{}';

@@ -31,7 +31,7 @@ const htmlFiles = fs.readdirSync(ADMIN_HTML).filter((f) => f.endsWith('.html')).
 
 /* ------------------------------------------------------ benutzte Schlüssel */
 
-const NAMESPACES = ['common', 'nav', 'shell', 'roles', 'status', 'login', 'setup', 'validation', 'errors',
+const NAMESPACES = ['common', 'nav', 'shell', 'roles', 'status', 'login', 'setup', 'validation', 'errors', 'holidays',
   'dashboard', 'bookings', 'calendar', 'employees', 'services', 'gallery', 'business', 'google', 'settings'];
 const used = new Map(); // key -> Set(file)
 const use = (key, file) => {
@@ -80,6 +80,10 @@ const dynamic = [
   ...['VACATION', 'SICK', 'OTHER'].map((k) => `employees.absenceKinds.${k}`),
   ...['access_denied', 'state_mismatch', 'no_refresh_token', 'not_configured', 'generic'].map((c) => `google.callbackErrors.${c}`),
   'employees.shift', 'employees.break', 'common.active', 'common.inactive',
+  // Feiertagsnamen: Schlüssel aus lib/holidays.js, im Code als `holidays.${key}`.
+  ...['neujahr', 'heilige-drei-koenige', 'ostermontag', 'staatsfeiertag', 'christi-himmelfahrt', 'pfingstmontag',
+    'fronleichnam', 'mariae-himmelfahrt', 'nationalfeiertag', 'allerheiligen', 'mariae-empfaengnis', 'christtag',
+    'stefanitag'].map((key) => `holidays.${key}`),
   'errors.generic', 'errors.forbidden', 'errors.not_found', 'errors.conflict', 'errors.server_error',
   ...[...backendCodes].map((code) => `errors.${code}`),
 ];

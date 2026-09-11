@@ -34,7 +34,7 @@ export default async function handler(req, res) {
     if (!services.length) return fail(res, 404, 'service_not_found', 'Diese Leistung ist nicht mehr buchbar.');
     if (!employees.length) return fail(res, 404, 'employee_not_found', 'Diese Person ist nicht mehr buchbar.');
 
-    const { slots, closed } = await getAvailability({
+    const { slots, closed, closure } = await getAvailability({
       business, employee: employees[0], service: services[0], date,
     });
 
@@ -43,7 +43,10 @@ export default async function handler(req, res) {
       ? null
       : await findNextAvailableDate({ business, employee: employees[0], service: services[0], fromDate: date });
 
-    json(res, 200, { date, timezone: business.timezone, closed, slots, nextAvailableDate });
+    // closure: { type: 'holiday' | 'closure', name } — die Buchungsseite nennt den Grund.
+    json(res, 200, {
+      date, timezone: business.timezone, closed, closure: closure ?? null, slots, nextAvailableDate,
+    });
   } catch (err) {
     if (err instanceof GoogleUnavailableError) {
       // Lieber gar keine Zeiten als falsche: belegte Zeiten als frei anzuzeigen

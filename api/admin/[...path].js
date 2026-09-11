@@ -27,7 +27,8 @@
      GET    /api/admin/users                       POST / PATCH /:id
      GET    /api/admin/google                      POST /api/admin/google/calendar, /disconnect
      POST   /api/admin/media                       Bild hochladen (Galerie, Mitarbeiterfoto)
-     GET    /api/admin/gallery                     POST / PATCH /:id / DELETE /:id / POST /reorder */
+     GET    /api/admin/gallery                     POST / PATCH /:id / DELETE /:id / POST /reorder
+     GET    /api/admin/closures                    Feiertage + Schließtage; POST / POST /holiday / DELETE /:id */
 import { fail, methodNotAllowed, serverError, readJson, rateLimit } from '../../lib/http.js';
 import { requireUser, hasRole } from '../../lib/auth.js';
 import { ensureSchema } from '../../lib/schema.js';
@@ -41,6 +42,7 @@ import * as settings from '../../lib/admin/settings.js';
 import * as googleAdmin from '../../lib/admin/google.js';
 import * as media from '../../lib/admin/media.js';
 import * as gallery from '../../lib/admin/gallery.js';
+import * as closures from '../../lib/admin/closures.js';
 
 /** Bilder kommen als Base64 im JSON — nur dieser Endpunkt darf so groß sein. */
 const UPLOAD_LIMIT = 6_000_000;
@@ -172,6 +174,14 @@ export default async function handler(req, res) {
       if (req.method === 'PATCH' && id) return await gallery.update(req, res, body, manager, id);
       if (req.method === 'DELETE' && id) return await gallery.remove(req, res, manager, id);
       return methodNotAllowed(res, ['GET', 'POST', 'PATCH', 'DELETE']);
+    }
+
+    if (resource === 'closures') {
+      if (req.method === 'GET' && !id) return await closures.list(req, res, manager);
+      if (req.method === 'POST' && !id) return await closures.add(req, res, body, manager);
+      if (req.method === 'POST' && id === 'holiday') return await closures.setHoliday(req, res, body, manager);
+      if (req.method === 'DELETE' && id) return await closures.remove(req, res, manager, id);
+      return methodNotAllowed(res, ['GET', 'POST', 'DELETE']);
     }
 
     if (resource === 'settings') {

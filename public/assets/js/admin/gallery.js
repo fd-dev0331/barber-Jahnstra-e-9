@@ -1,8 +1,8 @@
 /* /admin/gallery — Bilder der Galerie auf der Website: hochladen, beschreiben,
    sortieren, ein- und ausblenden, löschen.
 
-   Solange hier kein aktives Bild steht, zeigt die Website ihre Beispielbilder
-   aus dem HTML weiter — eine leere Galerie sieht niemand. */
+   Solange hier kein aktives Bild steht, zeigt die Galerie der Website den
+   Hinweis "Noch keine Bilder". */
 import { t, tn, onLanguageChange } from './i18n.js';
 import { api, ApiError, escapeHtml, errorMessage } from './core.js';
 import {

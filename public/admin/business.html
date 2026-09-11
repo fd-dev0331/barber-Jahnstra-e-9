@@ -103,6 +103,34 @@
           <div data-hours></div>
         </div>
       </section>
+
+      <!-- Feiertage und Schließtage: an diesen Tagen ist online nicht buchbar. -->
+      <section class="adm-card mt-6" aria-labelledby="closures-title">
+        <div class="adm-card-head"><h2 id="closures-title" class="adm-h2" data-i18n="business.closures"></h2></div>
+        <div class="adm-card-pad grid gap-6">
+          <p class="adm-hint mt-0" data-i18n="business.closuresHint"></p>
+          <div>
+            <h3 class="mb-2 text-sm font-semibold text-fg" data-i18n="business.publicHolidays"></h3>
+            <div data-holidays></div>
+          </div>
+          <div>
+            <h3 class="mb-2 text-sm font-semibold text-fg" data-i18n="business.customClosures"></h3>
+            <div data-closures></div>
+            <form data-closure-form novalidate class="mt-3 grid gap-3 sm:grid-cols-[minmax(0,190px)_minmax(0,1fr)_auto] sm:items-end">
+              <p class="adm-form-error sm:col-span-3" data-form-error role="alert" hidden></p>
+              <div>
+                <label class="adm-label" for="c-date" data-i18n="business.closureDate"></label>
+                <input class="adm-input tnum" id="c-date" name="date" type="date">
+              </div>
+              <div>
+                <label class="adm-label" for="c-label" data-i18n="business.closureLabel"></label>
+                <input class="adm-input" id="c-label" name="label" maxlength="120" autocomplete="off" data-i18n-attr="placeholder:business.closureLabelPlaceholder">
+              </div>
+              <button type="submit" class="adm-btn-secondary" data-i18n="business.closureAdd"></button>
+            </form>
+          </div>
+        </div>
+      </section>
     </div>
   </main>
 </div>

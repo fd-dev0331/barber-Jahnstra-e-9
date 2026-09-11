@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Galerie – Bregenz Barbershop</title>
-<meta name="description" content="Arbeiten aus dem Bregenz Barbershop: Haarschnitte, Fades, Bartpflege und Konturen. Bilder direkt aus unserem Instagram-Profil.">
+<meta name="description" content="Arbeiten aus dem Bregenz Barbershop: Haarschnitte, Fades, Bartpflege und Konturen. Bilder aus dem Salon.">
 <link rel="canonical" href="https://bregenz-barbershop.at/galerie.html">
 <meta name="theme-color" content="#0E0D0C">
 <meta property="og:type" content="website">
 <meta property="og:locale" content="de_AT">
 <meta property="og:site_name" content="Bregenz Barbershop">
 <meta property="og:title" content="Galerie – Bregenz Barbershop">
-<meta property="og:description" content="Arbeiten aus dem Bregenz Barbershop: Haarschnitte, Fades, Bartpflege und Konturen. Bilder direkt aus unserem Instagram-Profil.">
+<meta property="og:description" content="Arbeiten aus dem Bregenz Barbershop: Haarschnitte, Fades, Bartpflege und Konturen. Bilder aus dem Salon.">
 <meta property="og:url" content="https://bregenz-barbershop.at/galerie.html">
 <meta property="og:image" content="https://bregenz-barbershop.at/assets/img/og.jpg">
 <meta name="twitter:card" content="summary_large_image">
@@ -29,10 +29,10 @@
       Bregenz <span class="text-accent">Barbershop</span>
     </a>
     <nav aria-label="Hauptnavigation" class="hidden items-center gap-8 lg:flex">
-      <a href="/" class="font-sans text-sm font-medium uppercase tracking-[0.08em] text-fg-body transition-colors hover:text-accent">Start</a>
-      <a href="/#preise" class="font-sans text-sm font-medium uppercase tracking-[0.08em] text-fg-body transition-colors hover:text-accent">Preise</a>
-      <a href="/galerie.html" aria-current="page" class="font-sans text-sm font-medium uppercase tracking-[0.08em] text-accent">Galerie</a>
-      <a href="/#kontakt" class="font-sans text-sm font-medium uppercase tracking-[0.08em] text-fg-body transition-colors hover:text-accent">Kontakt</a>
+      <a href="/" class="font-sans text-sm font-semibold uppercase tracking-[0.08em] text-fg-body transition-colors hover:text-accent">Start</a>
+      <a href="/#preise" class="font-sans text-sm font-semibold uppercase tracking-[0.08em] text-fg-body transition-colors hover:text-accent">Preise</a>
+      <a href="/galerie.html" aria-current="page" class="font-sans text-sm font-semibold uppercase tracking-[0.08em] text-accent">Galerie</a>
+      <a href="/#kontakt" class="font-sans text-sm font-semibold uppercase tracking-[0.08em] text-fg-body transition-colors hover:text-accent">Kontakt</a>
       <a href="/booking.html" class="btn-primary">Termin buchen</a>
     </nav>
     <button type="button" data-menu-toggle aria-expanded="false" aria-controls="mobile-menu"
@@ -61,12 +61,11 @@
       <h1 class="h1">Galerie</h1>
       <hr class="rule">
       <p class="lead">
-        Schnitte, Fades und Bartarbeit aus dem Salon in der Jahnstraße.
-        Neue Bilder erscheinen zuerst auf Instagram.
+        Schnitte, Fades und Bartarbeit aus dem Salon.
       </p>
       <a href="https://www.instagram.com/bregenz_barbershop/" data-biz-href="instagram" target="_blank" rel="noopener noreferrer" class="btn-ghost mt-6">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
-        &#64;bregenz_barbershop
+        <span data-biz-text="instagram">@bregenz_barbershop</span>
       </a>
     </div>
   </section>
@@ -83,100 +82,16 @@
       <div class="aspect-square animate-pulse rounded-sm bg-surface"></div>
     </div>
 
-    <!-- Aktuelle Bilder aus dem Instagram-Profil, statisch im HTML: die Seite
-         funktioniert damit ohne JS und ohne API. Sobald der Backend-Cache
-         (scripts/sync-instagram.js + /api/gallery) Daten liefert, ersetzt
-         gallery.js diese Kacheln. -->
-    <ul id="gallery-grid" data-gallery role="list"
-        class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-        <li>
-          <button type="button" class="group block w-full overflow-hidden rounded-sm border border-line"
-                  data-lightbox-open data-index="0"
-                  aria-label="Bild 1 von 9 vergrößern">
-            <img src="/assets/img/gallery/ig-01.jpg" alt="Frischer Haarschnitt mit Fade, Blick in den Salon in der Jahnstraße"
-                 width="1000" height="1000" fetchpriority="high" decoding="async"
-                 class="aspect-square w-full object-cover transition-opacity duration-200 group-hover:opacity-80">
-          </button>
-        </li>
-        <li>
-          <button type="button" class="group block w-full overflow-hidden rounded-sm border border-line"
-                  data-lightbox-open data-index="1"
-                  aria-label="Bild 2 von 9 vergrößern">
-            <img src="/assets/img/gallery/ig-02.jpg" alt="Innenansicht des Bregenz Barbershop mit Barberstuhl und Kunde"
-                 width="360" height="640" fetchpriority="high" decoding="async"
-                 class="aspect-square w-full object-cover transition-opacity duration-200 group-hover:opacity-80">
-          </button>
-        </li>
-        <li>
-          <button type="button" class="group block w-full overflow-hidden rounded-sm border border-line"
-                  data-lightbox-open data-index="2"
-                  aria-label="Bild 3 von 9 vergrößern">
-            <img src="/assets/img/gallery/ig-03.jpg" alt="Lockiger Herren-Haarschnitt mit sauberer Kontur, Seitenansicht"
-                 width="360" height="640" fetchpriority="high" decoding="async"
-                 class="aspect-square w-full object-cover transition-opacity duration-200 group-hover:opacity-80">
-          </button>
-        </li>
-        <li>
-          <button type="button" class="group block w-full overflow-hidden rounded-sm border border-line"
-                  data-lightbox-open data-index="3"
-                  aria-label="Bild 4 von 9 vergrößern">
-            <img src="/assets/img/gallery/ig-04.jpg" alt="Nackenkontur nach dem Fade, Detailaufnahme"
-                 width="361" height="640" fetchpriority="high" decoding="async"
-                 class="aspect-square w-full object-cover transition-opacity duration-200 group-hover:opacity-80">
-          </button>
-        </li>
-        <li>
-          <button type="button" class="group block w-full overflow-hidden rounded-sm border border-line"
-                  data-lightbox-open data-index="4"
-                  aria-label="Bild 5 von 9 vergrößern">
-            <img src="/assets/img/gallery/ig-05.jpg" alt="Abo beim Schneiden mit Schere und Kamm"
-                 width="361" height="640" loading="lazy" decoding="async"
-                 class="aspect-square w-full object-cover transition-opacity duration-200 group-hover:opacity-80">
-          </button>
-        </li>
-        <li>
-          <button type="button" class="group block w-full overflow-hidden rounded-sm border border-line"
-                  data-lightbox-open data-index="5"
-                  aria-label="Bild 6 von 9 vergrößern">
-            <img src="/assets/img/gallery/ig-06.jpg" alt="Skin Fade im Profil, fertig gestylt"
-                 width="361" height="640" loading="lazy" decoding="async"
-                 class="aspect-square w-full object-cover transition-opacity duration-200 group-hover:opacity-80">
-          </button>
-        </li>
-        <li>
-          <button type="button" class="group block w-full overflow-hidden rounded-sm border border-line"
-                  data-lightbox-open data-index="6"
-                  aria-label="Bild 7 von 9 vergrößern">
-            <img src="/assets/img/gallery/ig-07.jpg" alt="Kunde im Barberstuhl während des Haarschnitts"
-                 width="361" height="640" loading="lazy" decoding="async"
-                 class="aspect-square w-full object-cover transition-opacity duration-200 group-hover:opacity-80">
-          </button>
-        </li>
-        <li>
-          <button type="button" class="group block w-full overflow-hidden rounded-sm border border-line"
-                  data-lightbox-open data-index="7"
-                  aria-label="Bild 8 von 9 vergrößern">
-            <img src="/assets/img/gallery/ig-08.jpg" alt="Low Fade mit zurückgestyltem Deckhaar, Seitenansicht"
-                 width="361" height="640" loading="lazy" decoding="async"
-                 class="aspect-square w-full object-cover transition-opacity duration-200 group-hover:opacity-80">
-          </button>
-        </li>
-        <li>
-          <button type="button" class="group block w-full overflow-hidden rounded-sm border border-line"
-                  data-lightbox-open data-index="8"
-                  aria-label="Bild 9 von 9 vergrößern">
-            <img src="/assets/img/gallery/ig-09.jpg" alt="Styling-Pomade wird für das Finish vorbereitet"
-                 width="360" height="640" loading="lazy" decoding="async"
-                 class="aspect-square w-full object-cover transition-opacity duration-200 group-hover:opacity-80">
-          </button>
-        </li>
-    </ul>
+    <!-- Bilder kommen ausschließlich aus der Verwaltung (/api/gallery). Ohne Bilder
+         zeigt die Seite den Hinweis darunter statt Beispielbildern. -->
+    <ul id="gallery-grid" data-gallery role="list" hidden
+        class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4"></ul>
 
     <!-- Leerzustand: nie ein leeres Raster zeigen. -->
     <div data-gallery-empty hidden class="card text-center">
-      <p class="text-fg-body">Die Galerie wird gerade aktualisiert.</p>
-      <a href="https://www.instagram.com/bregenz_barbershop/" data-biz-href="instagram" target="_blank" rel="noopener noreferrer" class="btn-secondary mt-5">
-        Aktuelle Bilder auf Instagram
+      <p class="font-sans text-lg font-semibold text-fg">Noch keine Bilder in der Galerie.</p>
+      <p class="mt-2 text-[15px] text-fg-muted">Schau bald wieder vorbei.</p>
+      <a href="https://www.instagram.com/bregenz_barbershop/" data-biz-href="instagram" target="_blank" rel="noopener noreferrer" $1Zu unserem Instagram
       </a>
     </div>
 
@@ -192,7 +107,7 @@
 <dialog data-lightbox class="m-0 h-full max-h-none w-full max-w-none bg-transparent p-0 backdrop:bg-black/[.96]">
   <div class="relative flex h-full w-full flex-col">
     <div class="flex items-center justify-between gap-4 px-4 py-3">
-      <p class="tnum text-sm text-fg-muted"><span data-lightbox-position>1</span> / <span data-lightbox-total>9</span></p>
+      <p class="tnum text-sm text-fg-muted"><span data-lightbox-position>1</span> / <span data-lightbox-total>0</span></p>
       <button type="button" data-lightbox-close
               class="flex h-12 w-12 items-center justify-center rounded-md text-accent hover:bg-surface"
               aria-label="Galerie schließen">

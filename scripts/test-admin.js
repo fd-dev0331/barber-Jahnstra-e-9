@@ -333,6 +333,56 @@ const deletedItem = await call(owner, `/api/admin/gallery/${galleryItem.body.ite
 check('Gelöschtes Galeriebild ist samt Datei weg',
   deletedItem.status === 200 && (await fetch(`${BASE}/api/media?id=${galleryMedia}`)).status === 404);
 
+console.log('\n▸ 10. Feiertage und Schließtage');
+const { publicHolidaysBetween } = await import('../lib/holidays.js');
+const closureList = await call(owner, '/api/admin/closures');
+check('Alle 13 Feiertage der nächsten 12 Monate werden geliefert',
+  closureList.status === 200 && closureList.body.holidays.length === 13);
+
+const bookable = (await anon('/api/employees')).body.employees[0];
+const closureDay = nextWorkday(6);
+const addedClosure = await call(owner, '/api/admin/closures', { method: 'POST', body: { date: closureDay, label: 'Testschließtag' } });
+check('Eigener Schließtag wird angelegt', addedClosure.status === 201);
+check('Doppelter Schließtag wird abgelehnt',
+  (await call(owner, '/api/admin/closures', { method: 'POST', body: { date: closureDay } })).status === 409);
+
+const closedDay = await anon(`/api/availability?date=${closureDay}&serviceId=${service.id}&employeeId=${bookable.id}`);
+check('Verfügbarkeit meldet den Schließtag mit Namen und ohne Zeiten',
+  closedDay.body.closed === true && closedDay.body.closure?.name === 'Testschließtag' && closedDay.body.slots.length === 0);
+
+const websiteOnClosure = await anon('/api/bookings', {
+  method: 'POST',
+  body: { serviceId: service.id, employeeId: bookable.id, start: `${closureDay}T09:00:00Z`, customerName: 'Feiertag', customerPhone: '0664 0000009' },
+});
+check('Website-Buchung am Schließtag: 409 mit Grund',
+  websiteOnClosure.status === 409 && websiteOnClosure.body.error === 'closed_day' && websiteOnClosure.body.message.includes('Testschließtag'));
+check('Manueller Termin am Schließtag: 409',
+  (await call(owner, '/api/admin/bookings', {
+    method: 'POST',
+    body: { serviceId: service.id, employeeId: bookable.id, start: `${closureDay}T09:00:00Z`, customerName: 'Feiertag', customerPhone: '0664 0000010' },
+  })).body.error === 'closed_day');
+
+await call(owner, `/api/admin/closures/${addedClosure.body.closure.id}`, { method: 'DELETE' });
+check('Nach dem Entfernen ist der Tag wieder buchbar',
+  (await anon(`/api/availability?date=${closureDay}&serviceId=${service.id}&employeeId=${bookable.id}`)).body.closure === null);
+
+// Nächster Feiertag innerhalb der Vorausbuchungsfrist, der nicht auf einen Sonntag fällt.
+const todayVienna = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Vienna' }).format(new Date());
+const inRange = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Vienna' }).format(new Date(Date.now() + 80 * 86_400_000));
+const holiday = publicHolidaysBetween(todayVienna, inRange)
+  .find((h) => h.date > todayVienna && new Date(`${h.date}T12:00:00Z`).getUTCDay() !== 0);
+if (holiday) {
+  const onHoliday = await anon(`/api/availability?date=${holiday.date}&serviceId=${service.id}&employeeId=${bookable.id}`);
+  check(`Feiertag ${holiday.name} (${holiday.date}) ist geschlossen`,
+    onHoliday.body.closed === true && onHoliday.body.closure?.name === holiday.name);
+  await call(owner, '/api/admin/closures/holiday', { method: 'POST', body: { key: holiday.key, closed: false } });
+  check('Als geöffnet markierter Feiertag ist buchbar',
+    (await anon(`/api/availability?date=${holiday.date}&serviceId=${service.id}&employeeId=${bookable.id}`)).body.closure === null);
+  await call(owner, '/api/admin/closures/holiday', { method: 'POST', body: { key: holiday.key, closed: true } });
+} else {
+  console.log('  ⏭  kein Feiertag in den nächsten 80 Tagen (außer sonntags) — Feiertagsprüfung übersprungen');
+}
+
 console.log('\n' + '─'.repeat(48));
 console.log(`  ${pass} bestanden, ${fail} fehlgeschlagen`);
 console.log('  Hinweis: Testmitarbeiter „Testperson", das Testkonto und der');

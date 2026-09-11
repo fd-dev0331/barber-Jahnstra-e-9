@@ -8,6 +8,8 @@ import { getBusiness } from '../lib/business.js';
 import { assertSlotFree } from '../lib/availability.js';
 import { json, methodNotAllowed, fail, serverError, rateLimit, readJson } from '../lib/http.js';
 import { isGoogleConnected, createEvent, GoogleUnavailableError } from '../lib/google.js';
+import { closureOn } from '../lib/holidays.js';
+import { dateInZone } from '../lib/time.js';
 
 const MAX = { name: 120, email: 200, phone: 40, note: 500 };
 const CONTROL_CHARS = /[\u0000-\u001F\u007F]/g;
@@ -78,6 +80,16 @@ export default async function handler(req, res) {
     const service = services[0];
     const employee = employees[0];
     const end = new Date(start.getTime() + service.duration_minutes * 60_000);
+
+    // Feiertag oder Schließtag: mit Namen ablehnen, nicht als "belegt".
+    const closure = await closureOn(business.id, dateInZone(start, business.timezone));
+    if (closure) {
+      const day = new Intl.DateTimeFormat('de-AT', {
+        timeZone: business.timezone, day: '2-digit', month: '2-digit', year: 'numeric',
+      }).format(start);
+      return fail(res, 409, 'closed_day',
+        `Am ${day} ist der Salon geschlossen (${closure.name}). Bitte wähle einen anderen Tag.`);
+    }
 
     if (start.getTime() < Date.now() + business.lead_time_minutes * 60_000) {
       return fail(res, 409, 'too_late', 'Dieser Termin liegt zu kurzfristig. Bitte wähle eine spätere Uhrzeit.');

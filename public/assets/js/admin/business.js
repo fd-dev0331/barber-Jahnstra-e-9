@@ -4,10 +4,12 @@
    kann, wann aktive Mitarbeiter arbeiten (working_hours). Diese Seite zeigt sie
    deshalb zusammengefasst an und verweist zum Bearbeiten auf die Mitarbeiter —
    ohne das Schema zu ändern. */
-import { t, onLanguageChange } from './i18n.js';
-import { api, ApiError, session, setTimezone, escapeHtml, weekdayName, WEEK_ORDER } from './core.js';
+import { t, tn, onLanguageChange } from './i18n.js';
 import {
-  toast, handleError, errorState, skeletonList, validate, clearErrors, showFormError, setBusy,
+  api, ApiError, session, setTimezone, escapeHtml, weekdayName, WEEK_ORDER, fmtDayKey,
+} from './core.js';
+import {
+  icon, toast, handleError, errorState, skeletonList, validate, clearErrors, showFormError, setBusy,
 } from './ui.js';
 import { requireSession, refreshShell } from './shell.js';
 
@@ -15,7 +17,10 @@ const form = document.querySelector('[data-business-form]');
 const DEFAULT_TIMEZONE = 'Europe/Vienna';
 const PREFERRED_ZONES = ['Europe/Vienna', 'Europe/Berlin', 'Europe/Zurich', 'Europe/Istanbul', 'Europe/Moscow', 'UTC'];
 
-const state = { business: null, employees: null, error: null };
+const state = { business: null, employees: null, error: null, closures: null, closuresError: null };
+const holidaysBox = document.querySelector('[data-holidays]');
+const closuresBox = document.querySelector('[data-closures]');
+const closureForm = document.querySelector('[data-closure-form]');
 
 function renderTimezones(selected) {
   const all = typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('timeZone') : [];
@@ -151,14 +156,129 @@ document.querySelector('[data-error]').addEventListener('click', (event) => {
   if (event.target.closest('[data-retry]')) load();
 });
 
+/* ------------------------------------------------- Feiertage und Schließtage
+   Feiertage berechnet der Server (Österreich); hier wird nur festgelegt, ob der
+   Salon an einem davon trotzdem öffnet. Eigene Schließtage kommen dazu. */
+
+const dayLabel = (date) => fmtDayKey(date, { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
+
+function renderClosures() {
+  if (state.closuresError) {
+    holidaysBox.innerHTML = errorState(state.closuresError);
+    closuresBox.innerHTML = '';
+    return;
+  }
+  if (!state.closures) {
+    holidaysBox.innerHTML = skeletonList(2);
+    closuresBox.innerHTML = '';
+    return;
+  }
+
+  holidaysBox.innerHTML = `<ul class="grid gap-1.5">${state.closures.holidays.map((holiday) => `
+    <li class="flex min-h-[48px] flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-md border border-line px-3 py-1.5">
+      <span class="min-w-0">
+        <span class="font-medium text-fg">${escapeHtml(t(`holidays.${holiday.key}`))}</span>
+        <span class="tnum ml-1 text-[13px] text-fg-muted">${escapeHtml(dayLabel(holiday.date))}</span>
+      </span>
+      <label class="flex min-h-[40px] cursor-pointer items-center gap-2 text-[13px] text-fg-body">
+        <input type="checkbox" class="adm-check" data-holiday="${holiday.key}" ${holiday.closed ? 'checked' : ''}>
+        <span>${escapeHtml(t('business.holidayClosed'))}</span>
+      </label>
+    </li>`).join('')}</ul>`;
+
+  closuresBox.innerHTML = state.closures.closures.length
+    ? `<ul class="grid gap-1.5">${state.closures.closures.map((closure) => `
+      <li class="flex min-h-[48px] items-center justify-between gap-3 rounded-md border border-line px-3 py-1.5">
+        <span class="min-w-0 break-words">
+          <span class="tnum font-medium text-fg">${escapeHtml(dayLabel(closure.date))}</span>
+          ${closure.label ? `<span class="text-fg-body"> · ${escapeHtml(closure.label)}</span>` : ''}
+        </span>
+        <button type="button" class="adm-icon-btn adm-icon-btn-plain h-10 w-10 hover:text-danger" data-remove-closure="${closure.id}"
+          aria-label="${escapeHtml(t('business.removeClosure'))}" title="${escapeHtml(t('business.removeClosure'))}">${icon('trash')}</button>
+      </li>`).join('')}</ul>`
+    : `<p class="text-[13px] text-fg-muted">${escapeHtml(t('business.noClosures'))}</p>`;
+}
+
+async function loadClosures() {
+  state.closuresError = null;
+  try {
+    state.closures = await api('/closures');
+    if (!closureForm.elements.date.value) closureForm.elements.date.value = state.closures.today;
+    closureForm.elements.date.min = state.closures.today;
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 401) return handleError(err);
+    state.closuresError = err;
+  }
+  renderClosures();
+  return undefined;
+}
+
+holidaysBox.addEventListener('change', async (event) => {
+  const checkbox = event.target.closest('[data-holiday]');
+  if (!checkbox) return;
+  checkbox.disabled = true;
+  try {
+    state.closures = await api('/closures/holiday', {
+      method: 'POST', body: { key: checkbox.dataset.holiday, closed: checkbox.checked },
+    });
+    renderClosures();
+    toast(t('business.holidaySaved'));
+  } catch (err) {
+    checkbox.checked = !checkbox.checked;
+    checkbox.disabled = false;
+    handleError(err);
+  }
+});
+holidaysBox.addEventListener('click', (event) => {
+  if (event.target.closest('[data-retry]')) loadClosures();
+});
+
+closuresBox.addEventListener('click', async (event) => {
+  const button = event.target.closest('[data-remove-closure]');
+  if (!button) return;
+  setBusy(button, true);
+  try {
+    await api(`/closures/${button.dataset.removeClosure}`, { method: 'DELETE' });
+    toast(t('business.closureRemoved'));
+    await loadClosures();
+  } catch (err) {
+    setBusy(button, false);
+    handleError(err);
+  }
+});
+
+closureForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  if (!validate(closureForm, [{ name: 'date', required: true }, { name: 'label', max: 120 }])) return;
+  const submit = closureForm.querySelector('button[type="submit"]');
+  setBusy(submit, true);
+  try {
+    const result = await api('/closures', {
+      method: 'POST',
+      body: { date: closureForm.elements.date.value, label: closureForm.elements.label.value.trim() || null },
+    });
+    closureForm.elements.label.value = '';
+    if (result.conflictingBookings) toast(tn('business.closureConflicts', result.conflictingBookings), 'warn');
+    else toast(t('business.closureAdded'));
+    await loadClosures();
+  } catch (err) {
+    showFormError(closureForm, err);
+  } finally {
+    setBusy(submit, false);
+  }
+});
+
 onLanguageChange(() => {
   if (state.business) renderTimezones(form.elements.timezone.value);
   clearErrors(form);
+  clearErrors(closureForm);
   render();
+  renderClosures();
 });
 
 (async () => {
   const user = await requireSession('business');
   if (!user) return;
-  await load();
+  renderClosures();
+  await Promise.all([load(), loadClosures()]);
 })().catch(handleError);

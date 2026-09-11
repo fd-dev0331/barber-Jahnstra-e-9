@@ -26,6 +26,19 @@
   };
   let timezone = 'Europe/Vienna';
   let address = 'Jahnstraße 9, 6900 Bregenz';
+  /* Feiertage und Schließtage aus der Verwaltung: Map<YYYY-MM-DD, Name>. */
+  let closedDays = new Map();
+
+  function todayInZone() {
+    const format = (zone) => new Intl.DateTimeFormat('en-CA', {
+      timeZone: zone, year: 'numeric', month: '2-digit', day: '2-digit',
+    }).format(new Date());
+    try {
+      return format(timezone);
+    } catch {
+      return format('Europe/Vienna');
+    }
+  }
 
   /* ---------- Opening hours ----------
      Computed in the business timezone, never from the visitor's device clock
@@ -59,8 +72,8 @@
   const badge = document.querySelector('[data-open-badge]');
   const summary = document.querySelector('[data-hours-summary]');
 
-  /** "Mo–Fr 09:00–19:00 · Sa 09:00–18:00 · So geschlossen" */
-  function summaryText() {
+  /** Eine Zeile je Gruppe: "Mo–Fr 09:00–19:00", "Sa 09:00–18:00", "So geschlossen". */
+  function summaryLines() {
     const groups = [];
     for (const day of WEEK) {
       const key = (hours[day] || []).map(([s, e]) => `${s}–${e}`).join(', ') || 'geschlossen';
@@ -69,8 +82,7 @@
       else groups.push({ key, days: [day] });
     }
     return groups
-      .map(({ key, days }) => `${DAY_SHORT[days[0]]}${days.length > 1 ? `–${DAY_SHORT[days[days.length - 1]]}` : ''} ${key}`)
-      .join(' · ');
+      .map(({ key, days }) => `${DAY_SHORT[days[0]]}${days.length > 1 ? `–${DAY_SHORT[days[days.length - 1]]}` : ''} ${key}`);
   }
 
   function renderHours(rebuild) {
@@ -85,11 +97,15 @@
           </div>`;
       }).join('');
     }
-    if (summary && rebuild) summary.textContent = summaryText();
+    if (summary && rebuild) {
+      summary.innerHTML = summaryLines().map((line) => `<span class="block">${esc(line)}</span>`).join('');
+    }
 
     const { day, minutes } = nowInZone();
     hoursList?.querySelector(`[data-day="${day}"]`)?.classList.add('bg-surface-2', 'text-fg', 'font-semibold');
-    const isOpen = (hours[day] || []).some(([s, e]) => minutes >= toMinutes(s) && minutes < toMinutes(e));
+    // Feiertag oder Schließtag: geschlossen, egal was die Arbeitszeiten sagen.
+    const holiday = closedDays.get(todayInZone());
+    const isOpen = !holiday && (hours[day] || []).some(([s, e]) => minutes >= toMinutes(s) && minutes < toMinutes(e));
 
     if (badge && stateWrap) {
       // Icon + text, never colour alone (WCAG 1.4.1).
@@ -97,7 +113,8 @@
       const icon = isOpen
         ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>'
         : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/></svg>';
-      badge.innerHTML = `${icon}<span>${isOpen ? 'Jetzt geöffnet' : 'Gerade geschlossen'}</span>`;
+      const label = isOpen ? 'Jetzt geöffnet' : holiday ? `Heute geschlossen – ${esc(holiday)}` : 'Gerade geschlossen';
+      badge.innerHTML = `${icon}<span>${label}</span>`;
       badge.style.background = isOpen ? 'rgba(74,222,128,.16)' : 'rgba(248,113,113,.16)';
       badge.style.color = isOpen ? '#4ADE80' : '#F87171';
       stateWrap.hidden = false;
@@ -289,10 +306,9 @@
     update();
   }
 
-  /* ---------- Google Maps ----------
-     Lädt automatisch, ohne Klick. Das iframe steht sofort im DOM; loading="lazy"
-     lässt den Browser die Karte aber erst holen, wenn der Kontaktbereich in die
-     Nähe des Bildschirms kommt — die Karte ist das schwerste Element der Seite. */
+  /* ---------- Google Maps: Klick auf "Karte laden" ----------
+     Nicht beim Seitenaufruf — schwerstes Element der Seite, und Google erhält
+     erst dann Daten. Gezeigt wird die Adresse aus der Verwaltung. */
   const mapWrap = document.querySelector('[data-map]');
   const mapSrc = () => `https://www.google.com/maps?q=${encodeURIComponent(`${address}, Österreich`)}&output=embed`;
 
@@ -305,8 +321,9 @@
     frame.referrerPolicy = 'no-referrer-when-downgrade';
     frame.className = 'absolute inset-0 h-full w-full border-0';
     frame.style.colorScheme = 'dark';
+    mapWrap.querySelector('[data-map-placeholder]')?.remove();
     mapWrap.appendChild(frame);
-    frame.addEventListener('load', () => mapWrap.querySelector('[data-map-placeholder]')?.remove(), { once: true });
+    frame.focus();
   }
 
   /** Adresse aus der Verwaltung kam erst nach dem Laden der Karte an. */
@@ -318,12 +335,13 @@
     }
   }
 
-  loadMap();
+  document.querySelector('[data-map-load]')?.addEventListener('click', loadMap);
 
   window.BB.business()
     .then((data) => {
       if (data?.business?.timezone) timezone = data.business.timezone;
       if (data?.business?.address) address = data.business.address;
+      if (Array.isArray(data?.closures)) closedDays = new Map(data.closures.map((c) => [c.date, c.name]));
       if (Array.isArray(data?.openingHours)) {
         hours = Object.fromEntries(data.openingHours.map((d) => [d.weekday, d.intervals || []]));
         if (hoursList || badge || summary) renderHours(true);

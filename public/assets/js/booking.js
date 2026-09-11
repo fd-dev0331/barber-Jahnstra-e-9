@@ -222,12 +222,17 @@
     loadSlots();
   });
 
+  // Wechselt das Datum schnell, darf eine ältere, langsamere Antwort die neuere
+  // nicht überschreiben — sonst stünde z. B. "keine Termine" am Feiertag.
+  let slotsRequest = 0;
+
   async function loadSlots() {
     const loading = $('[data-slots-loading]');
     const grid = $('[data-slots]');
     const empty = $('[data-slots-empty]');
     const live = $('[data-slots-live]');
     if (!state.date || !state.service || !state.employee) return;
+    const request = ++slotsRequest;
 
     loading.hidden = false; grid.hidden = true; empty.hidden = true;
     clearGlobalError();
@@ -239,24 +244,32 @@
         employeeId: String(state.employee.id),
       });
       const data = await window.BB.getJSON(`/api/availability?${params}`);
+      if (request !== slotsRequest) return; // inzwischen anderes Datum gewählt
       const slots = Array.isArray(data?.slots) ? data.slots : [];
 
       if (!slots.length) {
-        // Leerzustand statt leerem Raster, mit Hinweis auf den nächsten freien Tag.
+        // Leerzustand statt leerem Raster: mit Grund (Feiertag, Schließtag, Ruhetag)
+        // und Hinweis auf den nächsten freien Tag. Buchen geht an diesem Tag nicht.
+        const reason = data?.closure
+          ? `Am ${fmtDateLong(state.date)} ist der Salon geschlossen (${data.closure.name}). An diesem Tag sind keine Termine möglich.`
+          : data?.closed
+            ? 'An diesem Tag hat der Salon geschlossen.'
+            : 'An diesem Tag sind keine Termine mehr frei.';
+        $('[data-slots-empty-text]').textContent = reason;
         $('[data-next-free]').textContent = data?.nextAvailableDate
           ? `Der nächste freie Tag ist ${fmtDateLong(data.nextAvailableDate)}.`
           : '';
         empty.hidden = false;
-        live.textContent = 'An diesem Tag sind keine Termine mehr frei.';
+        live.textContent = reason;
         return;
       }
 
       renderSlots(slots);
       live.textContent = `${slots.filter((s) => s.available).length} freie Zeiten gefunden.`;
     } catch {
-      showGlobalError(FRIENDLY, loadSlots);
+      if (request === slotsRequest) showGlobalError(FRIENDLY, loadSlots);
     } finally {
-      loading.hidden = true;
+      if (request === slotsRequest) loading.hidden = true;
     }
   }
 
@@ -377,16 +390,19 @@
       goTo(5);
     } catch (err) {
       if (err.status === 409) {
-        /* Der Slot wurde in der Zwischenzeit vergeben. Eingaben bleiben erhalten,
-           die Liste wird neu geladen und der Fokus wandert zu den Zeiten. */
+        /* Der Slot wurde in der Zwischenzeit vergeben — oder der Tag ist ein
+           Feiertag/Schließtag. Eingaben bleiben erhalten, die Liste wird neu
+           geladen und der Fokus wandert zu den Zeiten. */
+        const message = err.body?.error === 'closed_day' && err.body.message
+          ? err.body.message
+          : 'Dieser Termin ist leider nicht mehr frei. Bitte wähle eine andere Uhrzeit.';
         state.slot = null;
         $('[data-next-3]').disabled = true;
         goTo(3);
         await loadSlots();
         $('[data-slots-live]').setAttribute('aria-live', 'assertive');
-        $('[data-slots-live]').textContent =
-          'Dieser Termin ist leider nicht mehr frei. Bitte wähle eine andere Uhrzeit.';
-        showGlobalError('Dieser Termin ist leider nicht mehr frei. Bitte wähle eine andere Uhrzeit.');
+        $('[data-slots-live]').textContent = message;
+        showGlobalError(message);
         $('[data-slots]').focus?.();
       } else {
         showGlobalError(

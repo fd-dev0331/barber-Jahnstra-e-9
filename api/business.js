@@ -11,6 +11,8 @@ import { query } from '../lib/db.js';
 import { json, fail, methodNotAllowed, serverError } from '../lib/http.js';
 import { ensureSchema } from '../lib/schema.js';
 import { mediaUrl } from '../lib/admin/media.js';
+import { closuresBetween } from '../lib/holidays.js';
+import { dateInZone, addDays } from '../lib/time.js';
 
 const hhmm = (value) => String(value).slice(0, 5);
 
@@ -48,7 +50,8 @@ export default async function handler(req, res) {
     if (!businesses.length) return fail(res, 404, 'not_found', 'Kein Betrieb angelegt.');
     const business = businesses[0];
 
-    const [{ rows: hours }, { rows: services }, { rows: assignments }, { rows: employees }] = await Promise.all([
+    const today = dateInZone(new Date(), business.timezone);
+    const [{ rows: hours }, { rows: services }, { rows: assignments }, { rows: employees }, closed] = await Promise.all([
       query(
         `SELECT wh.employee_id, wh.weekday, wh.start_time, wh.end_time
            FROM working_hours wh JOIN employee e ON e.id = wh.employee_id
@@ -73,6 +76,8 @@ export default async function handler(req, res) {
            FROM employee WHERE business_id = $1 ORDER BY sort_order, name`,
         [business.id]
       ),
+      // Feiertage und Schließtage der nächsten zwei Monate (Status "heute geschlossen").
+      closuresBetween(business.id, today, addDays(today, 60)),
     ]);
 
     const openingHours = [0, 1, 2, 3, 4, 5, 6].map((weekday) => ({
@@ -101,6 +106,8 @@ export default async function handler(req, res) {
         timezone: business.timezone,
       },
       openingHours,
+      today,
+      closures: [...closed].map(([date, closure]) => ({ date, name: closure.name, type: closure.type })),
       // Team-Slider: aktive Mitarbeiter, die auf der Website erscheinen sollen.
       team: active.filter((e) => e.show_on_website !== false).map((e) => ({
         id: e.id,

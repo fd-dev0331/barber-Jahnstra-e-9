@@ -76,36 +76,36 @@
           <a
             href="#home"
             data-nav-link
-            class="font-sans text-sm font-medium uppercase tracking-[0.08em] text-fg-body transition-colors hover:text-accent"
+            class="font-sans text-sm font-semibold uppercase tracking-[0.08em] text-fg-body transition-colors [text-shadow:0_1px_8px_rgba(0,0,0,0.75)] hover:text-accent"
             >Start</a
           >
           <a
             href="#ueber-uns"
             data-nav-link
-            class="font-sans text-sm font-medium uppercase tracking-[0.08em] text-fg-body transition-colors hover:text-accent"
+            class="font-sans text-sm font-semibold uppercase tracking-[0.08em] text-fg-body transition-colors [text-shadow:0_1px_8px_rgba(0,0,0,0.75)] hover:text-accent"
             >Über uns</a
           >
           <a
             href="#preise"
             data-nav-link
-            class="font-sans text-sm font-medium uppercase tracking-[0.08em] text-fg-body transition-colors hover:text-accent"
+            class="font-sans text-sm font-semibold uppercase tracking-[0.08em] text-fg-body transition-colors [text-shadow:0_1px_8px_rgba(0,0,0,0.75)] hover:text-accent"
             >Preise</a
           >
           <a
             href="#oeffnungszeiten"
             data-nav-link
-            class="font-sans text-sm font-medium uppercase tracking-[0.08em] text-fg-body transition-colors hover:text-accent"
+            class="font-sans text-sm font-semibold uppercase tracking-[0.08em] text-fg-body transition-colors [text-shadow:0_1px_8px_rgba(0,0,0,0.75)] hover:text-accent"
             >Zeiten</a
           >
           <a
             href="#kontakt"
             data-nav-link
-            class="font-sans text-sm font-medium uppercase tracking-[0.08em] text-fg-body transition-colors hover:text-accent"
+            class="font-sans text-sm font-semibold uppercase tracking-[0.08em] text-fg-body transition-colors [text-shadow:0_1px_8px_rgba(0,0,0,0.75)] hover:text-accent"
             >Kontakt</a
           >
           <a
             href="/galerie.html"
-            class="font-sans text-sm font-medium uppercase tracking-[0.08em] text-fg-body transition-colors hover:text-accent"
+            class="font-sans text-sm font-semibold uppercase tracking-[0.08em] text-fg-body transition-colors [text-shadow:0_1px_8px_rgba(0,0,0,0.75)] hover:text-accent"
             >Galerie</a
           >
           <a href="/booking.html" class="btn-primary">Termin buchen</a>
@@ -886,7 +886,7 @@
             <a href="/booking.html" class="btn-primary mt-8">Termin buchen</a>
           </div>
 
-          <!-- Karte lädt automatisch, sobald der Abschnitt in die Nähe des Bildschirms kommt. -->
+          <!-- Karte wird erst auf Klick geladen: schwerstes Element der Seite, und Google erhält erst dann Daten. -->
           <div>
             <div
               data-map
@@ -909,9 +909,13 @@
                   <path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z" />
                   <path d="M9 4v14M15 6v14" />
                 </svg>
-                <p class="text-[15px] text-fg-muted" aria-live="polite">
-                  Karte wird geladen …
+                <p class="text-[15px] text-fg-muted">
+                  Die Karte wird von Google Maps geladen. Dabei werden Daten an
+                  Google übertragen.
                 </p>
+                <button type="button" data-map-load class="btn-secondary">
+                  Karte laden
+                </button>
                 <a
                   class="text-sm text-fg-muted underline underline-offset-4 hover:text-accent"
                   href="https://www.google.com/maps/search/?api=1&amp;query=Jahnstra%C3%9Fe+9%2C+6900+Bregenz" data-biz-href="address"
@@ -934,7 +938,9 @@
             <p class="kicker mb-0">Bereit?</p>
             <h2 class="h2">Jetzt Termin sichern</h2>
             <p class="lead tnum" data-hours-summary>
-              Mo–Fr 09:00–19:00 · Sa 09:00–18:00 · So geschlossen
+              <span class="block">Mo–Fr 09:00–19:00</span>
+              <span class="block">Sa 09:00–18:00</span>
+              <span class="block">So geschlossen</span>
             </p>
             <div class="flex flex-wrap justify-center gap-3">
               <a href="/booking.html" class="btn-primary">
