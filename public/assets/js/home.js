@@ -137,6 +137,10 @@
       </li>`;
   }
 
+  /* Genau zwei Blöcke: erst die Angebote, dann alles Übrige. Eine Gliederung
+     nach Art der Leistung gibt es bewusst nicht — sie half niemandem beim
+     Aussuchen und zerlegte die Liste in lauter kurze Abschnitte. Ob etwas ein
+     Angebot ist, steht in der Verwaltung (Häkchen an der Leistung). */
   function renderServices(services) {
     const box = document.querySelector('[data-services]');
     if (!box) return;
@@ -144,14 +148,13 @@
       box.innerHTML = '<p class="mt-12 text-fg-muted">Aktuell sind keine Leistungen online buchbar. Ruf uns gerne an.</p>';
       return;
     }
-    const groups = new Map();
-    for (const service of services) {
-      const category = service.category || 'Weitere Leistungen';
-      if (!groups.has(category)) groups.set(category, []);
-      groups.get(category).push(service);
-    }
-    box.innerHTML = [...groups].map(([category, items], index) => `
-        <h3 class="${index ? 'mt-14' : 'mt-12'} font-display text-2xl font-bold uppercase tracking-wide text-fg">${esc(category)}</h3>
+    const blocks = [
+      ['Angebote', services.filter((s) => s.isOffer)],
+      ['Leistungen', services.filter((s) => !s.isOffer)],
+    ].filter(([, items]) => items.length);
+
+    box.innerHTML = blocks.map(([title, items], index) => `
+        <h3 class="${index ? 'mt-14' : 'mt-12'} font-display text-2xl font-bold uppercase tracking-wide text-fg">${esc(title)}</h3>
         <hr class="rule" />
         <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" role="list">${items.map(serviceCard).join('')}</ul>`).join('');
   }

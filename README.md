@@ -28,10 +28,11 @@ docker exec it-simulator-db psql -U postgres -c "CREATE DATABASE barbershop"
 
 ```bash
 node scripts/test-booking.js      # 22 Prüfungen: Verfügbarkeit, Buchung, Validierung
-node scripts/test-admin.js        # 59 Prüfungen: Setup, Anmeldung, Rechte, Mitarbeiter, Leistungen,
+node scripts/test-admin.js        # 63 Prüfungen: Setup, Anmeldung, Rechte, Mitarbeiter, Leistungen,
                                   #   Galerie, Bilder, Feiertage und Schließtage
 node scripts/test-admin-i18n.js   # 70 Prüfungen: DE/RU/TR vollständig, Spracherkennung, Website bleibt deutsch
-node scripts/test-website.js      # 28 Prüfungen: keine Beispieldaten im HTML, Bilder aus der Verwaltung
+node scripts/test-website.js      # 31 Prüfungen: keine Beispieldaten im HTML, Bilder und Angebote
+                                  #   aus der Verwaltung
 node scripts/test-telegram.js     # 29 Prüfungen: Mini App — Signatur, Verknüpfung, Bearer-Sitzung
                                   #   braucht TELEGRAM_BOT_TOKEN, derselbe Wert wie im Dev-Server
 node scripts/test-race.js         # gleichzeitige Buchungen desselben Slots
@@ -193,7 +194,7 @@ und `GET /api/gallery`:
 |---|---|
 | Titelbild der Startseite | Betrieb → Bild der Startseite |
 | Team-Slider „Über uns" | Mitarbeiter (Profil, Foto, Sprachen, Arbeitstage) |
-| Preisliste | Leistungen |
+| Preisliste — zwei Blöcke: Angebote, dann alles Übrige | Leistungen (Häkchen „Angebot“) |
 | Öffnungszeiten, „Jetzt geöffnet" | Arbeitszeiten der aktiven Mitarbeiter + Schließtage |
 | Adresse, Telefon, E-Mail, Instagram | Betrieb |
 | Galerie | Galerie |
@@ -208,6 +209,12 @@ Antwort, erscheint ein Satz, dass die Angaben gerade nicht geladen werden konnte
 Ist in der Verwaltung nichts hinterlegt, entfällt der Abschnitt: ohne Mitarbeiter
 mit Profil kein Team-Slider, ohne Titelbild ein dunkler Seitenkopf, ohne Bilder
 eine leere Galerie mit Hinweis.
+
+Die Preisliste hat genau zwei Blöcke: erst die Leistungen mit dem Häkchen
+„Angebot“, danach alle anderen. Eine Gliederung nach Art der Leistung gibt es
+nicht mehr — sie zerlegte die Liste in lauter kurze Abschnitte, ohne beim
+Aussuchen zu helfen. Das frühere Feld „Kategorie“ ist aus der Verwaltung
+verschwunden; die Spalte bleibt in der Datenbank, wird aber nirgends gelesen.
 
 Das gilt auch für das Vorschaubild beim Teilen (`og:image`): es zeigt auf
 `/api/media?slot=hero`, also auf dasselbe Titelbild. Diese Adresse bleibt gleich,

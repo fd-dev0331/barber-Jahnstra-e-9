@@ -8,7 +8,7 @@ export default async function handler(req, res) {
   try {
     const business = await getBusiness();
     const { rows } = await query(
-      `SELECT id, slug, name, description, category, duration_minutes, price_cents
+      `SELECT id, slug, name, description, duration_minutes, price_cents
          FROM service
         WHERE business_id = $1 AND status = 'ACTIVE'
         ORDER BY sort_order, name`,
@@ -22,7 +22,6 @@ export default async function handler(req, res) {
         slug: s.slug,
         name: s.name,
         description: s.description,
-        category: s.category,
         durationMinutes: s.duration_minutes,
         priceCents: s.price_cents,
       })),

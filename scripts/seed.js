@@ -13,16 +13,17 @@ const directUrl =
 if (directUrl) process.env.DATABASE_URL = directUrl;
 const { getPool, query } = await import('../lib/db.js');
 
+// Spalte 4: Angebot? Die Website zeigt solche Leistungen im ersten Block.
 const SERVICES = [
-  ['haarschnitt-augenbrauen-messer', 'Haarschnitt + Augenbrauen mit Messer', 'Schnitt und Augenbrauenkontur mit dem Messer — unser Angebot.', 'Angebote', 40, 2500, 10],
-  ['haarschnitt-waschen',            'Haarschnitt + Waschen',                'Schnitt mit Haarwäsche und Styling zum Abschluss.',           'Angebote', 40, 2700, 20],
-  ['gruppenrabatt',                  'Gruppenrabatt ab 5 Personen',          'Angebot für Gruppen ab fünf Personen — Preis pro Person.',    'Angebote', 30, 2000, 30],
-  ['herren-haarschnitt',             'Herren – Haarschnitt',                 'Klassischer Schnitt inklusive Konturen und Finish.',          'Herren – Haarschnitte & Stylings', 30, 2500, 40],
-  ['kinder-haarschnitt',             'Kinder – Haarschnitt bis 10 Jahre',    'Für die Kleinen, in Ruhe und ohne Hektik.',                   'Herren – Haarschnitte & Stylings', 15, 1800, 50],
-  ['herren-haare-waschen',           'Herren – Haare waschen',               'Haarwäsche mit Kopfmassage.',                                 'Herren – Haarschnitte & Stylings', 10,  500, 60],
-  ['herren-bart',                    'Herren – Bart',                        'Bartschnitt, Kontur und Pflege.',                             'Herren – Haarschnitte & Stylings', 15, 1500, 70],
-  ['herren-augenbrauen-messer',      'Herren – Augenbrauen mit Messer',      'Präzise Augenbrauenkontur mit dem Messer.',                   'Herren – Haarschnitte & Stylings', 10,  500, 80],
-  ['herren-augenbrauen-faden',       'Herren – Augenbrauen mit Faden',       'Augenbrauen zupfen mit der Fadentechnik.',                    'Herren – Haarschnitte & Stylings', 10,  500, 90],
+  ['haarschnitt-augenbrauen-messer', 'Haarschnitt + Augenbrauen mit Messer', 'Schnitt und Augenbrauenkontur mit dem Messer — unser Angebot.', true,  40, 2500, 10],
+  ['haarschnitt-waschen',            'Haarschnitt + Waschen',                'Schnitt mit Haarwäsche und Styling zum Abschluss.',           true,  40, 2700, 20],
+  ['gruppenrabatt',                  'Gruppenrabatt ab 5 Personen',          'Angebot für Gruppen ab fünf Personen — Preis pro Person.',    true,  30, 2000, 30],
+  ['herren-haarschnitt',             'Herren – Haarschnitt',                 'Klassischer Schnitt inklusive Konturen und Finish.',          false, 30, 2500, 40],
+  ['kinder-haarschnitt',             'Kinder – Haarschnitt bis 10 Jahre',    'Für die Kleinen, in Ruhe und ohne Hektik.',                   false, 15, 1800, 50],
+  ['herren-haare-waschen',           'Herren – Haare waschen',               'Haarwäsche mit Kopfmassage.',                                 false, 10,  500, 60],
+  ['herren-bart',                    'Herren – Bart',                        'Bartschnitt, Kontur und Pflege.',                             false, 15, 1500, 70],
+  ['herren-augenbrauen-messer',      'Herren – Augenbrauen mit Messer',      'Präzise Augenbrauenkontur mit dem Messer.',                   false, 10,  500, 80],
+  ['herren-augenbrauen-faden',       'Herren – Augenbrauen mit Faden',       'Augenbrauen zupfen mit der Fadentechnik.',                    false, 10,  500, 90],
 ];
 
 const pool = getPool();
@@ -42,15 +43,15 @@ try {
     console.log('• Betrieb angelegt');
   }
 
-  for (const [slug, name, description, category, duration, price, order] of SERVICES) {
+  for (const [slug, name, description, isOffer, duration, price, order] of SERVICES) {
     await query(
-      `INSERT INTO service (business_id, slug, name, description, category, duration_minutes, price_cents, sort_order)
+      `INSERT INTO service (business_id, slug, name, description, is_offer, duration_minutes, price_cents, sort_order)
        VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
        ON CONFLICT (business_id, slug) DO UPDATE
-         SET name = EXCLUDED.name, description = EXCLUDED.description, category = EXCLUDED.category,
+         SET name = EXCLUDED.name, description = EXCLUDED.description, is_offer = EXCLUDED.is_offer,
              duration_minutes = EXCLUDED.duration_minutes, price_cents = EXCLUDED.price_cents,
              sort_order = EXCLUDED.sort_order, updated_at = now()`,
-      [businessId, slug, name, description, category, duration, price, order]
+      [businessId, slug, name, description, isOffer, duration, price, order]
     );
   }
   console.log(`• ${SERVICES.length} Leistungen angelegt/aktualisiert`);

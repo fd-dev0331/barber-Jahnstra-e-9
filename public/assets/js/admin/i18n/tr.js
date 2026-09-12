@@ -351,7 +351,6 @@ export default {
     emptyHint: 'Aktif hizmet olmadan kimse online randevu alamaz.',
     name: 'Ad',
     description: 'Açıklama',
-    category: 'Kategori',
     duration: 'Süre',
     durationMinutes: 'Süre (dakika)',
     price: 'Fiyat',
@@ -372,6 +371,9 @@ export default {
     deleteTitle: '“{name}” kalıcı olarak silinsin mi?',
     deleteMessage: 'Bu işlem geri alınamaz. Silme yalnızca bu hizmete hiç randevu alınmamışsa mümkündür.',
     deleted: '“{name}” silindi.',
+    isOffer: 'Kampanya',
+    isOfferHint: 'Kampanyalar sitede ilk blokta, diğer hizmetlerden önce görünür.',
+    offerBadge: 'Kampanya',
   },
 
   gallery: {

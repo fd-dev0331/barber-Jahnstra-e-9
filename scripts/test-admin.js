@@ -280,6 +280,19 @@ const viaRewrite = await call(owner, `/api/admin/services?__rest=${syncId}`, { m
 check('Umgeschriebener Pfad (__rest wie auf Vercel) erreicht den Handler', viaRewrite.status === 200);
 check('Preisänderung erscheint in der Preisliste', (await listed())?.priceCents === 1500);
 
+// Angebot: die Website sortiert solche Leistungen nach vorn (zwei Blöcke,
+// keine Gliederung nach Art der Leistung).
+check('Neue Leistung ist kein Angebot', (await listed())?.isOffer === false);
+const asOffer = await call(owner, `/api/admin/services/${syncId}`, { method: 'PATCH', body: { isOffer: true } });
+check('Als Angebot markieren', asOffer.status === 200 && asOffer.body.service?.isOffer === true);
+const withOffer = (await anon('/api/business')).body.services;
+check('Angebot steht auf der Website vor den übrigen Leistungen',
+  withOffer.findIndex((s) => s.id === syncId) < withOffer.findIndex((s) => !s.isOffer),
+  withOffer.map((s) => `${s.isOffer ? '*' : '-'}${s.name}`).join(', '));
+check('Häkchen lässt sich wieder entfernen',
+  (await call(owner, `/api/admin/services/${syncId}`, { method: 'PATCH', body: { isOffer: false } }))
+    .body.service?.isOffer === false);
+
 await call(owner, `/api/admin/services/${syncId}`, { method: 'PATCH', body: { status: 'INACTIVE' } });
 check('Deaktivierte Leistung verschwindet aus der Preisliste', !(await listed()));
 check('Leistung ohne Termine lässt sich löschen',

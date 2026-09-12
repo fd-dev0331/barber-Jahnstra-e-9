@@ -271,3 +271,7 @@ CREATE TABLE IF NOT EXISTS telegram_account (
   last_seen_at  timestamptz
 );
 CREATE INDEX IF NOT EXISTS telegram_account_user_idx ON telegram_account (user_id);
+
+-- Angebot: hebt eine Leistung auf der Website in den ersten Block. Mehr
+-- Gliederung gibt es dort nicht — Angebote zuerst, danach alles andere.
+ALTER TABLE service ADD COLUMN IF NOT EXISTS is_offer boolean NOT NULL DEFAULT false;

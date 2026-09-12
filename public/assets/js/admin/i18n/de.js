@@ -352,7 +352,6 @@ export default {
     emptyHint: 'Ohne aktive Leistung kann niemand online buchen.',
     name: 'Name',
     description: 'Beschreibung',
-    category: 'Kategorie',
     duration: 'Dauer',
     durationMinutes: 'Dauer (Minuten)',
     price: 'Preis',
@@ -373,6 +372,9 @@ export default {
     deleteTitle: '„{name}“ endgültig löschen?',
     deleteMessage: 'Das lässt sich nicht rückgängig machen. Löschen geht nur, solange die Leistung nie gebucht wurde.',
     deleted: '„{name}“ wurde gelöscht.',
+    isOffer: 'Angebot',
+    isOfferHint: 'Angebote stehen auf der Website im ersten Block, vor allen anderen Leistungen.',
+    offerBadge: 'Angebot',
   },
 
   gallery: {

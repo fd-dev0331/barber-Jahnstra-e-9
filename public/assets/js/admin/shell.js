@@ -7,7 +7,7 @@ import { t, getLanguage, setLanguage, LANGUAGES, onLanguageChange } from './i18n
 import {
   api, ApiError, session, setTimezone, hasRank, roleLabel, escapeHtml, redirectToLogin,
 } from './core.js';
-import { icon, handleError } from './ui.js';
+import { icon, handleError, closeOnBackdrop } from './ui.js';
 import { initTelegram, isMiniApp, clearToken } from './telegram.js';
 
 /* Welche Rolle eine Seite mindestens braucht. Nur Anzeige — das Backend prüft
@@ -157,6 +157,7 @@ function renderShell(active) {
     menuDialog.id = 'adm-menu';
     menuDialog.className = 'adm-sheet';
     document.body.append(menuDialog);
+    closeOnBackdrop(menuDialog, () => menuDialog.close());
   }
   menuDialog.setAttribute('aria-label', t('shell.menu'));
   menuDialog.innerHTML = `
@@ -195,7 +196,7 @@ function bindShellEvents() {
       menuDialog?.showModal();
       return;
     }
-    if (menuDialog?.open && (event.target.closest('[data-menu-close]') || event.target === menuDialog)) {
+    if (menuDialog?.open && event.target.closest('[data-menu-close]')) {
       menuDialog.close();
       return;
     }

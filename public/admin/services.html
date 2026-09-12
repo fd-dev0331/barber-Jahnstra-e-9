@@ -67,15 +67,18 @@
           <input class="adm-input tnum" id="s-price" name="price" type="text" inputmode="decimal" autocomplete="off" placeholder="25,00">
         </div>
       </div>
-      <div class="adm-grid-2">
-        <div>
-          <label class="adm-label" for="s-category" data-i18n="services.category"></label>
-          <input class="adm-input" id="s-category" name="category" maxlength="120" autocomplete="off">
-        </div>
-        <div>
-          <label class="adm-label" for="s-sort" data-i18n="common.sortOrder"></label>
-          <input class="adm-input" id="s-sort" name="sortOrder" type="number" min="0" max="9999" inputmode="numeric">
-        </div>
+      <div>
+        <label class="adm-label" for="s-sort" data-i18n="common.sortOrder"></label>
+        <input class="adm-input" id="s-sort" name="sortOrder" type="number" min="0" max="9999" inputmode="numeric">
+      </div>
+      <!-- Angebot: die Website zeigt solche Leistungen im ersten Block. Eine
+           weitere Gliederung nach Art der Leistung gibt es dort nicht. -->
+      <div>
+        <label class="adm-check-row">
+          <input type="checkbox" name="isOffer" class="adm-check">
+          <span data-i18n="services.isOffer"></span>
+        </label>
+        <p class="adm-hint" data-i18n="services.isOfferHint"></p>
       </div>
       <div data-status-field hidden>
         <label class="adm-label" for="s-status" data-i18n="services.status"></label>

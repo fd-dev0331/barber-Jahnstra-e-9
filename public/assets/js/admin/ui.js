@@ -147,10 +147,32 @@ export const closeButton = () =>
   `<button type="button" class="adm-icon-btn adm-icon-btn-plain" data-close aria-label="${escapeHtml(t('common.close'))}">${icon('close')}</button>`;
 
 /** Schließen über [data-close] und über einen Klick auf den Hintergrund. */
+/**
+ * Klick auf die Fläche neben dem Dialog schließt ihn — aber nur, wenn er dort
+ * auch begonnen hat.
+ *
+ * Ohne diese Einschränkung ging das Fenster beim Markieren von Text zu: wer in
+ * einem Feld die Maus drückt und außerhalb loslässt, erzeugt ein Klick-Ereignis
+ * auf dem gemeinsamen Elternelement — und das ist das <dialog> selbst. Die
+ * Eingaben waren damit weg, ohne dass jemand etwas geschlossen hätte.
+ */
+export function closeOnBackdrop(dialog, close) {
+  let startedOutside = false;
+  dialog.addEventListener('pointerdown', (event) => {
+    startedOutside = event.target === dialog;
+  });
+  dialog.addEventListener('click', (event) => {
+    const outside = event.target === dialog && startedOutside;
+    startedOutside = false;
+    if (outside) close();
+  });
+}
+
 export function bindDialog(dialog) {
   dialog.addEventListener('click', (event) => {
-    if (event.target.closest('[data-close]') || event.target === dialog) dialog.close();
+    if (event.target.closest('[data-close]')) dialog.close();
   });
+  closeOnBackdrop(dialog, () => dialog.close());
 }
 
 /** Ersatz für window.confirm: übersetzt, im Stil der Verwaltung, "Abbrechen" vorausgewählt. */
@@ -180,8 +202,8 @@ export function confirmDialog({ title, message, confirmLabel, danger = false }) 
     dialog.addEventListener('click', (event) => {
       const button = event.target.closest('[data-answer]');
       if (button) finish(button.dataset.answer === 'yes');
-      else if (event.target === dialog) finish(false);
     });
+    closeOnBackdrop(dialog, () => finish(false));
     dialog.addEventListener('cancel', (event) => {
       event.preventDefault();
       finish(false);

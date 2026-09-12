@@ -84,6 +84,17 @@ async function main() {
   check('Öffnungszeiten für alle sieben Tage', Array.isArray(business.openingHours) && business.openingHours.length === 7);
   check('Team und Leistungen sind Listen', Array.isArray(business.team) && Array.isArray(business.services));
 
+  const services = business.services ?? [];
+  check('Jede Leistung sagt, ob sie ein Angebot ist',
+    services.every((s) => typeof s.isOffer === 'boolean'), JSON.stringify(services[0] ?? {}));
+  check('Keine Gliederung nach Art der Leistung mehr',
+    services.every((s) => s.category === undefined));
+  const firstNormal = services.findIndex((s) => !s.isOffer);
+  const lastOffer = services.map((s) => s.isOffer).lastIndexOf(true);
+  check('Angebote stehen vor den übrigen Leistungen',
+    firstNormal === -1 || lastOffer === -1 || lastOffer < firstNormal,
+    services.map((s) => `${s.isOffer ? '*' : '-'}${s.name}`).join(', '));
+
   const hero = await fetch(`${BASE}/api/media?slot=hero`);
   const heroSet = Boolean(business.images?.hero);
   check(`Titelbild-Adresse antwortet passend (${heroSet ? 'hinterlegt' : 'nicht hinterlegt'})`,

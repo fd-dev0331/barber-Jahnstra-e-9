@@ -1,9 +1,9 @@
 /* GET /api/business — Stammdaten für die öffentliche Website.
 
-   Eine Quelle für Kontakt, Öffnungszeiten und Preisliste: was in der Verwaltung
-   gepflegt wird (Betrieb, Mitarbeiter-Arbeitszeiten, Leistungen), erscheint so
-   ohne Umweg auf der Website. Das statische HTML bleibt als Rückfall für
-   Crawler und für den Fall, dass diese Anfrage scheitert.
+   Die einzige Quelle für alles Inhaltliche der Website: Kontakt, Titelbild,
+   Öffnungszeiten, Team und Preisliste. Im HTML steht davon nichts mehr — wo
+   diese Antwort ausbleibt, zeigt die Seite einen Hinweis statt veralteter
+   Angaben (public/assets/js/home.js).
 
    Öffnungszeiten haben keine eigene Tabelle: offen ist, wann mindestens ein
    aktiver Mitarbeiter arbeitet — dieselbe Regel, nach der gebucht werden kann. */
@@ -59,9 +59,10 @@ export default async function handler(req, res) {
         [business.id]
       ),
       query(
-        `SELECT id, slug, name, description, category, duration_minutes, price_cents
+        // Angebote zuerst: auf der Website stehen sie im ersten Block.
+        `SELECT id, slug, name, description, is_offer, duration_minutes, price_cents
            FROM service WHERE business_id = $1 AND status = 'ACTIVE'
-          ORDER BY sort_order, name`,
+          ORDER BY is_offer DESC, sort_order, name`,
         [business.id]
       ),
       query(
@@ -128,7 +129,7 @@ export default async function handler(req, res) {
         slug: s.slug,
         name: s.name,
         description: s.description,
-        category: s.category,
+        isOffer: s.is_offer === true,
         durationMinutes: s.duration_minutes,
         priceCents: s.price_cents,
         employees: performers(s.id),

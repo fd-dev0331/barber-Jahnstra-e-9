@@ -26,6 +26,11 @@ function employeesLabel(service) {
 
 /* ------------------------------------------------------------------ Liste */
 
+/** „Angebot" — dieselbe Kennzeichnung wie im ersten Block der Website. */
+const offerBadge = (service) => (service.isOffer
+  ? ` <span class="adm-badge st-gold align-middle">${escapeHtml(t('services.offerBadge'))}</span>`
+  : '');
+
 function actions(service) {
   const inactive = service.status === 'INACTIVE';
   return `<button type="button" class="adm-btn-ghost adm-btn-sm" data-edit="${service.id}">${icon('edit')}<span>${escapeHtml(t('common.edit'))}</span></button>
@@ -50,7 +55,7 @@ function tableView(services) {
         <th scope="col" class="text-right">${escapeHtml(t('bookings.colActions'))}</th>
       </tr></thead>
       <tbody>${services.map((s) => `<tr class="${s.status === 'INACTIVE' ? 'text-fg-muted' : ''}">
-        <td><div class="max-w-[320px] font-medium text-fg">${escapeHtml(s.name)}</div>
+        <td><div class="max-w-[320px] font-medium text-fg">${escapeHtml(s.name)}${offerBadge(s)}</div>
           ${s.description ? `<div class="max-w-[320px] truncate text-xs text-fg-muted">${escapeHtml(s.description)}</div>` : ''}</td>
         <td class="num">${escapeHtml(fmtMinutes(s.durationMinutes))}</td>
         <td class="num">${escapeHtml(fmtPrice(s.priceCents))}</td>
@@ -65,7 +70,7 @@ function tableView(services) {
 function cardView(services) {
   return `<div class="grid gap-2.5 md:grid-cols-2 lg:hidden">${services.map((s) => `<article class="adm-item grid min-w-0 gap-2">
     <div class="flex items-start justify-between gap-3">
-      <h2 class="min-w-0 break-words font-semibold text-fg">${escapeHtml(s.name)}</h2>
+      <h2 class="min-w-0 break-words font-semibold text-fg">${escapeHtml(s.name)}${offerBadge(s)}</h2>
       <span class="shrink-0">${activeBadge(s.status === 'ACTIVE')}</span>
     </div>
     ${s.description ? `<p class="break-words text-[13px] text-fg-muted">${escapeHtml(s.description)}</p>` : ''}
@@ -143,7 +148,7 @@ function openEdit(service) {
   dialog.querySelector('[data-edit-title]').textContent = t(service ? 'services.editTitle' : 'services.addTitle');
   form.elements.name.value = service?.name ?? '';
   form.elements.description.value = service?.description ?? '';
-  form.elements.category.value = service?.category ?? '';
+  form.elements.isOffer.checked = service?.isOffer === true;
   form.elements.sortOrder.value = service?.sortOrder ?? 100;
   form.elements.durationMinutes.value = service?.durationMinutes ?? 30;
   form.elements.price.value = service ? (service.priceCents / 100).toFixed(2) : '';
@@ -169,7 +174,6 @@ form.addEventListener('submit', async (event) => {
   const ok = validate(form, [
     { name: 'name', required: true, min: 2, max: 120 },
     { name: 'description', max: 500 },
-    { name: 'category', max: 120 },
     { name: 'durationMinutes', required: true, number: true, integer: true, minValue: 5, maxValue: 480 },
     {
       name: 'price',
@@ -195,7 +199,7 @@ form.addEventListener('submit', async (event) => {
   const body = {
     name: form.elements.name.value.trim(),
     description: form.elements.description.value.trim() || null,
-    category: form.elements.category.value.trim() || null,
+    isOffer: form.elements.isOffer.checked,
     sortOrder: Number(form.elements.sortOrder.value || 100),
     durationMinutes: Number(form.elements.durationMinutes.value),
     // Der Preis steht in der Datenbank in Cent — Rundung hier, nicht dort.
