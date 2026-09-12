@@ -11,6 +11,7 @@ import {
   icon, statusBadge, handleError, emptyState, errorState, skeletonList, skeletonStats, validate, clearErrors, setBusy,
 } from './ui.js';
 import { requireSession, languageSwitcher, bindLanguageEvents, showBootError } from './shell.js';
+import { initTelegram, signIn, linkAccount, telegramUser } from './telegram.js';
 
 const gate = document.querySelector('[data-gate]');
 
@@ -18,9 +19,17 @@ const gate = document.querySelector('[data-gate]');
 
 let gateView = 'login';
 
+const GATE_TITLE = { setup: 'setup.title', telegram: 'telegram.gateTitle', login: 'login.title' };
+
 function renderGate() {
   gate.querySelector('[data-lang-slot]').innerHTML = languageSwitcher();
-  document.title = `${t(gateView === 'setup' ? 'setup.title' : 'login.title')} – Bregenz Barbershop`;
+  document.title = `${t(GATE_TITLE[gateView])} – Bregenz Barbershop`;
+  const person = telegramUser();
+  const hint = gate.querySelector('[data-telegram-user]');
+  if (hint) {
+    hint.textContent = person?.name ? t('telegram.gateAccount', { name: person.name }) : '';
+    hint.hidden = !person?.name;
+  }
   // Feldfehler stammen aus der vorherigen Sprache — weg damit.
   gate.querySelectorAll('form').forEach((form) => clearErrors(form));
 }
@@ -206,10 +215,48 @@ document.querySelector('[data-error]').addEventListener('click', (event) => {
 
 /* --------------------------------------------------------------- Start */
 
+/**
+ * Telegram Mini App: Anmeldung ohne Formular.
+ * Ergebnis: die Sitzungsdaten, 'gate' (Verknüpfung nötig, Formular steht) oder
+ * null — dann geht es weiter wie im Browser.
+ */
+async function startInTelegram() {
+  const result = await signIn();
+  if (result.ok) return result.data;
+
+  // Ohne eingerichteten Bot verhält sich die Seite wie im Browser.
+  if (result.error === 'telegram_disabled') return null;
+
+  bindLanguageEvents();
+  onLanguageChange(renderGate);
+  bindForm('telegram', [
+    { name: 'email', required: true, email: true },
+    { name: 'password', required: true },
+  ], async (values) => {
+    const linked = await linkAccount(values);
+    if (!linked.ok) throw new ApiError(linked.status ?? 400, linked.error, linked.message);
+  });
+  showView('telegram');
+
+  if (!result.needsLink) {
+    const box = gate.querySelector('[data-form="telegram"] [data-form-error]');
+    box.textContent = errorMessage(new ApiError(401, result.error, result.message));
+    box.hidden = false;
+  }
+  return 'gate';
+}
+
 async function start() {
-  let data;
+  let data = null;
+
+  if (await initTelegram()) {
+    const result = await startInTelegram();
+    if (result === 'gate') return;
+    data = result;
+  }
+
   try {
-    data = await api('/session');
+    data = data ?? await api('/session');
   } catch (err) {
     if (!(err instanceof ApiError) || err.status !== 401) {
       showBootError();

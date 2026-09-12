@@ -139,7 +139,7 @@ for (const lang of ['de', 'ru', 'tr']) {
 }
 const identical = [...flat.de].filter(([k, v]) => typeof v === 'string' && v.length > 3
   && v === flat.ru.get(k) && v === flat.tr.get(k) && !/^[A-Z0-9 /().:·–-]+$/.test(v)
-  && !/^(Instagram|Google|Dashboard|Details)$/.test(v)).map(([k]) => k);
+  && !/^(Instagram|Google|Telegram|Dashboard|Details)$/.test(v)).map(([k]) => k);
 check('Keine Texte, die in RU/TR einfach deutsch geblieben sind', !identical.length, identical.join(', '));
 
 console.log('\n▸ 2. Jeder benutzte Schlüssel existiert');
@@ -169,7 +169,8 @@ for (const file of jsFiles.filter((f) => !f.includes(`${path.sep}i18n`))) {
 }
 
 console.log('\n▸ 4. Spracherkennung und Speicherung');
-function environment({ stored = null, languages = ['de-AT'] } = {}) {
+/** `telegram` ist die Sprache des Telegram-Kontos, wie sie in der Adresse steht. */
+function environment({ stored = null, languages = ['de-AT'], telegram = null } = {}) {
   const storage = new Map(stored ? [['admin_language', stored]] : []);
   Object.defineProperty(globalThis, 'localStorage', {
     configurable: true,
@@ -179,8 +180,15 @@ function environment({ stored = null, languages = ['de-AT'] } = {}) {
   Object.defineProperty(globalThis, 'document', {
     configurable: true, value: { documentElement: {}, querySelectorAll: () => [] },
   });
+  const initData = telegram
+    ? `user=${encodeURIComponent(JSON.stringify({ id: 1, first_name: 'T', language_code: telegram }))}&auth_date=1`
+    : null;
   Object.defineProperty(globalThis, 'window', {
-    configurable: true, value: { dispatchEvent() {}, addEventListener() {} },
+    configurable: true,
+    value: {
+      dispatchEvent() {}, addEventListener() {},
+      location: { pathname: '/admin', search: '', hash: initData ? `#tgWebAppData=${encodeURIComponent(initData)}` : '' },
+    },
   });
   return storage;
 }
@@ -199,6 +207,15 @@ check('Browser en-US/fr -> Fallback DE', (await freshI18n({ languages: ['en-US',
 check('Browser en, dann ru -> RU (erste unterstützte)', (await freshI18n({ languages: ['en', 'ru'] })).mod.getLanguage() === 'ru');
 check('Gespeicherte Wahl TR schlägt Browser RU', (await freshI18n({ stored: 'tr', languages: ['ru'] })).mod.getLanguage() === 'tr');
 check('Ungültiger gespeicherter Wert -> Erkennung', (await freshI18n({ stored: 'xx', languages: ['tr-TR'] })).mod.getLanguage() === 'tr');
+
+check('Telegram-Sprache RU schlägt Browser DE',
+  (await freshI18n({ languages: ['de-AT'], telegram: 'ru' })).mod.getLanguage() === 'ru');
+check('Telegram-Sprache TR schlägt Browser RU',
+  (await freshI18n({ languages: ['ru-RU'], telegram: 'tr' })).mod.getLanguage() === 'tr');
+check('Gespeicherte Wahl schlägt die Telegram-Sprache',
+  (await freshI18n({ stored: 'de', languages: ['ru'], telegram: 'tr' })).mod.getLanguage() === 'de');
+check('Unbekannte Telegram-Sprache -> Browsersprache',
+  (await freshI18n({ languages: ['tr-TR'], telegram: 'uk' })).mod.getLanguage() === 'tr');
 
 const detected = await freshI18n({ languages: ['ru'] });
 check('Erkennung allein speichert nichts', !detected.storage.has('admin_language'));

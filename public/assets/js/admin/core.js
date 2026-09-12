@@ -4,6 +4,7 @@
    entscheidet ausschließlich das Backend — dieses Skript versteckt nur Knöpfe,
    die sowieso in einem 403 enden würden (info.md §22). */
 import { t, has, getLocale } from './i18n.js';
+import { authToken, isMiniApp, reauthenticate } from './telegram.js';
 
 export class ApiError extends Error {
   constructor(status, code, message) {
@@ -21,10 +22,14 @@ function cookie(name) {
   return null;
 }
 
-async function request(url, { method = 'GET', body } = {}) {
+async function request(url, { method = 'GET', body } = {}, mayRetry = true) {
   const headers = {};
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   if (method !== 'GET') headers['X-CSRF-Token'] = cookie('bb_csrf') ?? '';
+  /* In der Telegram Mini App kommt kein Cookie an; dort trägt dieser Header die
+     Sitzung (public/assets/js/admin/telegram.js, lib/auth.js). */
+  const token = authToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
 
   let response;
   try {
@@ -40,6 +45,11 @@ async function request(url, { method = 'GET', body } = {}) {
 
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
+    /* Abgelaufene Sitzung in Telegram: dort lässt sie sich aus dem signierten
+       Start ohne Zutun erneuern — einmal, dann gilt der Fehler. */
+    if (response.status === 401 && mayRetry && isMiniApp() && (await reauthenticate())) {
+      return request(url, { method, body }, false);
+    }
     // Die Servermeldung ist deutsch; angezeigt wird der übersetzte Text zum Code.
     throw new ApiError(response.status, payload.error ?? 'error', payload.message);
   }

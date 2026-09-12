@@ -8,6 +8,7 @@ import {
   api, ApiError, session, setTimezone, hasRank, roleLabel, escapeHtml, redirectToLogin,
 } from './core.js';
 import { icon, handleError } from './ui.js';
+import { initTelegram, isMiniApp, clearToken } from './telegram.js';
 
 /* Welche Rolle eine Seite mindestens braucht. Nur Anzeige — das Backend prüft
    jeden Endpunkt selbst (api/admin/[...path].js). */
@@ -141,9 +142,9 @@ function renderShell(active) {
       <span class="adm-badge st-gold">${role}</span>
     </div>
     ${languageSwitcher()}
-    <button type="button" class="adm-btn-ghost adm-btn-sm hidden lg:inline-flex" data-logout>
+    ${isMiniApp() ? '' : `<button type="button" class="adm-btn-ghost adm-btn-sm hidden lg:inline-flex" data-logout>
       ${icon('logout')}<span>${escapeHtml(t('shell.logout'))}</span>
-    </button>
+    </button>`}
     <button type="button" class="adm-icon-btn lg:hidden" data-menu-open aria-haspopup="dialog" aria-controls="adm-menu"
       aria-label="${escapeHtml(t('shell.openMenu'))}">${icon('menu')}</button>
   </div>`;
@@ -167,15 +168,16 @@ function renderShell(active) {
       <button type="button" class="adm-icon-btn adm-icon-btn-plain" data-menu-close aria-label="${escapeHtml(t('common.close'))}">${icon('close')}</button>
     </div>
     <nav class="adm-nav min-h-0 overflow-y-auto p-2" aria-label="${escapeHtml(t('shell.navigation'))}">${navLinks(active)}</nav>
-    <div class="border-t border-line p-3">
+    ${isMiniApp() ? '' : `<div class="border-t border-line p-3">
       <button type="button" class="adm-btn-ghost adm-btn-block" data-logout>${icon('logout')}<span>${escapeHtml(t('shell.logout'))}</span></button>
-    </div>`;
+    </div>`}`;
 }
 
 async function logout(button) {
   button.disabled = true;
   try {
     await api('/session', { method: 'DELETE' });
+    clearToken();
   } catch {
     // Auch ohne Antwort zurück zur Anmeldung; die Session läuft serverseitig ab.
   }
@@ -229,6 +231,9 @@ export function showBootError() {
  * `preloaded` erspart /admin einen zweiten Aufruf von GET /session.
  */
 export async function requireSession(active, preloaded = null) {
+  /* Zuerst der Rahmen: erst danach weiß core.js, dass es in Telegram läuft und
+     eine abgelaufene Sitzung dort selbst erneuern darf. */
+  await initTelegram();
   bindShellEvents();
 
   let data = preloaded;

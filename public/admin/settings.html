@@ -70,6 +70,17 @@
           </form>
         </section>
 
+        <!-- Telegram: Mini App im Bot. Der Inhaber sieht alle Verknüpfungen
+             des Betriebs, alle anderen nur die eigene. -->
+        <section class="adm-card" aria-labelledby="telegram-title">
+          <div class="adm-card-head"><h2 id="telegram-title" class="adm-h2" data-i18n="telegram.title"></h2></div>
+          <div class="adm-card-pad grid gap-3">
+            <p class="adm-hint mt-0" data-i18n="telegram.hint"></p>
+            <div data-telegram-bot></div>
+            <div data-telegram class="grid gap-2"></div>
+          </div>
+        </section>
+
         <section class="adm-card" data-owner-only hidden aria-labelledby="users-title">
           <div class="adm-card-head">
             <h2 id="users-title" class="adm-h2" data-i18n="settings.users"></h2>
@@ -84,7 +95,7 @@
           </div>
         </section>
 
-        <section class="adm-card" aria-labelledby="logout-title">
+        <section class="adm-card" data-logout-section aria-labelledby="logout-title">
           <div class="adm-card-head"><h2 id="logout-title" class="adm-h2" data-i18n="shell.logout"></h2></div>
           <div class="adm-card-pad flex flex-wrap items-center justify-between gap-3">
             <p class="text-sm text-fg-body" data-i18n="settings.logoutHint"></p>

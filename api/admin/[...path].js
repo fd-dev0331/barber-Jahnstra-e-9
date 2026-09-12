@@ -11,6 +11,9 @@
      POST   /api/admin/session                     Login
      GET    /api/admin/session                     aktueller Benutzer
      DELETE /api/admin/session                     Logout
+     POST   /api/admin/session/telegram            Start der Mini App (signiertes initData)
+     POST   /api/admin/session/telegram/link       einmalige Verknüpfung mit E-Mail + Passwort
+     GET    /api/admin/telegram                    verknüpfte Telegram-Konten; DELETE /:id
      POST   /api/admin/password                    eigenes Passwort ändern
      GET    /api/admin/overview                    Dashboard
      GET    /api/admin/bookings                    Terminliste (Mitarbeiter: nur eigene)
@@ -43,6 +46,7 @@ import * as googleAdmin from '../../lib/admin/google.js';
 import * as media from '../../lib/admin/media.js';
 import * as gallery from '../../lib/admin/gallery.js';
 import * as closures from '../../lib/admin/closures.js';
+import * as telegram from '../../lib/admin/telegram.js';
 
 /** Bilder kommen als Base64 im JSON — nur dieser Endpunkt darf so groß sein. */
 const UPLOAD_LIMIT = 6_000_000;
@@ -83,8 +87,9 @@ export default async function handler(req, res) {
       : {};
     if (body === undefined) return; // Antwort wurde schon gesendet
 
-    // Profilfelder, Galerie und Bilder brauchen die Schema-Ergänzungen (lib/schema.js).
-    if (['employees', 'gallery', 'media'].includes(resource)) await ensureSchema();
+    // Profilfelder, Galerie, Bilder und Telegram brauchen die Schema-Ergänzungen (lib/schema.js).
+    if (['employees', 'gallery', 'media', 'telegram'].includes(resource)) await ensureSchema();
+    if (resource === 'session' && id === 'telegram') await ensureSchema();
 
     /* ---------------------------------------------------- ohne Anmeldung */
 
@@ -95,6 +100,22 @@ export default async function handler(req, res) {
         return await account.runSetup(req, res, body);
       }
       return methodNotAllowed(res, ['GET', 'POST']);
+    }
+
+    /* Telegram Mini App: die Anmeldung belegt `initData`, nicht ein Cookie.
+       Geprüft wird die Signatur mit dem Bot-Token (lib/telegram.js) — hier läuft
+       deshalb dieselbe Ratenbegrenzung wie beim Passwort-Login. */
+    if (resource === 'session' && id === 'telegram') {
+      if (req.method !== 'POST') return methodNotAllowed(res, ['POST']);
+      if (!sub) {
+        if (!rateLimit(req, res, { limit: 30, windowMs: 600_000, key: 'telegram' })) return;
+        return await telegram.signIn(req, res, body);
+      }
+      if (sub === 'link') {
+        if (!rateLimit(req, res, { limit: 10, windowMs: 600_000, key: 'login' })) return;
+        return await telegram.link(req, res, body);
+      }
+      return fail(res, 404, 'not_found', 'Diesen Endpunkt gibt es nicht.');
     }
 
     if (resource === 'session' && !id) {
@@ -116,6 +137,16 @@ export default async function handler(req, res) {
       const user = await requireUser(req, res, { minimum: 'EMPLOYEE' });
       if (!user) return;
       return await account.changePassword(req, res, body, user);
+    }
+
+    /* Die eigene Telegram-Verknüpfung geht jede Rolle etwas an; wer fremde
+       sieht und löst, entscheidet lib/admin/telegram.js anhand der Rolle. */
+    if (resource === 'telegram') {
+      const user = await requireUser(req, res, { minimum: 'EMPLOYEE' });
+      if (!user) return;
+      if (req.method === 'GET' && !id) return await telegram.status(req, res, user);
+      if (req.method === 'DELETE' && id) return await telegram.unlink(req, res, user, id);
+      return methodNotAllowed(res, ['GET', 'DELETE']);
     }
 
     if (resource === 'overview') {

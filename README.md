@@ -29,7 +29,9 @@ docker exec it-simulator-db psql -U postgres -c "CREATE DATABASE barbershop"
 ```bash
 node scripts/test-booking.js      # 22 Prüfungen: Verfügbarkeit, Buchung, Validierung
 node scripts/test-admin.js        # 33 Prüfungen: Setup, Anmeldung, Rechte, Dashboard-Rechte, Kündigung
-node scripts/test-admin-i18n.js   # 62 Prüfungen: DE/RU/TR vollständig, Spracherkennung, Website bleibt deutsch
+node scripts/test-admin-i18n.js   # 70 Prüfungen: DE/RU/TR vollständig, Spracherkennung, Website bleibt deutsch
+node scripts/test-telegram.js     # 29 Prüfungen: Mini App — Signatur, Verknüpfung, Bearer-Sitzung
+                                  #   braucht TELEGRAM_BOT_TOKEN, derselbe Wert wie im Dev-Server
 node scripts/test-race.js         # gleichzeitige Buchungen desselben Slots
 node scripts/test-responsive.js   # feste Breiten, Viewport, Zoom
 ```
@@ -54,7 +56,8 @@ public/           Ausgelieferte Website (Vercel outputDirectory)
   assets/js/      site.js (gemeinsam) · home.js · gallery.js · booking.js
   assets/js/admin/ core.js (API, Formate) · shell.js (Kopfzeile, Navigation,
                   Sprachwahl) · ui.js (Dialoge, Zustände, Formularprüfung) ·
-                  i18n.js + i18n/{de,ru,tr}.js · eine Datei je Admin-Seite
+                  telegram.js (Mini App) · i18n.js + i18n/{de,ru,tr}.js ·
+                  eine Datei je Admin-Seite
   assets/css/     site.css (Website) und admin.css (Verwaltung) — beide gebaut
 api/              Vercel Functions
   services.js     GET  Leistungen
@@ -65,12 +68,15 @@ api/              Vercel Functions
   reviews.js      GET  echte Google-Rezensionen (leer, solange keine da sind)
   business.js     GET  Kontakt, Öffnungszeiten, Preisliste, Team für die Website
   media.js        GET  Bilder aus der Verwaltung (Galerie, Mitarbeiterfotos)
+  telegram.js     POST Webhook des Bots (nur mit gültigem Secret)
   admin/[...path].js  alle Admin-Endpunkte (eine Function, siehe unten)
   google/[...path].js OAuth 2.0: /api/google/start und /api/google/callback
 lib/              db · http · time · availability · google · crypto · business · auth
-  admin/          account · employees · services · bookings · settings · google · util
+                  telegram (initData prüfen, Bot-API) · holidays · schema · media
+  admin/          account · employees · services · bookings · settings · google ·
+                  telegram · gallery · closures · media · util
 db/schema.sql     Schema
-scripts/          migrate · seed · dev-api · Tests
+scripts/          migrate · seed · dev-api · telegram-setup · Tests
 src/css/input.css Tailwind-Quelle (Design-Tokens)
 design-system/    Verbindliche Design-Vorgaben — vor UI-Änderungen lesen
 ```
@@ -92,6 +98,9 @@ Kontrastwert. **Nicht ohne Nachrechnen ändern.**
 | `INSTAGRAM_ACCESS_TOKEN` / `INSTAGRAM_USER_ID` | optional | Galerie-Sync |
 | `GOOGLE_BUSINESS_*` | optional | echte Rezensionen |
 | `SESSION_SECRET` | für /admin | Signiert den OAuth-`state`. Ohne den Wert lässt sich kein Google-Konto verbinden. |
+| `TELEGRAM_BOT_TOKEN` | für Telegram | Token des Bots vom @BotFather. Fehlt er, ist die Mini App aus; `/admin` bleibt im Browser unverändert. |
+| `TELEGRAM_WEBHOOK_SECRET` | für Telegram | Frei gewählt. Ohne passenden Wert im Header beantwortet `/api/telegram` nichts. |
+| `PUBLIC_BASE_URL` | für Telegram | https-Adresse der Website. Telegram öffnet Mini Apps nur über https. |
 
 Schlüssel erzeugen:
 
@@ -112,6 +121,7 @@ Das System täuscht nirgends Funktionen vor, die nicht konfiguriert sind:
 | Google Calendar | Buchungen laufen rein über die Datenbank | `503` + verständliche Meldung; **keine** Buchung wird angelegt |
 | Instagram | Galerie zeigt manuell gepflegte Bilder aus derselben Tabelle | Cache wird weiter ausgeliefert |
 | Google Rezensionen | Bewertungsblock bleibt **ausgeblendet** | Cache wird weiter ausgeliefert |
+| Telegram | Mini App und Bot sind aus (`503`), die Verwaltung im Browser bleibt unberührt | Anmeldung schlägt mit verständlicher Meldung fehl |
 
 Der Bewertungsblock erzeugt unter keinen Umständen Beispielbewertungen oder ein
 Platzhalter-Rating. Erfundene Rezensionen wären eine Irreführung und ein Verstoß
@@ -166,6 +176,71 @@ zugehörigen Sessions sofort ungültig.
 Datei unter `api/` eine eigene Serverless Function, und der Hobby-Plan lässt
 zwölf zu. `api/admin/[...path].js` routet deshalb intern; die Fachlogik liegt in
 `lib/admin/`.
+
+---
+
+## Telegram Mini App
+
+Dieselbe Verwaltung, geöffnet im Telegram-Bot. Kein zweites Frontend: es sind
+die Seiten unter `public/admin/`, nur in Telegrams Rahmen.
+
+**Einrichten (einmalig)**
+
+1. Beim [@BotFather](https://t.me/BotFather) einen Bot anlegen, Token kopieren.
+2. `TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET` und `PUBLIC_BASE_URL` setzen —
+   lokal in `.env`, auf Vercel unter Project Settings → Environment Variables.
+3. `node scripts/telegram-setup.js` ausführen. Das Skript setzt den Menüknopf
+   des Bots auf `<BASE>/admin`, die Befehle `/start` und `/help` (de, ru, tr)
+   und den Webhook auf `<BASE>/api/telegram`.
+   `node scripts/telegram-setup.js --status` zeigt nur den Zustand.
+4. Im Bot `/start` senden und die Verwaltung öffnen.
+
+**Anmeldung**
+
+Telegram schickt beim Start ein signiertes `initData` mit. Der Server rechnet
+die Signatur mit dem Bot-Token nach (`lib/telegram.js`) und prüft `auth_date` —
+älter als 24 Stunden gilt nicht mehr.
+
+Ein Telegram-Konto allein ist **kein** Zugang. Beim ersten Öffnen fragt die Mini
+App einmalig nach E-Mail und Passwort — denselben wie im Browser — und verknüpft
+danach beides (`telegram_account`). Jeder weitere Start meldet sich lautlos an.
+Gesperrte Konten kommen auch mit Verknüpfung nicht herein.
+
+Die Verknüpfungen stehen unter **Einstellungen → Telegram**: der Inhaber sieht
+alle des Betriebs, alle anderen nur ihre eigene, und jede lässt sich dort lösen.
+
+**Sitzung**
+
+Auf Telegram Web läuft die Mini App in einem iframe; ein `SameSite=Lax`-Cookie
+käme dort nicht an. Diese Sitzungen tragen ihr Token deshalb im
+`Authorization: Bearer`-Header. Es ist dasselbe Token aus `app_session`, mit
+demselben Ablauf — nur ein anderer Transportweg. Einen Header kann keine fremde
+Seite ungefragt mitschicken, CSRF-Schutz braucht dieser Weg deshalb nicht; für
+Cookie-Sitzungen bleibt die Prüfung unverändert bestehen.
+
+Das Token liegt im `sessionStorage` der Mini App: beim Schließen ist es weg,
+beim nächsten Start entsteht aus `initData` ein neues.
+
+**Was in Telegram anders aussieht**
+
+- Sprache: Ohne eigene Wahl gilt die Sprache des Telegram-Kontos (de/ru/tr).
+  Eine Wahl in der Verwaltung ist immer stärker.
+- Zurück-Knopf und Kopfzeile stellt Telegram; die Höhe kommt aus
+  `viewportStableHeight`.
+- „Abmelden" fehlt: der nächste Start würde sich sofort wieder anmelden. Wer
+  wirklich hinaus will, löst die Verknüpfung.
+
+**Telegram Web**
+
+Auf web.telegram.org läuft die Mini App in einem iframe. `vercel.json` erlaubt
+deshalb für `/admin` ausdrücklich `frame-ancestors 'self' https://web.telegram.org`;
+für die Website gilt weiterhin `X-Frame-Options: SAMEORIGIN`. In den
+Telegram-Apps für iOS, Android und Desktop ist kein iframe im Spiel — dort ist
+das ohne Belang.
+
+**Ohne Bot-Token** ist die ganze Anbindung aus: `/api/telegram` und die
+Mini-App-Anmeldung antworten mit `503`, die Verwaltung im Browser bleibt
+unverändert.
 
 ---
 
@@ -243,6 +318,8 @@ eine (`201`), die andere bekommt `409`.
   hinterlegt; falls es eine Mittagspause gibt, muss sie in `working_hours`
   mit `is_break = true` eingetragen werden.
 - **Google-Konto** für OAuth und den Kalender.
+- **Telegram-Bot** vom @BotFather, falls die Verwaltung in Telegram laufen soll
+  (Token + Webhook-Secret, danach `node scripts/telegram-setup.js`).
 - **Instagram/Meta-App** für den Galerie-Sync (sonst manuelle Pflege).
 - **Google Business Profile** für Rezensionen.
 - Weitere Mitarbeiter, falls es mehr als „Abo" gibt.

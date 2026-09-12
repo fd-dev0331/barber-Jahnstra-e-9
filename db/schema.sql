@@ -250,3 +250,20 @@ CREATE TABLE IF NOT EXISTS closure_day (
 
 -- Gesetzliche Feiertage, an denen der Salon trotzdem öffnet (Schlüssel aus lib/holidays.js).
 ALTER TABLE business ADD COLUMN IF NOT EXISTS open_holidays text[] NOT NULL DEFAULT '{}';
+
+-- Telegram-Konten, die mit einem Verwaltungszugang verknüpft sind. Erst diese
+-- Verknüpfung macht aus einem Telegram-Start eine Anmeldung; sie entsteht nur
+-- durch einmalige Eingabe von E-Mail und Passwort in der Mini App.
+CREATE TABLE IF NOT EXISTS telegram_account (
+  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  business_id   uuid NOT NULL REFERENCES business(id) ON DELETE CASCADE,
+  user_id       uuid NOT NULL REFERENCES app_user(id) ON DELETE CASCADE,
+  telegram_id   bigint NOT NULL UNIQUE,
+  username      text,
+  first_name    text,
+  last_name     text,
+  language_code text,
+  linked_at     timestamptz NOT NULL DEFAULT now(),
+  last_seen_at  timestamptz
+);
+CREATE INDEX IF NOT EXISTS telegram_account_user_idx ON telegram_account (user_id);

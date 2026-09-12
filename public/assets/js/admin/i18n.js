@@ -6,11 +6,13 @@
    Alle sichtbaren Texte stehen in i18n/de.js, i18n/ru.js und i18n/tr.js. Im Code
    steht nur der Schlüssel, nie der Text selbst und nie eine Sprachweiche.
 
-   Sprache: gespeicherte Wahl (localStorage "admin_language") > Browsersprache
+   Sprache: gespeicherte Wahl (localStorage "admin_language") > Sprache des
+   Telegram-Kontos, wenn die Verwaltung als Mini App läuft > Browsersprache
    (de/ru/tr) > Deutsch. Gespeichert wird nur eine Wahl, die jemand selbst trifft. */
 import de from './i18n/de.js';
 import ru from './i18n/ru.js';
 import tr from './i18n/tr.js';
+import { telegramLanguageHint } from './telegram.js';
 
 export const LANGUAGES = [
   { code: 'de', label: 'Deutsch', locale: 'de-AT' },
@@ -41,7 +43,11 @@ export function detectLanguage(list = navigator.languages?.length ? navigator.la
 
 let current = (() => {
   const stored = readStored();
-  return DICTIONARIES[stored] ? stored : detectLanguage();
+  if (DICTIONARIES[stored]) return stored;
+  // In Telegram ist die Kontosprache der bessere erste Tipp als die des Browsers.
+  const fromBrowser = navigator.languages?.length ? navigator.languages : [navigator.language];
+  const hint = telegramLanguageHint();
+  return detectLanguage(hint ? [hint, ...fromBrowser] : fromBrowser);
 })();
 
 export const getLanguage = () => current;

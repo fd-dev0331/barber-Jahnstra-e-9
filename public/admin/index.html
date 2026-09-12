@@ -52,6 +52,27 @@
         </form>
       </section>
 
+      <!-- Telegram Mini App: erscheint nur, wenn dieses Telegram-Konto noch mit
+           keinem Zugang verknüpft ist. Danach genügt der Start im Bot. -->
+      <section data-view="telegram" hidden class="adm-card adm-card-pad">
+        <h1 class="adm-h1" data-i18n="telegram.gateTitle"></h1>
+        <p class="adm-subtitle" data-i18n="telegram.gateSubtitle"></p>
+        <p class="adm-hint" data-telegram-user hidden></p>
+        <form data-form="telegram" novalidate class="mt-6 grid gap-4">
+          <p class="adm-form-error" data-form-error role="alert" hidden></p>
+          <div>
+            <label class="adm-label" for="tg-email" data-i18n="login.email"></label>
+            <input class="adm-input" id="tg-email" name="email" type="email" inputmode="email" autocomplete="username">
+          </div>
+          <div>
+            <label class="adm-label" for="tg-password" data-i18n="login.password"></label>
+            <input class="adm-input" id="tg-password" name="password" type="password" autocomplete="current-password">
+          </div>
+          <button class="adm-btn-primary adm-btn-block mt-2" type="submit" data-i18n="telegram.connect"></button>
+          <p class="adm-hint text-center" data-i18n="telegram.gateHint"></p>
+        </form>
+      </section>
+
       <section data-view="setup" hidden class="adm-card adm-card-pad">
         <h1 class="adm-h1" data-i18n="setup.title"></h1>
         <p class="adm-subtitle" data-i18n="setup.subtitle"></p>

@@ -305,3 +305,20 @@
 .adm-main .grid > *,
 .adm-dialog .grid > *,
 .adm-sheet .grid > * { min-width: 0; }
+
+/* Telegram Mini App. `data-tg="1"` setzt public/assets/js/admin/telegram.js auf
+   <html>, sobald die Verwaltung wirklich in Telegram läuft. Die Regeln stehen
+   außerhalb von @layer: das Attribut kommt im Quelltext nicht wörtlich vor, und
+   Tailwind würde die Klassen sonst aus dem Build entfernen.
+
+   Telegram gibt die nutzbare Höhe selbst vor (viewportStableHeight) — 100vh ist
+   dort zu hoch und schiebt den unteren Rand aus dem Bild. */
+[data-tg='1'] .adm-layout,
+[data-tg='1'] [data-gate] { min-height: var(--tg-viewport, 100vh); }
+
+[data-tg='1'] .adm-sidebar { height: calc(var(--tg-viewport, 100vh) - var(--adm-header-h)); }
+
+/* Unten sitzt in Telegram die Systemleiste des Geräts. */
+[data-tg='1'] .adm-main { padding-bottom: calc(5rem + env(safe-area-inset-bottom)); }
+[data-tg='1'] .adm-sheet { padding-bottom: env(safe-area-inset-bottom); }
+[data-tg='1'] .adm-toast { bottom: calc(1rem + env(safe-area-inset-bottom)); }

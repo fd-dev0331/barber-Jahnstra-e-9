@@ -10,13 +10,16 @@ import {
   validate, clearErrors, showFormError, setBusy,
 } from './ui.js';
 import { requireSession } from './shell.js';
+import { isMiniApp, clearToken } from './telegram.js';
 
 const passwordForm = document.querySelector('[data-password-form]');
 const usersBox = document.querySelector('[data-users]');
 const userDialog = document.querySelector('[data-user-dialog]');
 const userForm = userDialog.querySelector('[data-user-form]');
+const telegramBox = document.querySelector('[data-telegram]');
+const telegramBotBox = document.querySelector('[data-telegram-bot]');
 
-const state = { users: null, employees: [], usersError: null };
+const state = { users: null, employees: [], usersError: null, telegram: null, telegramError: null };
 
 /* -------------------------------------------------------------- Konto */
 
@@ -76,6 +79,96 @@ passwordForm.addEventListener('submit', async (event) => {
   } finally {
     setBusy(submit, false);
   }
+});
+
+/* ---------------------------------------------------------------- Telegram */
+
+function telegramRow(account) {
+  return `<div class="flex flex-wrap items-center justify-between gap-3 rounded-md border border-line bg-surface-2 px-3 py-3 sm:px-4">
+    <div class="min-w-0">
+      <p class="break-words font-semibold text-fg">${escapeHtml(account.name)}${
+        account.username ? ` <span class="font-normal text-fg-muted">@${escapeHtml(account.username)}</span>` : ''}</p>
+      <p class="break-all text-[13px] text-fg-muted">${escapeHtml(account.account.name)} · ${escapeHtml(account.account.email)}</p>
+      <p class="mt-1.5 flex flex-wrap items-center gap-1.5">
+        <span class="adm-badge st-gold">${escapeHtml(roleLabel(account.account.role))}</span>
+        ${account.isSelf ? `<span class="text-xs text-fg-muted">${escapeHtml(t('settings.you'))}</span>` : ''}
+      </p>
+    </div>
+    <button type="button" class="adm-btn-ghost adm-btn-sm" data-unlink="${account.id}">
+      ${icon('unlink')}<span>${escapeHtml(t('telegram.unlink'))}</span>
+    </button>
+  </div>`;
+}
+
+function renderTelegram() {
+  if (state.telegramError) {
+    telegramBotBox.innerHTML = '';
+    telegramBox.innerHTML = errorState(state.telegramError);
+    return;
+  }
+  if (!state.telegram) {
+    telegramBotBox.innerHTML = '';
+    telegramBox.innerHTML = skeletonList(1);
+    return;
+  }
+
+  const { bot, accounts } = state.telegram;
+  if (!bot.configured) {
+    telegramBotBox.innerHTML = `<p class="text-sm text-fg-body">${escapeHtml(t('telegram.notConfigured'))}</p>`;
+  } else if (bot.username) {
+    telegramBotBox.innerHTML = `<p class="text-sm text-fg-body">${escapeHtml(t('telegram.botIs'))}
+      <a class="adm-link" href="https://t.me/${encodeURIComponent(bot.username)}" target="_blank" rel="noopener">@${escapeHtml(bot.username)}</a></p>`;
+  } else {
+    telegramBotBox.innerHTML = `<p class="text-sm text-fg-body">${escapeHtml(t('telegram.botUnreachable'))}</p>`;
+  }
+
+  telegramBox.innerHTML = accounts.length
+    ? accounts.map(telegramRow).join('')
+    : emptyState({ title: t('telegram.noAccounts'), text: t('telegram.noAccountsHint') });
+}
+
+async function loadTelegram() {
+  state.telegramError = null;
+  try {
+    state.telegram = await api('/telegram');
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 401) return handleError(err);
+    state.telegramError = err;
+  }
+  renderTelegram();
+  return undefined;
+}
+
+telegramBox.addEventListener('click', async (event) => {
+  if (event.target.closest('[data-retry]')) return loadTelegram();
+  const button = event.target.closest('[data-unlink]');
+  if (!button) return undefined;
+  const account = state.telegram.accounts.find((entry) => entry.id === button.dataset.unlink);
+  const confirmed = await confirmDialog({
+    title: t('telegram.unlinkTitle', { name: account.name }),
+    message: t(account.isSelf ? 'telegram.unlinkOwnMessage' : 'telegram.unlinkMessage'),
+    confirmLabel: t('telegram.unlink'),
+    danger: true,
+  });
+  if (!confirmed) return undefined;
+
+  setBusy(button, true);
+  try {
+    await api(`/telegram/${account.id}`, { method: 'DELETE' });
+    /* Die eigene Verknüpfung in der Mini App zu lösen heißt: diese Sitzung ist
+       vorbei. Das Token wegwerfen und zurück zur Anmeldung. */
+    if (account.isSelf && isMiniApp()) {
+      clearToken();
+      window.location.href = '/admin';
+      return undefined;
+    }
+    toast(t('telegram.unlinked'));
+    await loadTelegram();
+  } catch (err) {
+    setBusy(button, false);
+    handleError(err);
+  }
+  return undefined;
 });
 
 /* ------------------------------------------------------------------ Konten */
@@ -218,6 +311,7 @@ bindDialog(userDialog);
 onLanguageChange(() => {
   renderAccount();
   renderLanguages();
+  renderTelegram();
   clearErrors(passwordForm);
   if (isOwner(session.user)) {
     renderUsers();
@@ -233,6 +327,11 @@ onLanguageChange(() => {
   if (!user) return;
   renderAccount();
   renderLanguages();
+  // In Telegram beendet der Knopf „Abmelden" nichts: der nächste Start meldet
+  // sich sofort wieder an. Dort führt der Weg über „Verknüpfung lösen".
+  if (isMiniApp()) document.querySelector('[data-logout-section]').hidden = true;
+  renderTelegram();
+  await loadTelegram();
   if (isOwner(user)) {
     document.querySelector('[data-owner-only]').hidden = false;
     renderUsers();
