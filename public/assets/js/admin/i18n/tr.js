@@ -136,6 +136,7 @@ export default {
     telegram_invalid: 'Telegram isteği doğrulanamadı. Lütfen yönetimi botta yeniden aç.',
     telegram_expired: 'Telegram başlatması zaman aşımına uğradı. Lütfen yönetimi botta yeniden aç.',
     telegram_disabled: 'Bu işletme için Telegram bağlantısı kurulmamış.',
+    not_cancelled: 'Yalnızca iptal edilen randevular silinebilir. Önce randevuyu iptal et.',
   },
 
   dashboard: {
@@ -228,6 +229,11 @@ export default {
     outsideHours: 'Çalışma saatleri dışında ekle (çakışan randevular yine de engellenir)',
     create: 'Ekle',
     created: 'Randevu eklendi.',
+    delete: 'Sil',
+    deleteTitle: 'İptal edilen randevu silinsin mi?',
+    deleteMessage: '{name} adlı kişinin {date} {time} randevusu kalıcı olarak silinecek. Bu işlem geri alınamaz.',
+    deleted: 'Randevu silindi.',
+    deleteGoogleWarning: 'Randevu silindi. Google Takvim kaydı kaldırılamadı — lütfen oradan kontrol et.',
   },
 
   calendar: {

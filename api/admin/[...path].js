@@ -19,6 +19,7 @@
      GET    /api/admin/bookings                    Terminliste (Mitarbeiter: nur eigene)
      POST   /api/admin/bookings                    manueller Termin
      PATCH  /api/admin/bookings/:id                Statuswechsel
+     DELETE /api/admin/bookings/:id                stornierten Termin löschen (ab ADMIN)
      GET    /api/admin/employees                   Mitarbeiter inkl. inaktive
      POST   /api/admin/employees
      PATCH  /api/admin/employees/:id
@@ -162,7 +163,13 @@ export default async function handler(req, res) {
       if (req.method === 'GET' && !id) return await bookings.list(req, res, user, params);
       if (req.method === 'POST' && !id) return await bookings.create(req, res, body, user);
       if (req.method === 'PATCH' && id) return await bookings.update(req, res, body, user, id);
-      return methodNotAllowed(res, ['GET', 'POST', 'PATCH']);
+      /* Löschen ist der Leitung vorbehalten: ein Mitarbeiter darf seine Termine
+         stornieren, aber keine Spuren beseitigen. */
+      if (req.method === 'DELETE' && id) {
+        if (!hasRole(user, 'ADMIN')) return fail(res, 403, 'forbidden', 'Dafür fehlt dir die Berechtigung.');
+        return await bookings.remove(req, res, user, id);
+      }
+      return methodNotAllowed(res, ['GET', 'POST', 'PATCH', 'DELETE']);
     }
 
     /* Alles Weitere ist Sache der Leitung. Ein EMPLOYEE bekommt hier 403 —

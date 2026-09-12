@@ -137,6 +137,7 @@ export default {
     telegram_invalid: 'Diese Telegram-Anfrage konnte nicht überprüft werden. Bitte öffne die Verwaltung erneut im Bot.',
     telegram_expired: 'Der Telegram-Start ist abgelaufen. Bitte öffne die Verwaltung erneut im Bot.',
     telegram_disabled: 'Die Telegram-Anbindung ist für diesen Betrieb nicht eingerichtet.',
+    not_cancelled: 'Nur stornierte Termine lassen sich löschen. Storniere den Termin zuerst.',
   },
 
   dashboard: {
@@ -229,6 +230,11 @@ export default {
     outsideHours: 'Außerhalb der Arbeitszeit eintragen (Doppelbuchungen bleiben ausgeschlossen)',
     create: 'Eintragen',
     created: 'Termin eingetragen.',
+    delete: 'Löschen',
+    deleteTitle: 'Stornierten Termin löschen?',
+    deleteMessage: 'Der Termin von {name} am {date} um {time} wird endgültig gelöscht. Das lässt sich nicht rückgängig machen.',
+    deleted: 'Termin gelöscht.',
+    deleteGoogleWarning: 'Termin gelöscht. Der Eintrag im Google Kalender konnte nicht entfernt werden — bitte dort nachsehen.',
   },
 
   calendar: {

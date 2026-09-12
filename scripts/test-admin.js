@@ -155,6 +155,20 @@ const manual = await call(owner, '/api/admin/bookings', {
 check('Manueller Termin wird angelegt', manual.status === 201 && manual.body.booking.source === 'MANUAL');
 const bookingId = manual.body.booking?.id;
 
+/* Noch ein Termin, später am selben Tag: an ihm wird in Abschnitt 7 das Löschen
+   geprüft. Er entsteht hier, solange der Testmitarbeiter noch aktiv ist. */
+const lateSlot = [...(availability.body.slots ?? [])].reverse().find((slot) => slot.available);
+const forDeletion = lateSlot ? await call(owner, '/api/admin/bookings', {
+  method: 'POST',
+  body: {
+    serviceId: service.id, employeeId, start: lateSlot.start,
+    customerName: 'Loeschtest', customerPhone: '0664 0000003',
+  },
+}) : { status: 0, body: {} };
+const deletableId = forDeletion.body.booking?.id;
+check('Zweiter Termin für den Löschtest angelegt', forDeletion.status === 201 && Boolean(deletableId),
+  `(${forDeletion.status} ${JSON.stringify(forDeletion.body).slice(0, 90)})`);
+
 const duplicate = await call(owner, '/api/admin/bookings', {
   method: 'POST',
   body: {
@@ -214,6 +228,10 @@ check('Mitarbeiter-Dashboard enthält keine Google-Kontodaten',
 const staffSession = await call(staff, '/api/admin/session');
 check('Sitzung nennt den verknüpften Mitarbeiter', staffSession.body.employee?.id === employeeId);
 
+// Stornieren darf ein Mitarbeiter, endgültig löschen nicht.
+const staffDelete = await call(staff, `/api/admin/bookings/${deletableId}`, { method: 'DELETE' });
+check('Mitarbeiter darf Termine nicht löschen -> 403', staffDelete.status === 403, `(${staffDelete.status})`);
+
 check('Inhaberkonto lässt sich nicht herabstufen',
   (await call(owner, `/api/admin/users/${(await call(owner, '/api/admin/users')).body.users.find((u) => u.role === 'OWNER').id}`, {
     method: 'PATCH', body: { role: 'EMPLOYEE' },
@@ -255,6 +273,20 @@ check('Termin wird storniert', cancelled.status === 200);
 // Erst ohne Termine ist das endgültige Löschen erlaubt — genau darum geht es.
 const stillThere = await call(owner, `/api/admin/employees/${employeeId}`, { method: 'DELETE' });
 check('Löschen bleibt gesperrt, solange stornierte Termine vorliegen', stillThere.status === 409);
+
+// Stornierte Termine lassen sich endgültig löschen, andere nicht.
+const notCancelled = await call(owner, `/api/admin/bookings/${deletableId}`, { method: 'DELETE' });
+check('Offener Termin lässt sich nicht löschen -> 409 not_cancelled',
+  notCancelled.status === 409 && notCancelled.body.error === 'not_cancelled',
+  `(${notCancelled.status} ${notCancelled.body.error})`);
+
+await call(owner, `/api/admin/bookings/${deletableId}`, { method: 'PATCH', body: { status: 'CANCELLED' } });
+const removed = await call(owner, `/api/admin/bookings/${deletableId}`, { method: 'DELETE' });
+check('Stornierter Termin wird gelöscht', removed.status === 200, `(${removed.status} ${removed.body.error ?? ''})`);
+const afterDelete = await call(owner, '/api/admin/bookings?view=all');
+check('Gelöschter Termin ist aus der Liste verschwunden',
+  !(afterDelete.body.bookings ?? []).some((b) => b.id === deletableId));
+check('Zweites Löschen -> 404', (await call(owner, `/api/admin/bookings/${deletableId}`, { method: 'DELETE' })).status === 404);
 
 console.log('\n▸ 8. Website-Synchronisierung');
 const site = await anon('/api/business');

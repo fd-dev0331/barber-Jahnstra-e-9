@@ -28,7 +28,7 @@ docker exec it-simulator-db psql -U postgres -c "CREATE DATABASE barbershop"
 
 ```bash
 node scripts/test-booking.js      # 22 Prüfungen: Verfügbarkeit, Buchung, Validierung
-node scripts/test-admin.js        # 63 Prüfungen: Setup, Anmeldung, Rechte, Mitarbeiter, Leistungen,
+node scripts/test-admin.js        # 69 Prüfungen: Setup, Anmeldung, Rechte, Mitarbeiter, Leistungen,
                                   #   Galerie, Bilder, Feiertage und Schließtage
 node scripts/test-admin-i18n.js   # 70 Prüfungen: DE/RU/TR vollständig, Spracherkennung, Website bleibt deutsch
 node scripts/test-website.js      # 31 Prüfungen: keine Beispieldaten im HTML, Bilder und Angebote
@@ -147,7 +147,7 @@ Inhaber machen.
 | Seite | Rolle | Inhalt |
 |---|---|---|
 | `/admin` | alle | Termine heute, kommende Termine, Zahlen, Google-Status, Schnellaktionen |
-| `/admin/bookings` | alle | Tabelle (ab 1280px) bzw. Karten, Filter, Suche, Details, Statuswechsel, Stornieren, manueller Termin mit freien Zeiten |
+| `/admin/bookings` | alle | Tabelle (ab 1280px) bzw. Karten, Filter, Suche, Details, Statuswechsel, Stornieren, manueller Termin mit freien Zeiten; **stornierte Termine löschen** (ADMIN+) |
 | `/admin/calendar` | alle | Tag, Woche, kommende Termine — in der Zeitzone des Betriebs |
 | `/admin/employees` | ADMIN+ | Anlegen, bearbeiten, deaktivieren, reaktivieren, löschen (nur ohne Termine), Leistungen, Kalender, Arbeitszeiten, Pausen, Abwesenheiten |
 | `/admin/services` | ADMIN+ | Leistungen mit Dauer, Preis, Status und zuständigen Mitarbeitern |
@@ -184,6 +184,26 @@ zwölf zu. `api/admin/[...path].js` routet deshalb intern; die Fachlogik liegt i
 `lib/admin/`.
 
 ---
+
+### Was sich löschen lässt — und was nicht
+
+Ein Eintrag verschwindet nur, wenn dadurch keine Geschichte verloren geht:
+
+| | Löschen erlaubt | sonst |
+|---|---|---|
+| Mitarbeiter | nur ohne einen einzigen Termin in der Historie | deaktivieren |
+| Leistung | nur ohne einen einzigen Termin in der Historie | deaktivieren |
+| Termin | nur wenn storniert, und nur ab `ADMIN` | stornieren |
+
+Ein wahrgenommener, offener oder als „nicht erschienen" vermerkter Termin bleibt
+also bestehen; wer ihn loswerden will, storniert ihn zuerst und trifft damit eine
+sichtbare Entscheidung. Danach ist das Löschen endgültig — kein Papierkorb. Die
+Oberfläche zeigt den Knopf nur dort, wo er erlaubt ist, und das Backend prüft es
+noch einmal (`409 has_bookings` bzw. `409 not_cancelled`, `403` für Mitarbeiter).
+
+Steht beim Stornieren ein Eintrag im Google Kalender, wird er dort gelöscht. War
+Google in dem Moment nicht erreichbar, versucht es das Löschen des Termins noch
+einmal und sagt es, falls es wieder nicht klappt.
 
 ## Was die Website anzeigt
 

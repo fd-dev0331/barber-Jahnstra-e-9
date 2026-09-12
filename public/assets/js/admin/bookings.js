@@ -135,6 +135,16 @@ function actionButtons(booking, { compact = false } = {}) {
       : `<button type="button" class="adm-btn-danger adm-btn-sm" data-status="CANCELLED" data-id="${booking.id}">
           ${icon('xCircle')}<span>${label}</span></button>`);
   }
+  /* Stornierte Termine lassen sich endgültig löschen — nur sie, und nur von der
+     Leitung. Das Backend prüft beides noch einmal. */
+  if (booking.status === 'CANCELLED' && canManage(session.user)) {
+    const label = escapeHtml(t('bookings.delete'));
+    buttons.push(compact
+      ? `<button type="button" class="adm-icon-btn h-10 w-10 hover:border-danger hover:text-danger" data-remove="${booking.id}"
+          aria-label="${label}: ${escapeHtml(booking.customer.name)}" title="${label}">${icon('trash')}</button>`
+      : `<button type="button" class="adm-btn-danger adm-btn-sm" data-remove="${booking.id}">
+          ${icon('trash')}<span>${label}</span></button>`);
+  }
   return buttons.join('');
 }
 
@@ -242,6 +252,8 @@ results.addEventListener('click', (event) => {
   if (detail) return openDetail(detail.dataset.detail);
   const statusButton = event.target.closest('[data-status]');
   if (statusButton) return changeStatus(statusButton.dataset.id, statusButton.dataset.status, statusButton);
+  const removeButton = event.target.closest('[data-remove]');
+  if (removeButton) return removeBooking(removeButton.dataset.remove, removeButton);
   return undefined;
 });
 
@@ -278,7 +290,9 @@ function renderDetail() {
   ].join('');
 
   const actions = booking.status === 'CANCELLED'
-    ? `<p class="adm-hint">${escapeHtml(t('bookings.cancelledFinal'))}</p>`
+    ? `<p class="adm-hint mt-0">${escapeHtml(t('bookings.cancelledFinal'))}</p>
+       ${canManage(session.user) ? `<button type="button" class="adm-btn-danger adm-btn-sm mt-3" data-remove="${booking.id}">
+         ${icon('trash')}<span>${escapeHtml(t('bookings.delete'))}</span></button>` : ''}`
     : `<div class="flex flex-wrap gap-2">${STATUS_ACTIONS
       .filter((status) => status !== booking.status)
       .map((status) => `<button type="button" class="${status === 'CANCELLED' ? 'adm-btn-danger' : 'adm-btn-ghost'} adm-btn-sm"
@@ -300,8 +314,42 @@ function openDetail(id) {
 detailDialog.addEventListener('click', (event) => {
   const statusButton = event.target.closest('[data-status]');
   if (statusButton) changeStatus(statusButton.dataset.id, statusButton.dataset.status, statusButton);
+  const removeButton = event.target.closest('[data-remove]');
+  if (removeButton) removeBooking(removeButton.dataset.remove, removeButton);
 });
 bindDialog(detailDialog);
+
+/**
+ * Stornierten Termin endgültig löschen. Danach ist er weg — kein Papierkorb,
+ * keine Wiederherstellung; deshalb die Rückfrage mit Namen und Zeitpunkt.
+ */
+async function removeBooking(id, button) {
+  const booking = findBooking(id);
+  if (!booking) return;
+
+  const ok = await confirmDialog({
+    title: t('bookings.deleteTitle'),
+    message: t('bookings.deleteMessage', {
+      name: booking.customer.name, date: fmtDate(booking.start), time: fmtTime(booking.start),
+    }),
+    confirmLabel: t('bookings.delete'),
+    danger: true,
+  });
+  if (!ok) return;
+
+  setBusy(button, true);
+  try {
+    const result = await api(`/bookings/${id}`, { method: 'DELETE' });
+    state.bookings = (state.bookings ?? []).filter((entry) => entry.id !== id);
+    if (detailDialog.open && state.detailId === id) detailDialog.close();
+    renderResults();
+    if (result.warning) toast(t('bookings.deleteGoogleWarning'), 'warn');
+    else toast(t('bookings.deleted'));
+  } catch (err) {
+    setBusy(button, false);
+    handleError(err);
+  }
+}
 
 async function changeStatus(id, status, button) {
   const booking = findBooking(id);
