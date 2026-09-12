@@ -88,7 +88,7 @@ export default async function handler(req, res) {
     if (body === undefined) return; // Antwort wurde schon gesendet
 
     // Profilfelder, Galerie, Bilder und Telegram brauchen die Schema-Ergänzungen (lib/schema.js).
-    if (['employees', 'gallery', 'media', 'telegram'].includes(resource)) await ensureSchema();
+    if (['employees', 'gallery', 'media', 'telegram', 'settings'].includes(resource)) await ensureSchema();
     if (resource === 'session' && id === 'telegram') await ensureSchema();
 
     /* ---------------------------------------------------- ohne Anmeldung */

@@ -28,8 +28,10 @@ docker exec it-simulator-db psql -U postgres -c "CREATE DATABASE barbershop"
 
 ```bash
 node scripts/test-booking.js      # 22 Prüfungen: Verfügbarkeit, Buchung, Validierung
-node scripts/test-admin.js        # 33 Prüfungen: Setup, Anmeldung, Rechte, Dashboard-Rechte, Kündigung
+node scripts/test-admin.js        # 59 Prüfungen: Setup, Anmeldung, Rechte, Mitarbeiter, Leistungen,
+                                  #   Galerie, Bilder, Feiertage und Schließtage
 node scripts/test-admin-i18n.js   # 70 Prüfungen: DE/RU/TR vollständig, Spracherkennung, Website bleibt deutsch
+node scripts/test-website.js      # 28 Prüfungen: keine Beispieldaten im HTML, Bilder aus der Verwaltung
 node scripts/test-telegram.js     # 29 Prüfungen: Mini App — Signatur, Verknüpfung, Bearer-Sitzung
                                   #   braucht TELEGRAM_BOT_TOKEN, derselbe Wert wie im Dev-Server
 node scripts/test-race.js         # gleichzeitige Buchungen desselben Slots
@@ -67,7 +69,8 @@ api/              Vercel Functions
   gallery.js      GET  Bilder aus dem Backend-Cache
   reviews.js      GET  echte Google-Rezensionen (leer, solange keine da sind)
   business.js     GET  Kontakt, Öffnungszeiten, Preisliste, Team für die Website
-  media.js        GET  Bilder aus der Verwaltung (Galerie, Mitarbeiterfotos)
+  media.js        GET  Bilder aus der Verwaltung: ?id=<uuid> (dauerhaft cachebar)
+                  oder ?slot=hero (Titelbild, für og:image)
   telegram.js     POST Webhook des Bots (nur mit gültigem Secret)
   admin/[...path].js  alle Admin-Endpunkte (eine Function, siehe unten)
   google/[...path].js OAuth 2.0: /api/google/start und /api/google/callback
@@ -78,6 +81,8 @@ lib/              db · http · time · availability · google · crypto · busi
 db/schema.sql     Schema
 scripts/          migrate · seed · dev-api · telegram-setup · Tests
 src/css/input.css Tailwind-Quelle (Design-Tokens)
+public/assets/img/ leer — alle Bilder der Website liegen in der Datenbank
+                  (Tabelle media), gepflegt in der Verwaltung
 design-system/    Verbindliche Design-Vorgaben — vor UI-Änderungen lesen
 ```
 
@@ -176,6 +181,41 @@ zugehörigen Sessions sofort ungültig.
 Datei unter `api/` eine eigene Serverless Function, und der Hobby-Plan lässt
 zwölf zu. `api/admin/[...path].js` routet deshalb intern; die Fachlogik liegt in
 `lib/admin/`.
+
+---
+
+## Was die Website anzeigt
+
+Alles Inhaltliche der Website kommt aus der Verwaltung, über `GET /api/business`
+und `GET /api/gallery`:
+
+| Auf der Seite | Quelle in der Verwaltung |
+|---|---|
+| Titelbild der Startseite | Betrieb → Bild der Startseite |
+| Team-Slider „Über uns" | Mitarbeiter (Profil, Foto, Sprachen, Arbeitstage) |
+| Preisliste | Leistungen |
+| Öffnungszeiten, „Jetzt geöffnet" | Arbeitszeiten der aktiven Mitarbeiter + Schließtage |
+| Adresse, Telefon, E-Mail, Instagram | Betrieb |
+| Galerie | Galerie |
+
+Im HTML steht davon **nichts** — kein Beispielpreis, keine feste Uhrzeit, keine
+erfundene Person, kein Bild aus `public/assets/img/`. Solche Rückfallwerte gab es
+früher; beim Laden waren sie kurz zu sehen, und wer etwas in der Verwaltung
+geändert hatte, sah einen Moment lang den alten Stand.
+
+Bis die Antwort da ist, stehen an diesen Stellen graue Ladeflächen. Kommt keine
+Antwort, erscheint ein Satz, dass die Angaben gerade nicht geladen werden konnten.
+Ist in der Verwaltung nichts hinterlegt, entfällt der Abschnitt: ohne Mitarbeiter
+mit Profil kein Team-Slider, ohne Titelbild ein dunkler Seitenkopf, ohne Bilder
+eine leere Galerie mit Hinweis.
+
+Das gilt auch für das Vorschaubild beim Teilen (`og:image`): es zeigt auf
+`/api/media?slot=hero`, also auf dasselbe Titelbild. Diese Adresse bleibt gleich,
+wenn das Bild gewechselt wird, und wird deshalb nur kurz zwischengespeichert —
+`/api/media?id=…` dagegen dauerhaft, weil eine ID immer zu demselben Bild gehört.
+
+Was das kostet: Ohne JavaScript oder bei nicht erreichbarem Server bleiben diese
+Stellen leer. Das ist bewusst so — eine veraltete Angabe wäre schlimmer als keine.
 
 ---
 
@@ -304,14 +344,12 @@ eine (`201`), die andere bekommt `409`.
 
 ## Offen / vom Kunden benötigt
 
-- **Echte Fotos in voller Auflösung.** Hero, Über-uns-Bild und die neun
-  Galeriekacheln stammen aus dem öffentlichen Instagram-Profil
-  (`public/assets/img/`, Stand 08.09.2026) und sind als Zwischenlösung gedacht.
-  Die Reel-Vorschaubilder liegen nur in 360 × 640 px vor — für den Hero sichtbar
-  weich. Mit `INSTAGRAM_ACCESS_TOKEN` (Graph API) oder Originaldateien vom
-  Kunden lassen sie sich 1:1 ersetzen; Dateinamen bleiben gleich. Einheitlicher
-  Weißabgleich über den ganzen Satz, sonst wirkt das dunkle Raster
-  zusammengewürfelt.
+- **Bilder in der Verwaltung hinterlegen.** Im Repository liegt kein einziges
+  Foto mehr: Titelbild (Betrieb → Bild der Startseite), Mitarbeiterfotos
+  (Mitarbeiter → Profil) und Galerie kommen aus der Verwaltung. Solange dort
+  nichts liegt, bleibt der Kopf dunkel und die Galerie zeigt „Noch keine
+  Bilder" — es wird nichts erfunden. Querformat für das Titelbild, gleicher
+  Weißabgleich über den ganzen Satz.
 - **Telefonnummer in E.164 bestätigen.** `+436812039790` ist aus `0681 20397906`
   abgeleitet und **nicht verifiziert**.
 - **Pausen und Urlaubszeiten.** Aktuell sind Mo–Fr 09–19 und Sa 09–18 ohne Pause

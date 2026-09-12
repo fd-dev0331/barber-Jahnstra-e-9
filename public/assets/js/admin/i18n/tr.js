@@ -439,6 +439,14 @@ export default {
     },
     noClosures: 'Özel kapalı gün yok.',
     removeClosure: 'Kapalı günü kaldır',
+    sectionImages: 'Ana sayfa görseli',
+    heroHint: 'Bu görsel ana sayfanın üst bölümünde, başlığın arkasında durur. Görsel yoksa üst bölüm koyu kalır — uydurma bir görsel konmaz. En iyisi yatay bir fotoğraftır.',
+    heroChoose: 'Görsel seç',
+    heroRemove: 'Görseli kaldır',
+    heroStatus: '„Kaydet" ile uygulanır.',
+    heroEmpty: 'Henüz görsel yok.',
+    heroUploading: 'Görsel yükleniyor …',
+    heroReady: 'Görsel yüklendi. „Kaydet" ile uygula.',
   },
 
   holidays: {

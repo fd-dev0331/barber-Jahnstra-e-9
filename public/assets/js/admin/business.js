@@ -9,7 +9,7 @@ import {
   api, ApiError, session, setTimezone, escapeHtml, weekdayName, WEEK_ORDER, fmtDayKey,
 } from './core.js';
 import {
-  icon, toast, handleError, errorState, skeletonList, validate, clearErrors, showFormError, setBusy,
+  icon, toast, handleError, errorState, skeletonList, validate, clearErrors, showFormError, setBusy, uploadImage,
 } from './ui.js';
 import { requireSession, refreshShell } from './shell.js';
 
@@ -17,7 +17,7 @@ const form = document.querySelector('[data-business-form]');
 const DEFAULT_TIMEZONE = 'Europe/Vienna';
 const PREFERRED_ZONES = ['Europe/Vienna', 'Europe/Berlin', 'Europe/Zurich', 'Europe/Istanbul', 'Europe/Moscow', 'UTC'];
 
-const state = { business: null, employees: null, error: null, closures: null, closuresError: null };
+const state = { business: null, employees: null, error: null, closures: null, closuresError: null, hero: null };
 const holidaysBox = document.querySelector('[data-holidays]');
 const closuresBox = document.querySelector('[data-closures]');
 const closureForm = document.querySelector('[data-closure-form]');
@@ -43,7 +43,47 @@ function fillForm(business) {
   f.leadTimeMinutes.value = business.leadTimeMinutes;
   f.maxAdvanceDays.value = business.maxAdvanceDays;
   renderTimezones(business.timezone || DEFAULT_TIMEZONE);
+  state.hero = business.heroMediaId ? { mediaId: business.heroMediaId, url: business.heroUrl } : null;
+  renderHero();
 }
+
+/* ------------------------------------------------------------- Titelbild
+   Wie beim Mitarbeiterfoto: das Bild wandert beim Auswählen sofort nach oben,
+   zugeordnet wird es erst mit „Speichern". */
+const heroPreview = document.querySelector('[data-hero-preview]');
+const heroInput = document.querySelector('[data-hero-input]');
+const heroStatus = document.querySelector('[data-hero-status]');
+
+function renderHero(statusKey = 'business.heroStatus') {
+  heroPreview.innerHTML = state.hero
+    ? `<img src="${escapeHtml(state.hero.url)}" alt="" class="h-full w-full object-cover">`
+    : `<span class="text-fg-muted">${icon('image')}</span>`;
+  document.querySelector('[data-hero-remove]').hidden = !state.hero;
+  heroStatus.textContent = t(state.hero ? statusKey : 'business.heroEmpty');
+}
+
+heroInput.addEventListener('change', async () => {
+  const [file] = heroInput.files;
+  heroInput.value = '';
+  if (!file) return;
+  heroStatus.textContent = t('business.heroUploading');
+  heroInput.disabled = true;
+  try {
+    const media = await uploadImage(file);
+    state.hero = { mediaId: media.id, url: media.url };
+    renderHero('business.heroReady');
+  } catch (err) {
+    renderHero();
+    showFormError(form, err);
+  } finally {
+    heroInput.disabled = false;
+  }
+});
+
+document.querySelector('[data-hero-remove]').addEventListener('click', () => {
+  state.hero = null;
+  renderHero();
+});
 
 /** Vereinigung der Schichten aller aktiven Mitarbeiter je Wochentag. */
 function openingIntervals(weekday) {
@@ -136,6 +176,7 @@ form.addEventListener('submit', async (event) => {
         slotStepMinutes: Number(f.slotStepMinutes.value),
         leadTimeMinutes: Number(f.leadTimeMinutes.value),
         maxAdvanceDays: Number(f.maxAdvanceDays.value),
+        heroMediaId: state.hero?.mediaId ?? null,
       },
     });
     state.business = business;

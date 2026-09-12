@@ -1,9 +1,12 @@
 /* Home-page behaviour: opening hours, price list, consent-gated map, Google reviews.
    No booking or admin code is loaded here; die Galerie lebt auf /galerie.html.
 
-   Öffnungszeiten und Preisliste kommen aus /api/business, also aus dem, was in
-   der Verwaltung gepflegt wird. Das statische HTML ist der Rückfall für
-   Crawler, Besucher ohne JavaScript und einen nicht erreichbaren Server. */
+   Alles Inhaltliche kommt aus /api/business, also aus der Verwaltung: Zeiten,
+   Preise, Team, Titelbild, Kontakt. Im HTML steht davon nichts mehr — kein
+   Beispielpreis, kein erfundener Mitarbeiter, keine fest eingetragene Uhrzeit.
+   Solche Rückfallwerte waren beim Laden kurz zu sehen und widersprachen dann
+   dem, was die Verwaltung sagt. Bis die Antwort da ist, stehen deshalb graue
+   Platzhalterflächen; bleibt sie aus, erscheint ein kurzer Hinweis. */
 (() => {
   'use strict';
 
@@ -14,18 +17,13 @@
   const DAY_SCHEMA = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const WEEK = [1, 2, 3, 4, 5, 6, 0];
 
-  /* Rückfall bis /api/business antwortet — deckt sich mit dem HTML. */
-  let hours = {
-    0: [],
-    1: [['09:00', '19:00']],
-    2: [['09:00', '19:00']],
-    3: [['09:00', '19:00']],
-    4: [['09:00', '19:00']],
-    5: [['09:00', '19:00']],
-    6: [['09:00', '18:00']],
-  };
+  /* Leer, bis /api/business geantwortet hat: lieber noch nichts anzeigen als
+     eine Zeit, die gleich darauf von der Verwaltung widerlegt wird. */
+  let hours = null;
+  /* Nur für die Zeitrechnung, bis der Betrieb seine Zeitzone gemeldet hat —
+     sichtbar wird daraus nichts. */
   let timezone = 'Europe/Vienna';
-  let address = 'Jahnstraße 9, 6900 Bregenz';
+  let address = '';
   /* Feiertage und Schließtage aus der Verwaltung: Map<YYYY-MM-DD, Name>. */
   let closedDays = new Map();
 
@@ -76,7 +74,7 @@
   function summaryLines() {
     const groups = [];
     for (const day of WEEK) {
-      const key = (hours[day] || []).map(([s, e]) => `${s}–${e}`).join(', ') || 'geschlossen';
+      const key = (hours?.[day] || []).map(([s, e]) => `${s}–${e}`).join(', ') || 'geschlossen';
       const last = groups[groups.length - 1];
       if (last && last.key === key) last.days.push(day);
       else groups.push({ key, days: [day] });
@@ -86,6 +84,7 @@
   }
 
   function renderHours(rebuild) {
+    if (!hours) return;
     if (hoursList && rebuild) {
       hoursList.innerHTML = WEEK.map((day, index) => {
         const intervals = hours[day] || [];
@@ -120,8 +119,6 @@
       stateWrap.hidden = false;
     }
   }
-
-  if (hoursList || badge) renderHours(false);
 
   /* ---------- Preisliste ----------
      Aktive Leistungen, gruppiert nach Kategorie in der Reihenfolge aus der
@@ -162,6 +159,20 @@
   /* ---------- Strukturierte Daten ----------
      Dieselben Angaben wie sichtbar auf der Seite, damit Suchmaschinen, die
      JavaScript ausführen, keine veralteten Zeiten oder Nummern sehen. */
+  /**
+   * Adresse aus der Verwaltung in Straße / PLZ / Ort zerlegen. Geschrieben wird
+   * sie dort mal als "Jahnstraße 9, 6900 Bregenz", mal als
+   * "Jahnstraße 9, Bregenz 6900"; passt keins davon, bleibt das Feld unberührt.
+   */
+  function postalAddress(value) {
+    const written = String(value || '').trim();
+    let match = /^(.+?),\s*(\d{4,5})\s+(.+)$/.exec(written);
+    if (match) return { streetAddress: match[1], postalCode: match[2], addressLocality: match[3] };
+    match = /^(.+?),\s*(.+?)\s+(\d{4,5})$/.exec(written);
+    if (match) return { streetAddress: match[1], postalCode: match[3], addressLocality: match[2] };
+    return null;
+  }
+
   function updateStructuredData(business) {
     const script = document.querySelector('script[type="application/ld+json"]');
     if (!script) return;
@@ -170,11 +181,10 @@
       if (business.name) data.name = business.name;
       if (business.phone) data.telephone = window.BB.telHref(business.phone).slice(4);
       if (business.email) data.email = business.email;
-      const parts = /^(.+?),\s*(\d{4,5})\s+(.+)$/.exec(business.address || '');
-      if (parts && data.address) {
-        Object.assign(data.address, { streetAddress: parts[1], postalCode: parts[2], addressLocality: parts[3] });
-      }
-      data.openingHoursSpecification = WEEK.flatMap((day) => (hours[day] || []).map(([opens, closes]) => ({
+      const postal = postalAddress(business.address);
+      if (postal && data.address) Object.assign(data.address, postal);
+      if (business.instagram) data.sameAs = [business.instagram];
+      data.openingHoursSpecification = WEEK.flatMap((day) => (hours?.[day] || []).map(([opens, closes]) => ({
         '@type': 'OpeningHoursSpecification', dayOfWeek: DAY_SCHEMA[day], opens, closes,
       })));
       script.textContent = JSON.stringify(data, null, 2);
@@ -246,8 +256,19 @@
   }
 
   function setupTeam(members) {
-    // Niemand mit Profil: die Folie aus dem HTML bleibt, statt einer leeren Sektion.
-    if (!team || !members.length) return;
+    if (!team) return;
+    const section = document.querySelector('[data-team-section]');
+    /* Niemand zum Zeigen: der Abschnitt bleibt weg. Eine Beispielperson stand
+       hier früher im HTML — sie gehörte zu niemandem und ist deshalb raus. */
+    if (!members.length) {
+      if (section) section.hidden = true;
+      return;
+    }
+    if (section) {
+      section.hidden = false;
+      // Der Abschnitt taucht erst jetzt auf; ohne das bliebe er durchsichtig.
+      window.BB.watchReveal(section);
+    }
     const track = team.querySelector('[data-team-track]');
     const controls = team.querySelector('[data-team-controls]');
     const dots = team.querySelector('[data-team-dots]');
@@ -306,6 +327,16 @@
     update();
   }
 
+  /* ---------- Titelbild ----------
+     Kommt aus der Verwaltung. Ohne hinterlegtes Bild bleibt der Kopf dunkel —
+     die Überschrift steht ohnehin auf einem Verlauf. */
+  function setHeroImage(url) {
+    const image = document.querySelector('[data-hero-image]');
+    if (!image || !url) return;
+    image.src = url;
+    image.hidden = false;
+  }
+
   /* ---------- Google Maps: Klick auf "Karte laden" ----------
      Nicht beim Seitenaufruf — schwerstes Element der Seite, und Google erhält
      erst dann Daten. Gezeigt wird die Adresse aus der Verwaltung. */
@@ -347,12 +378,20 @@
         if (hoursList || badge || summary) renderHours(true);
       }
       if (Array.isArray(data?.services)) renderServices(data.services);
-      if (Array.isArray(data?.team)) setupTeam(data.team);
+      setupTeam(Array.isArray(data?.team) ? data.team : []);
+      setHeroImage(data?.images?.hero);
       if (data?.business) updateStructuredData(data.business);
       refreshMap();
     })
     .catch(() => {
-      /* Rückfall: Öffnungszeiten, Preisliste und Team aus dem HTML bleiben stehen. */
+      /* Ohne Antwort gibt es nichts zu zeigen. Statt der Platzhalterflächen
+         steht dann ein Satz, der sagt, was los ist — keine erfundenen Zeiten
+         und keine Preise von gestern. */
+      const note = 'Diese Angaben konnten gerade nicht geladen werden. Bitte lade die Seite neu.';
+      const services = document.querySelector('[data-services]');
+      if (services) services.innerHTML = `<p class="mt-12 text-fg-muted">${note}</p>`;
+      if (hoursList) hoursList.innerHTML = `<p class="text-fg-muted">${note}</p>`;
+      setupTeam([]);
     });
 
   /* ---------- Google reviews ----------

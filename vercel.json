@@ -87,6 +87,7 @@
     },
     {
       "source": "/api/media",
+      "has": [{ "type": "query", "key": "id" }],
       "headers": [
         {
           "key": "Cache-Control",

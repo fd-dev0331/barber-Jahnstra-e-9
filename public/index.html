@@ -25,26 +25,17 @@
       content="Präzise Haarschnitte, saubere Konturen und klassische Bartpflege – mitten in Bregenz. Jetzt online Termin buchen."
     />
     <meta property="og:url" content="https://bregenz-barbershop.at/" />
+    <!-- Vorschaubild beim Teilen: dasselbe Titelbild, das in der Verwaltung
+     hinterlegt ist. Ist dort keines, antwortet die Adresse mit 404 und die
+     Vorschau bleibt ohne Bild — besser als ein Bild, das es nicht mehr gibt. -->
     <meta
       property="og:image"
-      content="https://bregenz-barbershop.at/assets/img/og.jpg"
-    />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta
-      property="og:image:alt"
-      content="Blick in den Bregenz Barbershop in der Jahnstraße 9"
+      content="https://bregenz-barbershop.at/api/media?slot=hero"
     />
     <meta name="twitter:card" content="summary_large_image" />
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="preload"
-      as="image"
-      href="/assets/img/hero-salon.jpg"
-      fetchpriority="high"
-    />
     <link
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500;600&display=swap"
@@ -194,8 +185,8 @@
             >Galerie</a
           >
           <a href="/booking.html" class="btn-primary mt-6">Termin buchen</a>
-          <a href="tel:+436812039790" data-biz-href="phone" class="btn-secondary mt-3"
-            ><span data-biz-text="phone">0681 20397906</span></a
+          <a data-biz-href="phone" class="btn-secondary mt-3"
+            ><span data-biz-text="phone"></span></a
           >
         </nav>
       </div>
@@ -207,14 +198,14 @@
         id="home"
         class="relative flex min-h-[600px] items-end overflow-hidden md:min-h-[calc(100vh-72px)] md:max-h-[900px]"
       >
-        <!-- Innenansicht des Salons. object-position hält Regale, Stuhl und Spiegel
-         im Bild, wenn das Hochformat auf breiten Viewports beschnitten wird. -->
+        <!-- Titelbild aus der Verwaltung (home.js, /api/business). Ist dort keines
+         hinterlegt, bleibt der Kopf dunkel — es wird keines erfunden. -->
         <img
-          src="/assets/img/hero-salon.webp"
+          data-hero-image
+          hidden
+          src=""
           alt=""
           role="presentation"
-          width="360"
-          height="640"
           fetchpriority="high"
           decoding="async"
           style="object-position: center 40%"
@@ -231,7 +222,7 @@
         ></div>
 
         <div class="container-x relative w-full pb-14 pt-28 md:pb-24">
-          <p class="kicker"><span data-biz-text="address-dotted">Jahnstraße 9 · 6900 Bregenz</span></p>
+          <p class="kicker"><span data-biz-text="address-dotted"></span></p>
           <h1 class="h1">
             Dein Schnitt.<br /><span class="text-accent">Dein Stil.</span>
           </h1>
@@ -255,7 +246,7 @@
                 <path d="M5 12h14M13 6l6 6-6 6" />
               </svg>
             </a>
-            <a href="tel:+436812039790" data-biz-href="phone" class="btn-secondary">
+            <a data-biz-href="phone" class="btn-secondary">
               <svg
                 width="18"
                 height="18"
@@ -269,100 +260,23 @@
                   d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a1 1 0 0 1-1 1A16 16 0 0 1 4 5a1 1 0 0 1 1-1Z"
                 />
               </svg>
-              <span data-biz-text="phone">0681 20397906</span>
+              <span data-biz-text="phone"></span>
             </a>
           </div>
         </div>
       </section>
 
-      <!-- ===================== 2. ÜBER UNS ===================== -->
-      <section id="ueber-uns" class="section" data-reveal>
-        <!-- Team-Slider: home.js baut je Mitarbeiter eine Folie aus /api/business
-         (Profile aus der Verwaltung). Die Folie im HTML ist der Rückfall ohne
-         JavaScript oder Server. -->
+      <!-- ===================== 2. ÜBER UNS / TEAM =====================
+       Eine Folie je Mitarbeiter, gebaut aus /api/business — also aus den
+       Profilen in der Verwaltung. Im HTML steht bewusst keine Folie: eine
+       erfundene Person, die gleich darauf verschwindet, wäre schlechter als
+       ein Abschnitt, der erst mit echten Daten erscheint. -->
+      <section id="ueber-uns" class="section" data-team-section hidden data-reveal>
         <div class="container-x" data-team aria-roledescription="carousel" aria-label="Unser Team">
           <div
             data-team-track
             class="flex snap-x snap-mandatory overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          >
-        <div
-          class="grid w-full shrink-0 snap-start items-center gap-10 md:grid-cols-2 md:gap-16"
-          data-team-slide
-        >
-          <div class="order-2 md:order-1">
-            <p class="kicker">Der Barbier</p>
-            <h2 class="h2">Handwerk,<br />nicht Fließband</h2>
-            <hr class="rule" />
-            <p class="lead">
-              Im Bregenz Barbershop findest du die fast verloren gegangene
-              Tradition des Barbiers wieder. Inhaber
-              <strong class="font-semibold text-fg">Abdulrahman</strong> — von
-              allen nur „Abo" genannt — arbeitet mit Können und Leidenschaft,
-              mit dem Fokus auf Old-School und orientalische Art.
-            </p>
-            <p class="lead mt-4">
-              Hier nimmt sich jemand Zeit für deinen Schnitt: Haarschnitt,
-              Bartrasur, Konturen mit dem Messer. Nett, freundlich, klassisch —
-              und barrierefrei zugänglich.
-            </p>
-
-            <dl class="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3">
-              <div class="card">
-                <dt
-                  class="text-[13px] uppercase tracking-[0.12em] text-fg-muted"
-                >
-                  Sprachen
-                </dt>
-                <dd
-                  class="mt-1 font-display text-2xl font-bold uppercase text-accent"
-                >
-                  4
-                </dd>
-                <dd class="mt-1 text-sm text-fg-muted">DE · EN · AR · TR</dd>
-              </div>
-              <div class="card">
-                <dt
-                  class="text-[13px] uppercase tracking-[0.12em] text-fg-muted"
-                >
-                  Geöffnet
-                </dt>
-                <dd
-                  class="mt-1 font-display text-2xl font-bold uppercase text-accent"
-                >
-                  6 Tage
-                </dd>
-                <dd class="mt-1 text-sm text-fg-muted">Mo – Sa</dd>
-              </div>
-              <div class="card col-span-2 sm:col-span-1">
-                <dt
-                  class="text-[13px] uppercase tracking-[0.12em] text-fg-muted"
-                >
-                  Anfahrt
-                </dt>
-                <dd
-                  class="mt-1 font-display text-2xl font-bold uppercase text-accent"
-                >
-                  4 Min.
-                </dd>
-                <dd class="mt-1 text-sm text-fg-muted">ab Bregenz Leutbühel</dd>
-              </div>
-            </dl>
-          </div>
-
-          <div class="order-1 md:order-2">
-            <img
-              src="/assets/img/about-inhaber.jpg"
-              alt="Inhaber Abdulrahman vor dem Bregenz Barbershop in der Jahnstraße"
-              width="1050"
-              height="1400"
-              loading="lazy"
-              decoding="async"
-              class="w-full rounded-lg border border-line object-cover"
-            />
-          </div>
-        </div>
-          </div>
-
+          ></div>
           <div data-team-controls hidden class="mt-8 flex items-center justify-between gap-4">
             <div class="flex flex-wrap" data-team-dots></div>
             <div class="flex gap-2">
@@ -392,258 +306,16 @@
             Laufkundschaft ist willkommen, kann aber warten müssen.
           </p>
 
+          <!-- Preisliste aus der Verwaltung (home.js, /api/business). Bis die
+           Antwort da ist, stehen hier nur graue Platzhalterflächen: erfundene
+           Leistungen und Preise, die gleich wieder verschwinden, hatten wir
+           hier — sie sind absichtlich weg. -->
           <div data-services>
-          <h3
-            class="mt-12 font-display text-2xl font-bold uppercase tracking-wide text-fg"
-          >
-            Angebote
-          </h3>
-          <hr class="rule" />
-          <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" role="list">
-            <li class="card card-hover flex flex-col gap-2">
-              <div class="flex items-start justify-between gap-4">
-                <h3
-                  class="min-w-0 font-sans text-[19px] font-semibold leading-snug text-fg"
-                >
-                  Haarschnitt + Augenbrauen mit Messer
-                </h3>
-                <span
-                  class="tnum shrink-0 font-sans text-xl font-semibold text-accent"
-                  >25,00&nbsp;€</span
-                >
-              </div>
-              <p class="text-[15px] text-fg-muted">
-                Schnitt und Augenbrauenkontur mit dem Messer — unser Angebot.
-              </p>
-              <p
-                class="text-[13px] font-medium uppercase tracking-[0.08em] text-fg-muted"
-              >
-                40 Min. &middot; Abo
-              </p>
-              <a
-                href="/booking.html?service=haarschnitt-augenbrauen-messer"
-                class="btn-secondary mt-2 self-start"
-                >Termin buchen</a
-              >
-            </li>
-            <li class="card card-hover flex flex-col gap-2">
-              <div class="flex items-start justify-between gap-4">
-                <h3
-                  class="min-w-0 font-sans text-[19px] font-semibold leading-snug text-fg"
-                >
-                  Haarschnitt + Waschen
-                </h3>
-                <span
-                  class="tnum shrink-0 font-sans text-xl font-semibold text-accent"
-                  >27,00&nbsp;€</span
-                >
-              </div>
-              <p class="text-[15px] text-fg-muted">
-                Schnitt mit Haarwäsche und Styling zum Abschluss.
-              </p>
-              <p
-                class="text-[13px] font-medium uppercase tracking-[0.08em] text-fg-muted"
-              >
-                40 Min. &middot; Abo
-              </p>
-              <a
-                href="/booking.html?service=haarschnitt-waschen"
-                class="btn-secondary mt-2 self-start"
-                >Termin buchen</a
-              >
-            </li>
-            <li class="card card-hover flex flex-col gap-2">
-              <div class="flex items-start justify-between gap-4">
-                <h3
-                  class="min-w-0 font-sans text-[19px] font-semibold leading-snug text-fg"
-                >
-                  Gruppenrabatt ab 5 Personen
-                </h3>
-                <span
-                  class="tnum shrink-0 font-sans text-xl font-semibold text-accent"
-                  >20,00&nbsp;€</span
-                >
-              </div>
-              <p class="text-[15px] text-fg-muted">
-                Angebot für Gruppen ab fünf Personen — Preis pro Person.
-              </p>
-              <p
-                class="text-[13px] font-medium uppercase tracking-[0.08em] text-fg-muted"
-              >
-                30 Min. &middot; Abo
-              </p>
-              <a
-                href="/booking.html?service=gruppenrabatt"
-                class="btn-secondary mt-2 self-start"
-                >Termin buchen</a
-              >
-            </li>
-          </ul>
-
-          <h3
-            class="mt-14 font-display text-2xl font-bold uppercase tracking-wide text-fg"
-          >
-            Herren – Haarschnitte &amp; Stylings
-          </h3>
-          <hr class="rule" />
-          <ul class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" role="list">
-            <li class="card card-hover flex flex-col gap-2">
-              <div class="flex items-start justify-between gap-4">
-                <h3
-                  class="min-w-0 font-sans text-[19px] font-semibold leading-snug text-fg"
-                >
-                  Herren – Haarschnitt
-                </h3>
-                <span
-                  class="tnum shrink-0 font-sans text-xl font-semibold text-accent"
-                  >25,00&nbsp;€</span
-                >
-              </div>
-              <p class="text-[15px] text-fg-muted">
-                Klassischer Schnitt inklusive Konturen und Finish.
-              </p>
-              <p
-                class="text-[13px] font-medium uppercase tracking-[0.08em] text-fg-muted"
-              >
-                30 Min. &middot; Abo
-              </p>
-              <a
-                href="/booking.html?service=herren-haarschnitt"
-                class="btn-secondary mt-2 self-start"
-                >Termin buchen</a
-              >
-            </li>
-            <li class="card card-hover flex flex-col gap-2">
-              <div class="flex items-start justify-between gap-4">
-                <h3
-                  class="min-w-0 font-sans text-[19px] font-semibold leading-snug text-fg"
-                >
-                  Kinder – Haarschnitt bis 10 Jahre
-                </h3>
-                <span
-                  class="tnum shrink-0 font-sans text-xl font-semibold text-accent"
-                  >18,00&nbsp;€</span
-                >
-              </div>
-              <p class="text-[15px] text-fg-muted">
-                Für die Kleinen, in Ruhe und ohne Hektik.
-              </p>
-              <p
-                class="text-[13px] font-medium uppercase tracking-[0.08em] text-fg-muted"
-              >
-                15 Min. &middot; Abo
-              </p>
-              <a
-                href="/booking.html?service=kinder-haarschnitt"
-                class="btn-secondary mt-2 self-start"
-                >Termin buchen</a
-              >
-            </li>
-            <li class="card card-hover flex flex-col gap-2">
-              <div class="flex items-start justify-between gap-4">
-                <h3
-                  class="min-w-0 font-sans text-[19px] font-semibold leading-snug text-fg"
-                >
-                  Herren – Haare waschen
-                </h3>
-                <span
-                  class="tnum shrink-0 font-sans text-xl font-semibold text-accent"
-                  >5,00&nbsp;€</span
-                >
-              </div>
-              <p class="text-[15px] text-fg-muted">
-                Haarwäsche mit Kopfmassage.
-              </p>
-              <p
-                class="text-[13px] font-medium uppercase tracking-[0.08em] text-fg-muted"
-              >
-                10 Min. &middot; Abo
-              </p>
-              <a
-                href="/booking.html?service=herren-haare-waschen"
-                class="btn-secondary mt-2 self-start"
-                >Termin buchen</a
-              >
-            </li>
-            <li class="card card-hover flex flex-col gap-2">
-              <div class="flex items-start justify-between gap-4">
-                <h3
-                  class="min-w-0 font-sans text-[19px] font-semibold leading-snug text-fg"
-                >
-                  Herren – Bart
-                </h3>
-                <span
-                  class="tnum shrink-0 font-sans text-xl font-semibold text-accent"
-                  >15,00&nbsp;€</span
-                >
-              </div>
-              <p class="text-[15px] text-fg-muted">
-                Bartschnitt, Kontur und Pflege.
-              </p>
-              <p
-                class="text-[13px] font-medium uppercase tracking-[0.08em] text-fg-muted"
-              >
-                15 Min. &middot; Abo
-              </p>
-              <a
-                href="/booking.html?service=herren-bart"
-                class="btn-secondary mt-2 self-start"
-                >Termin buchen</a
-              >
-            </li>
-            <li class="card card-hover flex flex-col gap-2">
-              <div class="flex items-start justify-between gap-4">
-                <h3
-                  class="min-w-0 font-sans text-[19px] font-semibold leading-snug text-fg"
-                >
-                  Herren – Augenbrauen mit Messer
-                </h3>
-                <span
-                  class="tnum shrink-0 font-sans text-xl font-semibold text-accent"
-                  >5,00&nbsp;€</span
-                >
-              </div>
-              <p class="text-[15px] text-fg-muted">
-                Präzise Augenbrauenkontur mit dem Messer.
-              </p>
-              <p
-                class="text-[13px] font-medium uppercase tracking-[0.08em] text-fg-muted"
-              >
-                10 Min. &middot; Abo
-              </p>
-              <a
-                href="/booking.html?service=herren-augenbrauen-messer"
-                class="btn-secondary mt-2 self-start"
-                >Termin buchen</a
-              >
-            </li>
-            <li class="card card-hover flex flex-col gap-2">
-              <div class="flex items-start justify-between gap-4">
-                <h3
-                  class="min-w-0 font-sans text-[19px] font-semibold leading-snug text-fg"
-                >
-                  Herren – Augenbrauen mit Faden
-                </h3>
-                <span
-                  class="tnum shrink-0 font-sans text-xl font-semibold text-accent"
-                  >5,00&nbsp;€</span
-                >
-              </div>
-              <p class="text-[15px] text-fg-muted">
-                Augenbrauen zupfen mit der Fadentechnik.
-              </p>
-              <p
-                class="text-[13px] font-medium uppercase tracking-[0.08em] text-fg-muted"
-              >
-                10 Min. &middot; Abo
-              </p>
-              <a
-                href="/booking.html?service=herren-augenbrauen-faden"
-                class="btn-secondary mt-2 self-start"
-                >Termin buchen</a
-              >
-            </li>
-          </ul>
+            <div data-services-skeleton class="mt-12 grid gap-3 sm:grid-cols-2 lg:grid-cols-3" aria-hidden="true">
+              <div class="h-[168px] animate-pulse rounded-lg bg-surface"></div>
+              <div class="h-[168px] animate-pulse rounded-lg bg-surface"></div>
+              <div class="h-[168px] animate-pulse rounded-lg bg-surface"></div>
+            </div>
           </div>
         </div>
       </section>
@@ -710,55 +382,18 @@
             <a href="/booking.html" class="btn-primary mt-8">Termin buchen</a>
           </div>
 
+          <!-- Öffnungszeiten aus der Verwaltung: offen ist, wann jemand arbeitet
+           (working_hours). Feste Zeiten im HTML wären genau die Angabe, die beim
+           Laden kurz falsch aufblitzt. -->
           <dl class="max-w-md" data-hours>
-            <div
-              data-day="1"
-              class="flex items-baseline justify-between gap-4 rounded-sm border-b border-line px-3 py-2.5"
-            >
-              <dt>Montag</dt>
-              <dd class="tnum">09:00 – 19:00</dd>
-            </div>
-            <div
-              data-day="2"
-              class="flex items-baseline justify-between gap-4 rounded-sm border-b border-line px-3 py-2.5"
-            >
-              <dt>Dienstag</dt>
-              <dd class="tnum">09:00 – 19:00</dd>
-            </div>
-            <div
-              data-day="3"
-              class="flex items-baseline justify-between gap-4 rounded-sm border-b border-line px-3 py-2.5"
-            >
-              <dt>Mittwoch</dt>
-              <dd class="tnum">09:00 – 19:00</dd>
-            </div>
-            <div
-              data-day="4"
-              class="flex items-baseline justify-between gap-4 rounded-sm border-b border-line px-3 py-2.5"
-            >
-              <dt>Donnerstag</dt>
-              <dd class="tnum">09:00 – 19:00</dd>
-            </div>
-            <div
-              data-day="5"
-              class="flex items-baseline justify-between gap-4 rounded-sm border-b border-line px-3 py-2.5"
-            >
-              <dt>Freitag</dt>
-              <dd class="tnum">09:00 – 19:00</dd>
-            </div>
-            <div
-              data-day="6"
-              class="flex items-baseline justify-between gap-4 rounded-sm border-b border-line px-3 py-2.5"
-            >
-              <dt>Samstag</dt>
-              <dd class="tnum">09:00 – 18:00</dd>
-            </div>
-            <div
-              data-day="0"
-              class="flex items-baseline justify-between gap-4 rounded-sm px-3 py-2.5"
-            >
-              <dt>Sonntag</dt>
-              <dd class="text-fg-muted">Geschlossen</dd>
+            <div data-hours-skeleton aria-hidden="true">
+              <div class="h-11 animate-pulse rounded-sm bg-surface-2"></div>
+              <div class="mt-1.5 h-11 animate-pulse rounded-sm bg-surface-2"></div>
+              <div class="mt-1.5 h-11 animate-pulse rounded-sm bg-surface-2"></div>
+              <div class="mt-1.5 h-11 animate-pulse rounded-sm bg-surface-2"></div>
+              <div class="mt-1.5 h-11 animate-pulse rounded-sm bg-surface-2"></div>
+              <div class="mt-1.5 h-11 animate-pulse rounded-sm bg-surface-2"></div>
+              <div class="mt-1.5 h-11 animate-pulse rounded-sm bg-surface-2"></div>
             </div>
           </dl>
         </div>
@@ -794,10 +429,10 @@
                   </svg>
                   <a
                     class="text-fg-body underline decoration-line-strong underline-offset-4 transition-colors hover:text-accent"
-                    href="https://www.google.com/maps/search/?api=1&amp;query=Jahnstra%C3%9Fe+9%2C+6900+Bregenz" data-biz-href="address"
+                    data-biz-href="address"
                     target="_blank"
                     rel="noopener noreferrer"
-                    ><span data-biz-text="address">Jahnstraße 9, 6900 Bregenz</span></a
+                    ><span data-biz-text="address"></span></a
                   >
                 </li>
                 <li class="flex gap-3">
@@ -817,8 +452,8 @@
                   </svg>
                   <a
                     class="tnum text-fg-body underline decoration-line-strong underline-offset-4 transition-colors hover:text-accent"
-                    href="tel:+436812039790" data-biz-href="phone"
-                    ><span data-biz-text="phone">0681 20397906</span></a
+                    data-biz-href="phone"
+                    ><span data-biz-text="phone"></span></a
                   >
                 </li>
                 <li class="flex gap-3">
@@ -837,8 +472,8 @@
                   </svg>
                   <a
                     class="break-all text-fg-body underline decoration-line-strong underline-offset-4 transition-colors hover:text-accent"
-                    href="mailto:abdulrahmanhamrawe1994@gmail.com" data-biz-href="email"
-                    ><span data-biz-text="email">abdulrahmanhamrawe1994@gmail.com</span></a
+                    data-biz-href="email"
+                    ><span data-biz-text="email"></span></a
                   >
                 </li>
                 <li class="flex gap-3">
@@ -864,10 +499,10 @@
                   </svg>
                   <a
                     class="text-fg-body underline decoration-line-strong underline-offset-4 transition-colors hover:text-accent"
-                    href="https://www.instagram.com/bregenz_barbershop/" data-biz-href="instagram"
+                    data-biz-href="instagram"
                     target="_blank"
                     rel="noopener noreferrer"
-                    ><span data-biz-text="instagram">@bregenz_barbershop</span></a
+                    ><span data-biz-text="instagram"></span></a
                   >
                 </li>
               </ul>
@@ -918,7 +553,7 @@
                 </button>
                 <a
                   class="text-sm text-fg-muted underline underline-offset-4 hover:text-accent"
-                  href="https://www.google.com/maps/search/?api=1&amp;query=Jahnstra%C3%9Fe+9%2C+6900+Bregenz" data-biz-href="address"
+                  data-biz-href="address"
                   target="_blank"
                   rel="noopener noreferrer"
                   >Stattdessen in Google Maps öffnen</a
@@ -937,11 +572,7 @@
           >
             <p class="kicker mb-0">Bereit?</p>
             <h2 class="h2">Jetzt Termin sichern</h2>
-            <p class="lead tnum" data-hours-summary>
-              <span class="block">Mo–Fr 09:00–19:00</span>
-              <span class="block">Sa 09:00–18:00</span>
-              <span class="block">So geschlossen</span>
-            </p>
+            <p class="lead tnum" data-hours-summary></p>
             <div class="flex flex-wrap justify-center gap-3">
               <a href="/booking.html" class="btn-primary">
                 Termin buchen
@@ -958,8 +589,8 @@
                   <path d="M5 12h14M13 6l6 6-6 6" />
                 </svg>
               </a>
-              <a href="tel:+436812039790" data-biz-href="phone" class="btn-secondary"
-                ><span data-biz-text="phone">0681 20397906</span></a
+              <a data-biz-href="phone" class="btn-secondary"
+                ><span data-biz-text="phone"></span></a
               >
             </div>
           </div>
@@ -986,31 +617,31 @@
             <li>
               <a
                 class="hover:text-accent"
-                href="https://www.google.com/maps/search/?api=1&amp;query=Jahnstra%C3%9Fe+9%2C+6900+Bregenz" data-biz-href="address"
+                data-biz-href="address"
                 target="_blank"
                 rel="noopener noreferrer"
-                ><span data-biz-text="address">Jahnstraße 9, 6900 Bregenz</span></a
+                ><span data-biz-text="address"></span></a
               >
             </li>
             <li>
-              <a class="tnum hover:text-accent" href="tel:+436812039790" data-biz-href="phone"
-                ><span data-biz-text="phone">0681 20397906</span></a
+              <a class="tnum hover:text-accent" data-biz-href="phone"
+                ><span data-biz-text="phone"></span></a
               >
             </li>
             <li>
               <a
                 class="break-all hover:text-accent"
-                href="mailto:abdulrahmanhamrawe1994@gmail.com" data-biz-href="email"
-                ><span data-biz-text="email">abdulrahmanhamrawe1994@gmail.com</span></a
+                data-biz-href="email"
+                ><span data-biz-text="email"></span></a
               >
             </li>
             <li>
               <a
                 class="hover:text-accent"
-                href="https://www.instagram.com/bregenz_barbershop/" data-biz-href="instagram"
+                data-biz-href="instagram"
                 target="_blank"
                 rel="noopener noreferrer"
-                ><span data-biz-text="instagram">@bregenz_barbershop</span></a
+                ><span data-biz-text="instagram"></span></a
               >
             </li>
           </ul>
@@ -1043,7 +674,7 @@
           class="container-x flex flex-wrap items-center justify-between gap-3 py-5 text-[13px] text-fg-muted"
         >
           <p>© <span data-year>2026</span> Bregenz Barbershop</p>
-          <p><span data-biz-text="address-dotted">Jahnstraße 9 · 6900 Bregenz</span> · Österreich</p>
+          <p><span data-biz-text="address-dotted"></span> · Österreich</p>
         </div>
       </div>
     </footer>
@@ -1055,43 +686,14 @@
         "name": "Bregenz Barbershop",
         "description": "Old-School Barbier-Handwerk in Bregenz: Herren-Haarschnitt, Bartpflege und Konturen mit dem Messer.",
         "url": "https://bregenz-barbershop.at/",
-        "telephone": "+436812039790",
-        "email": "abdulrahmanhamrawe1994@gmail.com",
         "priceRange": "€",
         "currenciesAccepted": "EUR",
-        "image": "https://bregenz-barbershop.at/assets/img/og.jpg",
+        "image": "https://bregenz-barbershop.at/api/media?slot=hero",
         "address": {
           "@type": "PostalAddress",
-          "streetAddress": "Jahnstraße 9",
-          "postalCode": "6900",
-          "addressLocality": "Bregenz",
           "addressRegion": "Vorarlberg",
           "addressCountry": "AT"
         },
-        "sameAs": [
-          "https://www.instagram.com/bregenz_barbershop/",
-          "https://bregenzbarbershop.mytreatwell.at/"
-        ],
-        "openingHoursSpecification": [
-          {
-            "@type": "OpeningHoursSpecification",
-            "dayOfWeek": [
-              "Monday",
-              "Tuesday",
-              "Wednesday",
-              "Thursday",
-              "Friday"
-            ],
-            "opens": "09:00",
-            "closes": "19:00"
-          },
-          {
-            "@type": "OpeningHoursSpecification",
-            "dayOfWeek": "Saturday",
-            "opens": "09:00",
-            "closes": "18:00"
-          }
-        ],
         "isAccessibleForFree": false,
         "publicAccess": true
       }

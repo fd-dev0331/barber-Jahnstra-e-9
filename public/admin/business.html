@@ -63,6 +63,25 @@
           </div>
         </section>
 
+        <!-- Titelbild der Startseite. Ohne Bild zeigt die Website dort keines —
+             ein Platzhalter, den hier niemand austauschen kann, wäre schlechter. -->
+        <section class="adm-card" aria-labelledby="hero-title">
+          <div class="adm-card-head"><h2 id="hero-title" class="adm-h2" data-i18n="business.sectionImages"></h2></div>
+          <div class="adm-card-pad">
+            <p class="adm-hint mt-0" data-i18n="business.heroHint"></p>
+            <div data-hero-preview class="mt-3 grid aspect-[16/9] w-full max-w-[420px] place-items-center overflow-hidden rounded-md border border-line bg-bg"></div>
+            <div class="mt-2 flex flex-wrap gap-2">
+              <label class="adm-btn-ghost adm-btn-sm relative cursor-pointer focus-within:ring-2 focus-within:ring-accent">
+                <input type="file" accept="image/jpeg,image/png,image/webp" data-hero-input
+                  class="absolute inset-0 h-full w-full cursor-pointer opacity-0">
+                <span data-i18n="business.heroChoose"></span>
+              </label>
+              <button type="button" class="adm-btn-ghost adm-btn-sm" data-hero-remove data-i18n="business.heroRemove"></button>
+            </div>
+            <p class="adm-hint" data-hero-status aria-live="polite"></p>
+          </div>
+        </section>
+
         <section class="adm-card" aria-labelledby="booking-title">
           <div class="adm-card-head"><h2 id="booking-title" class="adm-h2" data-i18n="business.sectionBooking"></h2></div>
           <div class="adm-card-pad grid gap-4">

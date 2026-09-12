@@ -440,6 +440,14 @@ export default {
     },
     noClosures: 'Keine eigenen Schließtage eingetragen.',
     removeClosure: 'Schließtag entfernen',
+    sectionImages: 'Bild der Startseite',
+    heroHint: 'Dieses Bild liegt im Kopf der Startseite, hinter der Überschrift. Ohne Bild bleibt der Kopf dunkel — es wird keines erfunden. Querformat wirkt am besten.',
+    heroChoose: 'Bild wählen',
+    heroRemove: 'Bild entfernen',
+    heroStatus: 'Wird mit „Speichern" übernommen.',
+    heroEmpty: 'Noch kein Bild hinterlegt.',
+    heroUploading: 'Bild wird hochgeladen …',
+    heroReady: 'Bild hochgeladen. Mit „Speichern" übernehmen.',
   },
 
   holidays: {

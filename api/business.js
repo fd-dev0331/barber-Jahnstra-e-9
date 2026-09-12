@@ -44,7 +44,7 @@ export default async function handler(req, res) {
     // Bewusst ohne den 60-s-Cache aus lib/business.js: eine Änderung in der
     // Verwaltung läuft in einer anderen Function-Instanz und leert ihn hier nicht.
     const { rows: businesses } = await query(
-      `SELECT id, name, timezone, address, phone, email, instagram
+      `SELECT id, name, timezone, address, phone, email, instagram, hero_media_id
          FROM business ORDER BY created_at LIMIT 1`
     );
     if (!businesses.length) return fail(res, 404, 'not_found', 'Kein Betrieb angelegt.');
@@ -105,6 +105,9 @@ export default async function handler(req, res) {
         instagram: business.instagram,
         timezone: business.timezone,
       },
+      // Bilder der Website. Was hier fehlt, zeigt die Seite gar nicht an —
+      // statt eines Platzhalters, den in der Verwaltung niemand austauschen kann.
+      images: { hero: mediaUrl(business.hero_media_id) },
       openingHours,
       today,
       closures: [...closed].map(([date, closure]) => ({ date, name: closure.name, type: closure.type })),

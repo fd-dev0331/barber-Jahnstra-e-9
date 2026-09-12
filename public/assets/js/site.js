@@ -142,6 +142,14 @@
   /* ---------- Scroll reveal ----------
      Content is visible in the HTML; the class is added only when JS runs, so
      crawlers and no-JS visitors never get a blank page. */
+  /* Abschnitte, die erst mit Daten aus der Verwaltung erscheinen (das Team),
+     stehen beim Start auf display:none. Ein IntersectionObserver merkt nicht
+     von selbst, dass so ein Element später eine Fläche bekommt — sonst bliebe
+     der Abschnitt für immer durchsichtig. watchReveal() stößt die Beobachtung
+     deshalb neu an; ohne Animation (reduzierte Bewegung, alter Browser) ist es
+     wirkungslos, weil dann nie etwas ausgeblendet wurde. */
+  let watchReveal = () => {};
+
   if (!reduceMotion && 'IntersectionObserver' in window) {
     const io = new IntersectionObserver(
       (entries, obs) => {
@@ -153,10 +161,15 @@
       },
       { rootMargin: '0px 0px -10% 0px' }
     );
-    document.querySelectorAll('[data-reveal]').forEach((el) => {
+    watchReveal = (el) => {
+      if (!el || el.classList.contains('is-visible')) return;
       el.classList.add('reveal');
+      // Erneutes observe() allein wäre wirkungslos: der Beobachter kennt das
+      // Element schon. Erst abmelden, dann wieder anmelden.
+      io.unobserve(el);
       io.observe(el);
-    });
+    };
+    document.querySelectorAll('[data-reveal]').forEach(watchReveal);
   }
 
   /* ---------- Shared helpers ---------- */
@@ -174,6 +187,8 @@
         ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]
       );
     },
+    /** Einen Abschnitt beobachten, der erst jetzt sichtbar geworden ist. */
+    watchReveal: (el) => watchReveal(el),
     async getJSON(url, options) {
       const res = await fetch(url, { headers: { Accept: 'application/json' }, ...options });
       if (!res.ok) {
