@@ -1,619 +1,905 @@
-# BACKEND AUDIT AND RECOVERY — DO NOT REBUILD THE PROJECT
+Проведи полный аудит безопасности базы данных и исправь проблему с Row Level Security (RLS) в этом проекте.
+
+ВАЖНО:
+Это существующий production-проект.
 
-Текущий проект уже существует. Не переписывай его с нуля и не начинай новый проект.
+Главный приоритет:
+1. SECURITY
+2. Сохранение всей существующей функциональности
+3. Минимальные изменения в коде
+4. Воспроизводимая migration
+5. Никакого переписывания проекта без необходимости
+
+НЕ удаляй существующие таблицы, данные, API, функции, endpoints или UI.
+
+НЕ меняй бизнес-логику без необходимости.
+
+НЕ создавай новую архитектуру авторизации, если в проекте уже существует рабочая.
+
+НЕ отключай существующие функции.
+
+==================================================
+1. КОНТЕКСТ ПРОЕКТА
+==================================================
 
-Твоя задача сейчас — провести полный аудит существующего backend/admin/Google Calendar функционала, определить, что реально реализовано, что реализовано частично, а чего нет, после чего довести систему до рабочего состояния.
+Проект использует PostgreSQL/Supabase.
 
-## КРИТИЧЕСКИ ВАЖНО
+Supabase Security Advisor обнаружил критическую проблему:
 
-Не считай задачу выполненной только потому, что:
+"Table publicly accessible — Anyone with your project URL can read, edit, and delete all data in this table because Row Level Security is not enabled."
 
-* Vercel deploy проходит;
-* PostgreSQL подключается;
-* `/admin` существует;
-* frontend выглядит правильно;
-* API отвечает HTTP 200 в простом тесте.
+В Supabase Table Editor несколько таблиц находятся в состоянии:
 
-Функция считается реализованной только после проверки полного пользовательского сценария.
+"UNRESTRICTED"
+"RLS disabled"
 
----
+В проекте есть:
 
-# 1. СНАЧАЛА АУДИТ
+- публичный сайт
+- Admin Panel
+- Telegram Mini App, связанная с административной/booking функциональностью
+- backend
+- PostgreSQL
+- Google Calendar integration
+- booking system
+- media/gallery
+- authentication/session system
 
-Перед изменением кода:
+ВАЖНО:
 
-1. Проанализируй текущую структуру проекта.
-2. Найди frontend.
-3. Найди backend/serverless functions.
-4. Найди database layer.
-5. Найди schema/migrations.
-6. Найди authentication.
-7. Найди admin.
-8. Найди Google OAuth.
-9. Найди Google Calendar integration.
-10. Найди employee management.
-11. Найди booking API.
-12. Найди environment configuration.
+Telegram Mini App — это часть ЭТОГО ЖЕ проекта.
 
-Не делай предположений.
+Не считай Telegram отдельным проектом.
 
-Для каждого пункта укажи:
+Не удаляй и не отключай существующий Telegram Mini App.
 
-* EXISTS
-* PARTIALLY IMPLEMENTED
-* MISSING
-* BROKEN
+==================================================
+2. СНАЧАЛА ИЗУЧИ ВЕСЬ ПРОЕКТ
+==================================================
 
-После аудита составь короткий список проблем и только потом начинай исправления.
+До внесения любых изменений полностью проанализируй:
 
----
+- db/schema.sql
+- все SQL migrations
+- lib/db.js
+- lib/auth.js
+- lib/*
+- api/*
+- public/*
+- frontend JS
+- Admin Panel
+- Telegram Mini App
+- scripts/*
+- package.json
+- README.md
+- info.md
+- все конфигурационные файлы
+- все места, где используется PostgreSQL
+- все места, где используется Supabase
+- все места, где используются environment variables
+
+Проведи поиск всех SQL-запросов и обращений к таблицам.
+
+Особенно:
+
+- absence
+- app_session
+- app_user
+- booking
+- business
+- closure_day
+- employee
+- employee_service
+- gallery_item
+- google_integration
+- media
+- review
+- service
+- telegram_account
+- working_hours
+
+Также найди:
+
+- views
+- functions
+- triggers
+- sequences
+- foreign keys
+- SECURITY DEFINER functions
+- API endpoints
+- middleware
+- authentication checks
+
+НЕ делай предположений о доступе.
+
+Определи реальный access flow на основании кода.
+
+==================================================
+3. ОПРЕДЕЛИ РЕАЛЬНУЮ АРХИТЕКТУРУ DATABASE ACCESS
+==================================================
+
+В проекте backend может использовать PostgreSQL напрямую через pg.
+
+Проверь:
+
+- DATABASE_URL
+- POSTGRES_URL
+- POSTGRES_URL_NON_POOLING
+
+Определи:
+
+1. Какая PostgreSQL role используется production backend.
+2. Как эта role получает доступ к БД.
+3. Имеет ли она BYPASSRLS.
+4. Используется ли Supabase Data API.
+5. Используется ли @supabase/supabase-js.
+6. Используется ли REST API Supabase.
+7. Используется ли anon/publishable key.
+8. Используется ли service_role/secret key.
+9. Есть ли прямой frontend → Supabase доступ.
+10. Какие запросы идут только через backend.
 
-# 2. ЛОКАЛЬНАЯ БАЗА ДАННЫХ
+НЕ предполагай, что backend использует service_role.
+
+Проверь фактически.
+
+Если проект использует прямой PostgreSQL connection через backend, учитывай это при проектировании RLS.
+
+==================================================
+4. ПОЛНОСТЬЮ ПРОВЕРЬ TELEGRAM MINI APP
+==================================================
 
-Для локального тестирования использовать PostgreSQL, который уже запущен в Docker:
+В этом проекте существует Telegram Mini App.
 
-localhost:5433
+Найди и проанализируй весь связанный код:
 
-Не использовать Supabase для локальной разработки.
+- Telegram WebApp initialization
+- initData
+- initDataUnsafe
+- Telegram user ID
+- Telegram authentication
+- telegram_account
+- Mini App frontend
+- Mini App API calls
+- backend endpoints
+- authorization
+- admin permissions
+- booking operations
 
-Сначала система должна полностью работать локально.
+Найди весь код, связанный с:
 
-Проверить:
+- telegram
+- WebApp
+- initData
+- initDataUnsafe
+- telegram_account
+- Telegram user ID
+- bot token
 
-* database connection;
-* migrations;
-* schema;
-* constraints;
-* indexes;
-* seed;
-* transactions.
+Определи точный flow:
 
----
+Telegram Mini App
+        ↓
+frontend
+        ↓
+API/backend
+        ↓
+authorization
+        ↓
+PostgreSQL
 
-# 3. ENVIRONMENT VARIABLES
+НЕ допускай:
 
-Runtime должен поддерживать:
+Telegram Mini App
+        ↓
+anon/public Data API
+        ↓
+прямой полный доступ к PostgreSQL
 
-DATABASE_URL
+если такой доступ не является действительно необходимым.
 
-с fallback:
+Проверь, что Mini App НЕ получает:
 
-POSTGRES_URL
+- DATABASE_URL
+- POSTGRES_URL
+- POSTGRES_URL_NON_POOLING
+- service_role
+- SUPABASE_SERVICE_ROLE_KEY
+- SUPABASE_SECRET_KEY
+- другие database credentials
 
-То есть:
+Эти данные никогда не должны попадать:
 
-DATABASE_URL имеет приоритет.
+- в browser JavaScript
+- в public/
+- в HTML
+- в frontend bundle
+- в API response
 
-Если DATABASE_URL отсутствует, использовать POSTGRES_URL.
+==================================================
+5. TELEGRAM AUTHENTICATION
+==================================================
 
-Для migrations использовать:
+Найди существующую реализацию проверки Telegram WebApp authentication.
 
-POSTGRES_URL_NON_POOLING
+Проверь:
 
-если она существует.
+- проверяется ли подпись Telegram initData
+- проверяется ли auth_date
+- проверяется ли актуальность auth data
+- определяется ли Telegram user ID
+- проверяется ли telegram_account
+- проверяется ли admin permission
+- проверяется ли ownership/permission перед изменением данных
 
-Не ломать существующий локальный `.env`.
+НЕ заменяй существующий Telegram authentication новым механизмом без необходимости.
 
-Не коммитить `.env`.
+НЕ переноси Telegram authentication в Supabase Auth.
 
-Проверить `.gitignore`.
+Если текущая реализация небезопасна:
 
----
+1. Зафиксируй это как Security Finding.
+2. Предложи минимальное исправление.
+3. Внеси исправление только если оно необходимо для безопасности.
+4. Не ломай существующую Mini App.
 
-# 4. MASTER / OWNER ACCOUNT
+ВАЖНО:
 
-Это КРИТИЧЕСКАЯ функция.
+RLS НЕ должен быть единственным уровнем авторизации Telegram Mini App.
 
-При первом входе в `/admin` backend должен определить, существует ли активный OWNER.
+Backend должен продолжать проверять:
 
-Если OWNER ещё нет:
+"имеет ли этот Telegram user право выполнять данную операцию?"
 
-показать setup flow для создания первого владельца бизнеса.
+==================================================
+6. ПРОАНАЛИЗИРУЙ КАЖДУЮ ТАБЛИЦУ
+==================================================
 
-Первый пользователь должен стать:
+Для каждой таблицы определи:
 
-role = OWNER
+- кто может SELECT
+- кто может INSERT
+- кто может UPDATE
+- кто может DELETE
 
-status = ACTIVE
+Для каждой таблицы определить:
 
-Он должен быть связан с Business.
+- нужна ли RLS
+- какие PostgreSQL roles имеют доступ
+- какие grants нужны
+- какие policies нужны
+- какие операции должны быть запрещены
 
-Не разрешать второму пользователю автоматически становиться OWNER.
+Сделай это на основании реального кода проекта.
 
-Проверка должна выполняться backend.
+Не используй один общий шаблон для всех таблиц.
 
-Frontend не должен самостоятельно решать, кто OWNER.
+==================================================
+7. ПРЕДВАРИТЕЛЬНАЯ МОДЕЛЬ ДОСТУПА
+==================================================
 
----
+Используй следующую модель только как отправную точку.
 
-# 5. INITIAL SETUP FLOW
+Если реальный код показывает другую необходимость — следуй реальному коду и объясни отличие.
 
-Первый запуск должен работать так:
+------------------------------------------
+PUBLIC DATA
+------------------------------------------
 
-/admin
+business
 
-↓
+Публичный сайт может читать только необходимые публичные поля.
 
-No OWNER exists
+Изменение:
+только backend/admin.
 
-↓
+------------------------------------------
 
-Create Business / Master Account
+employee
 
-Поля:
+Публичный сайт может читать только необходимые публичные данные.
 
-* business name
-* owner name
-* email
-* password
+Изменение:
+только backend/admin.
 
-↓
+------------------------------------------
 
-создание:
+employee_service
 
-Business
+Публичное чтение только если реально используется сайтом.
 
-User
+Изменение:
+только backend/admin.
 
-OWNER relation
+------------------------------------------
 
-↓
+service
 
-создание session
+Публичное чтение активных услуг.
 
-↓
+Изменение:
+только backend/admin.
 
-Dashboard / Google setup
+------------------------------------------
 
----
+working_hours
 
-# 6. AUTHENTICATION
+Публичное чтение необходимых рабочих часов.
 
-Проверить и при необходимости реализовать:
+Изменение:
+только backend/admin.
 
-* login;
-* logout;
-* session;
-* password hashing;
-* protected admin routes;
-* protected API endpoints;
-* session expiration;
-* invalid session handling.
+------------------------------------------
 
-Не хранить password в открытом виде.
+closure_day
 
-Не доверять role, переданной frontend.
+Публичное чтение необходимых данных.
 
-Backend должен получать пользователя из валидной session и только после этого проверять permissions.
+Изменение:
+только backend/admin.
 
----
+------------------------------------------
 
-# 7. GOOGLE OAUTH 2.0
+gallery_item
 
-Owner должен иметь кнопку:
+Публичное чтение.
 
-Connect Google Account
+Изменение:
+только backend/admin.
 
-Использовать настоящий Google OAuth 2.0.
+------------------------------------------
 
-Не создавать fake OAuth.
+review
 
-Не просить Google password.
+Публичное чтение только тех данных, которые реально предназначены для сайта.
 
-OAuth flow:
+Изменение:
+только backend/admin.
 
-/api/auth/google
+------------------------------------------
+8. BOOKING
+------------------------------------------
 
-↓
+booking является чувствительной таблицей.
 
-Google
+Публичный посетитель может создать booking ТОЛЬКО через существующий разрешённый flow.
 
-↓
+Публичный пользователь НЕ должен иметь возможность:
 
-/api/auth/google/callback
+- SELECT всех booking
+- SELECT чужих booking
+- UPDATE произвольных booking
+- DELETE произвольных booking
 
-↓
+Admin должен иметь необходимые права.
 
-exchange authorization code
+Telegram Mini App должна иметь только те права, которые реально нужны существующему flow.
 
-↓
+Проверь отдельно:
 
-получение access token / refresh token
+- создание booking
+- просмотр booking
+- изменение booking
+- отмена booking
+- удаление booking
 
-↓
+Не разрешай полный CRUD anon.
 
-зашифрованное хранение refresh token на backend
+==================================================
+9. ЧУВСТВИТЕЛЬНЫЕ ТАБЛИЦЫ
+==================================================
 
-↓
+Следующие таблицы должны рассматриваться как sensitive:
 
-Google account connected
+app_user
+app_session
+google_integration
+telegram_account
+absence
 
-Не помещать client secret, refresh token или access token во frontend.
+Проверь фактическое использование каждой.
 
----
+------------------------------------------
+app_user
+------------------------------------------
 
-# 8. GOOGLE INTEGRATION
+Не должна быть публично доступна.
 
-После подключения Google Owner должен иметь возможность получить список доступных Google Calendars.
+Особенно:
 
-Пример:
+- password_hash
+- email/login
+- session-related data
+- admin information
 
-Main Calendar
-Business
-Alex
-David
+anon не должен читать эту таблицу.
 
-Owner выбирает календарь.
+------------------------------------------
+app_session
+------------------------------------------
 
-Сохранить:
+Не должна быть публично доступна.
 
-google_calendar_id
+Защитить:
 
-в соответствующем Employee или Google integration record согласно существующей архитектуре.
+- token_hash
+- csrf_token
+- session information
 
----
+------------------------------------------
+google_integration
+------------------------------------------
 
-# 9. РЕКОМЕНДУЕМАЯ АРХИТЕКТУРА
+Не должна быть публично доступна.
 
-Для этого проекта предпочтительно:
+Защитить:
 
-один Google Account бизнеса
+- OAuth credentials
+- encrypted tokens
+- refresh tokens
+- Google integration data
 
-↓
+------------------------------------------
+telegram_account
+------------------------------------------
 
-несколько Google Calendars
+Не должна быть публично доступна.
 
-↓
+Защитить:
 
-каждый Employee связан со своим calendar.
+- Telegram user ID
+- account linkage
+- authorization information
+- admin relationship
 
-Не реализовывать отдельный OAuth для каждого Employee без необходимости.
+------------------------------------------
+absence
+------------------------------------------
 
-Если существующая архитектура уже предусматривает другой подход, сначала объясни его и не ломай существующие данные без необходимости.
+Не должна быть публично доступна.
 
----
+Используется административной частью.
 
-# 10. EMPLOYEE MANAGEMENT
+==================================================
+10. MEDIA
+==================================================
 
-Owner должен иметь возможность:
+Отдельно проверь таблицу:
 
-* add employee;
-* edit employee;
-* deactivate employee;
-* reactivate employee;
-* delete employee, если это безопасно;
-* assign services;
-* assign working hours;
-* assign Google Calendar.
+media
 
-При увольнении:
+Определи:
 
-status = inactive
+- как изображения загружаются
+- как изображения читаются
+- используется ли frontend напрямую
+- используется ли API endpoint
+- используется ли bytea
+- может ли backend отдавать изображения
 
-Не удалять исторические bookings.
+Если изображения выдаются через backend/API:
 
-Inactive employee:
+не делай всю таблицу media публично доступной через Data API только ради отображения изображений.
 
-* не показывается клиенту;
-* не доступен для новых bookings;
-* не получает новые bookings.
+Проверь реальный access path.
 
-Исторические bookings сохраняются.
+==================================================
+11. GRANTS + RLS
+==================================================
 
-Backend обязательно проверяет это правило.
+ОЧЕНЬ ВАЖНО:
 
----
+Не ограничивайся:
 
-# 11. ROLES
+ALTER TABLE ... ENABLE ROW LEVEL SECURITY;
 
-Минимум:
+Проверь также PostgreSQL GRANT.
 
-OWNER
-EMPLOYEE
-CLIENT
+Supabase использует два уровня:
 
-При необходимости:
+1. GRANT
+2. RLS policies
 
-ADMIN
+Policy сама по себе не отзывает существующие grants.
 
-Permissions должны проверяться backend.
+Поэтому проверь:
 
-Нельзя защищать backend только таким кодом frontend:
+- anon
+- authenticated
+- service_role
+- другие роли
 
-if user.role === OWNER
+Для каждой таблицы оставь только минимально необходимые права.
 
-Frontend role checks используются только для отображения UI.
+Не предоставляй anon полный CRUD.
 
----
+Не используй широкие:
 
-# 12. BOOKING
+USING (true)
 
-Проверить полный flow:
+для sensitive tables.
 
-Service
-→ Employee
-→ Date
-→ Availability
-→ Time
-→ Customer data
-→ Booking
-→ Google Calendar Event
-→ Confirmation
+Если public SELECT действительно необходим:
 
-Перед созданием booking backend ОБЯЗАТЕЛЬНО повторно проверяет availability.
+разреши его только для соответствующей таблицы и только для нужной операции.
 
-Нельзя доверять availability, которую frontend получил ранее.
+==================================================
+12. НЕ СЛОМАЙ BACKEND
+==================================================
 
-Если Google Calendar показывает занятость:
+Если backend использует PostgreSQL напрямую и его role имеет необходимые права:
 
-booking не создаётся.
+не создавай бессмысленные policies, которые backend не должен использовать.
 
-Если Google API недоступен:
+Но обязательно проверь фактически:
 
-не создавать booking как успешный.
+- role
+- grants
+- bypassrls
+- database permissions
 
----
+Если backend использует роль без BYPASSRLS, разработай корректную модель RLS.
 
-# 13. WORKING HOURS
+==================================================
+13. SECRET SECURITY
+==================================================
 
-Availability должна учитывать:
+Проверь, что следующие значения НИКОГДА не попадают во frontend:
 
-* working days;
-* working hours;
-* breaks;
-* days off;
-* vacation;
-* inactive employee;
-* Google Calendar busy events;
-* service duration;
-* timezone.
+- DATABASE_URL
+- POSTGRES_URL
+- POSTGRES_URL_NON_POOLING
+- SESSION_SECRET
+- TOKEN_ENCRYPTION_KEY
+- Google OAuth secrets
+- Telegram bot token
+- SUPABASE_SERVICE_ROLE_KEY
+- SUPABASE_SECRET_KEY
+- любые database credentials
 
-Business timezone:
+Проверь:
 
-Europe/Vienna
+- public/
+- browser JS
+- API responses
+- build output
+- source maps
+- environment configuration
 
-если это соответствует настройке бизнеса.
+НЕ меняй существующие secrets без необходимости.
 
-Не использовать timezone сервера как единственный источник времени.
+Если обнаружишь потенциальную утечку:
 
----
+отдельно укажи это в Security Findings.
 
-# 14. DATABASE
+==================================================
+14. RLS MIGRATION
+==================================================
 
-Проверить наличие и корректность:
+Не выполняй случайные ручные изменения только через Dashboard.
 
-businesses
-users
-employees
-services
-bookings
-google_integrations
+Создай воспроизводимую SQL migration.
 
-Проверить foreign keys.
+Используй существующую migration system проекта, если она есть.
 
-Проверить status fields.
+Например:
 
-Проверить timestamps.
+db/migrations/xxxx_secure_rls.sql
 
-Проверить индексы.
+или существующий формат проекта.
 
-Проверить защиту от конфликтующих bookings.
+Migration должна:
 
-Не удалять исторические данные employee.
+- быть максимально идемпотентной
+- не удалять данные
+- не удалять таблицы
+- не ломать существующие foreign keys
+- не ломать application logic
+- включать RLS
+- устанавливать необходимые grants
+- создавать необходимые policies
+- при необходимости отзывать лишние grants
 
----
+Не делай DROP TABLE.
 
-# 15. ADMIN PAGES
+Не удаляй существующие данные.
 
-Проверить:
+==================================================
+15. RLS POLICIES
+==================================================
 
-/admin
-/admin/bookings
-/admin/calendar
-/admin/employees
-/admin/services
-/admin/settings
-/admin/google
+Для каждой policy обязательно укажи:
 
-Если каких-либо страниц нет — реализовать.
+- table
+- operation
+- role
+- USING
+- WITH CHECK
 
----
+Особенно внимательно проверь:
 
-# 16. ERROR HANDLING
+SELECT
+INSERT
+UPDATE
+DELETE
 
-Каждый API должен иметь:
+Для UPDATE учитывай, что PostgreSQL должен корректно проверять доступ к существующей строке и новую строку.
 
-* validation;
-* authentication check;
-* authorization check;
-* database error handling;
-* Google API error handling;
-* meaningful HTTP status;
-* safe error message.
+Не создавай policy только ради того, чтобы "ошибка исчезла".
 
-Никогда не возвращать пользователю:
+Policy должна отражать реальный access model приложения.
 
-* stack trace;
-* database credentials;
-* OAuth secrets;
-* internal paths.
+==================================================
+16. VIEWS И FUNCTIONS
+==================================================
 
----
+Проверь все:
 
-# 17. SECURITY
+- views
+- functions
+- SECURITY DEFINER
+- triggers
 
-Проверить:
+Supabase предупреждает, что views могут обходить RLS в зависимости от того, как они созданы.
 
-* password hashing;
-* session security;
-* authorization;
-* input validation;
-* SQL injection;
-* XSS;
-* CSRF where applicable;
-* CORS;
-* rate limiting;
-* OAuth token encryption;
-* secrets;
-* `.env`;
-* Git history.
+Проверь, нет ли view, которая раскрывает данные защищённой таблицы.
 
-Никакие credentials не должны попадать в Git.
+Проверь SECURITY DEFINER functions.
 
----
+Не создавай SECURITY DEFINER без необходимости.
 
-# 18. TESTING
+Если SECURITY DEFINER нужен:
 
-Сначала локально.
+- используй минимальные права
+- задай безопасный search_path
+- ограничь EXECUTE
+- проверь возможность обхода авторизации
 
-PostgreSQL:
+==================================================
+17. TESTS
+==================================================
 
-localhost:5433
+После изменений создай/обнови database security tests.
 
-Проверить реальный сценарий:
+Если проект использует Supabase CLI:
 
-1. чистая база;
-2. открыть `/admin`;
-3. создать Master/Owner;
-4. войти;
-5. открыть Google integration;
-6. пройти Google OAuth;
-7. получить calendars;
-8. выбрать calendar;
-9. создать employee;
-10. назначить employee calendar;
-11. создать service;
-12. настроить working hours;
-13. открыть public `/booking`;
-14. выбрать service;
-15. выбрать employee;
-16. выбрать date;
-17. получить availability;
-18. создать booking;
-19. проверить Google Calendar event;
-20. проверить booking в database;
-21. попробовать создать overlapping booking;
-22. убедиться, что второй booking отклоняется;
-23. deactivate employee;
-24. убедиться, что employee исчез из public booking;
-25. убедиться, что старые bookings остались.
+используй совместимую с проектом систему тестирования.
 
----
+Проверь минимум:
 
-# 19. VERCEL
+PUBLIC / ANON:
 
-Только после успешного локального тестирования подготовить production deployment.
+- SELECT public data → разрешён там, где необходимо
+- SELECT app_user → запрещён
+- SELECT app_session → запрещён
+- SELECT google_integration → запрещён
+- SELECT telegram_account → запрещён
+- SELECT absence → запрещён
+- SELECT arbitrary booking → запрещён
+- UPDATE arbitrary booking → запрещён
+- DELETE arbitrary booking → запрещён
 
-Vercel environment variables должны быть разделены:
+BOOKING:
 
-Production
-Preview
-Development
+- разрешён только необходимый public booking flow
+- нельзя читать все booking
+- нельзя изменять чужие booking
+- нельзя удалять чужие booking
 
-Не предполагать, что переменные автоматически существуют во всех окружениях.
+ADMIN:
 
-После изменения environment variables выполнить новый deployment.
+- login работает
+- session работает
+- bookings работают
+- employees работают
+- employee services работают
+- services работают
+- working hours работают
+- closure days работают
+- absences работают
+- gallery работает
+- media работает
+- Google Calendar integration работает
 
----
+TELEGRAM MINI APP:
 
-# 20. SUPABASE / POSTGRES
+- Mini App открывается
+- Telegram authentication работает
+- Telegram user определяется корректно
+- разрешённые операции работают
+- запрещённые операции блокируются
+- нельзя получить чужие данные
+- нельзя получить app_user
+- нельзя получить app_session
+- нельзя получить google_integration
+- нельзя получить telegram_account напрямую
+- нельзя обойти backend authorization
 
-Если используется Vercel Supabase integration:
+PUBLIC WEBSITE:
 
-runtime:
+- услуги загружаются
+- сотрудники загружаются
+- расписание загружается
+- галерея загружается
+- reviews загружаются
+- booking работает
 
-POSTGRES_URL
+==================================================
+18. SECURITY ADVISOR
+==================================================
 
-или DATABASE_URL, если он задан вручную.
+После создания migration проверь результат с точки зрения Supabase Security Advisor.
 
-migration:
+Цель:
 
-POSTGRES_URL_NON_POOLING
+убрать проблему:
 
-Не использовать pooled connection для DDL, если это несовместимо с конкретной конфигурацией.
+"Table publicly accessible"
 
----
+для действительно защищаемых таблиц.
 
-# 21. НЕ ИСПОЛЬЗОВАТЬ FAKE DATA ДЛЯ ИМИТАЦИИ ИНТЕГРАЦИИ
+Но НЕ делай таблицы публичными только для того, чтобы Security Advisor перестал показывать предупреждение.
 
-Не создавать fake:
+Security Advisor должен быть исправлен за счёт правильного access control.
 
-* Google OAuth;
-* Google Calendar;
-* access token;
-* refresh token;
-* API credentials;
-* calendar events.
+==================================================
+19. НЕ ВНОСИ ИЗМЕНЕНИЯ В SUPABASE DASHBOARD ВСЛЕПУЮ
+==================================================
 
-Если для локального тестирования невозможно выполнить реальный Google OAuth без credentials:
+Не проси меня вручную нажимать:
 
-реализуй integration полностью и явно укажи, какую настройку должен выполнить владелец проекта.
+"Enable RLS"
 
----
+на отдельных таблицах до того, как ты определишь policies.
 
-# 22. ВАЖНО: НЕ ОСТАНАВЛИВАЙСЯ НА DATABASE CONNECTION
+Сначала подготовь migration.
 
-Исправление:
+После этого сообщи:
 
-DATABASE_URL
-→ POSTGRES_URL
+- какие таблицы будут переведены на RLS
+- какие policies будут созданы
+- какие grants изменятся
+- какие риски есть
+- какие тесты пройдены
 
-не является завершением задачи.
+==================================================
+20. ФИНАЛЬНЫЙ SECURITY REPORT
+==================================================
 
-Это только устранение одной инфраструктурной проблемы.
+После завершения дай подробный, но понятный отчёт.
 
-После исправления database connection продолжить аудит и тестирование:
+Создай раздел:
 
-OWNER
-→ AUTH
-→ GOOGLE OAUTH
-→ CALENDAR
-→ EMPLOYEE
-→ BOOKING.
+SECURITY AUDIT RESULT
 
----
+И покажи таблицу:
 
-# 23. FINAL REPORT
+Table | RLS | anon SELECT | anon INSERT | anon UPDATE | anon DELETE | Backend/Admin | Notes
 
-После работы предоставить:
+Отдельно:
 
-## Existing
+SECURITY FINDINGS
 
-Что уже было реализовано.
+Для каждой проблемы:
 
-## Fixed
+- Severity
+- Problem
+- Evidence
+- Fix
+- File
+- Status
 
-Что исправлено.
+Отдельно:
 
-## Missing
+TELEGRAM MINI APP SECURITY
 
-Что отсутствовало.
+Покажи:
 
-## Architecture
+- authentication flow
+- initData validation
+- Telegram user identification
+- authorization
+- endpoints
+- database tables
+- allowed operations
+- blocked operations
+- возможный прямой доступ к Data API
+- secrets exposure
+- исправленные проблемы
 
-Frontend
-Backend
+Отдельно:
+
+DATABASE SECURITY
+
+Покажи:
+
+- PostgreSQL role backend
+- BYPASSRLS
+- grants
+- RLS
+- policies
+- sensitive tables
+- public tables
+
+Отдельно:
+
+FILES CHANGED
+
+Покажи каждый изменённый файл.
+
+Отдельно:
+
+MIGRATION
+
+Покажи имя migration и кратко что она делает.
+
+Отдельно:
+
+TEST RESULTS
+
+Покажи, что реально было протестировано.
+
+Отдельно:
+
+REMAINING RISKS
+
+Если что-то невозможно проверить без production credentials или Supabase Dashboard — прямо напиши это.
+
+Не говори "всё безопасно", если что-то не было проверено.
+
+==================================================
+21. КРИТИЧЕСКОЕ ТРЕБОВАНИЕ
+==================================================
+
+НЕ СЧИТАЙ ЗАДАЧУ ЗАВЕРШЁННОЙ только потому, что:
+
+- RLS включён
+- Security Advisor warning исчез
+- migration успешно выполнилась
+
+Задача считается завершённой только после проверки трёх основных клиентов:
+
+1. Public Website
+2. Admin Panel
+3. Telegram Mini App
+
+И проверки:
+
 Database
-Authentication
-Google OAuth
-Google Calendar
++
+Backend authorization
++
+RLS
++
+GRANTS
++
+Secrets
 
-## Local testing
+должны соответствовать реальному access flow проекта.
 
-Какие реальные сценарии проверены через PostgreSQL localhost:5433.
+Главная цель:
 
-## Production configuration
+ЗАЩИТИТЬ DATABASE ОТ ПУБЛИЧНОГО ДОСТУПА,
 
-Какие environment variables нужны Vercel.
+НО НЕ СЛОМАТЬ:
 
-## Google configuration
+- сайт
+- booking
+- admin panel
+- Google Calendar
+- media/gallery
+- authentication
+- Telegram Mini App
+- существующий backend.
 
-Что нужно создать/настроить в Google Cloud.
+Сначала проанализируй.
 
-## Remaining
+Затем предложи план.
 
-Что осталось сделать владельцу проекта.
+Затем внеси изменения.
 
-Не утверждать, что Google OAuth или Calendar работают, если реальный OAuth flow не был проверен.
+Затем создай migration.
 
-Не считать deployment успешным доказательством работоспособности backend.
+Затем протестируй.
+
+И только после этого дай финальный отчёт.
