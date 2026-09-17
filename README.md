@@ -28,7 +28,7 @@ docker exec it-simulator-db psql -U postgres -c "CREATE DATABASE barbershop"
 
 ```bash
 node scripts/test-booking.js      # 22 Prüfungen: Verfügbarkeit, Buchung, Validierung
-node scripts/test-admin.js        # 69 Prüfungen: Setup, Anmeldung, Rechte, Mitarbeiter, Leistungen,
+node scripts/test-admin.js        # 79 Prüfungen: Setup, Anmeldung, Rechte, Mitarbeiter, Leistungen,
                                   #   Galerie, Bilder, Feiertage und Schließtage
 node scripts/test-admin-i18n.js   # 70 Prüfungen: DE/RU/TR vollständig, Spracherkennung, Website bleibt deutsch
 node scripts/test-website.js      # 31 Prüfungen: keine Beispieldaten im HTML, Bilder und Angebote
@@ -36,6 +36,9 @@ node scripts/test-website.js      # 31 Prüfungen: keine Beispieldaten im HTML, 
 node scripts/test-telegram.js     # 29 Prüfungen: Mini App — Signatur, Verknüpfung, Bearer-Sitzung
                                   #   braucht TELEGRAM_BOT_TOKEN, derselbe Wert wie im Dev-Server
 node scripts/test-race.js         # gleichzeitige Buchungen desselben Slots
+node scripts/test-db-security.js  # 58 Prüfungen: RLS, Rechte, Policies gegen die Supabase Data API
+                                  #   nur gegen eine lokale Supabase-ähnliche DB, siehe „Datenbank-Sicherheit"
+npm run db:security-check         # Befund einer echten Datenbank, nur lesend (auch Produktion)
 node scripts/test-responsive.js   # feste Breiten, Viewport, Zoom
 ```
 
@@ -76,11 +79,13 @@ api/              Vercel Functions
   admin/[...path].js  alle Admin-Endpunkte (eine Function, siehe unten)
   google/[...path].js OAuth 2.0: /api/google/start und /api/google/callback
 lib/              db · http · time · availability · google · crypto · business · auth
-                  telegram (initData prüfen, Bot-API) · holidays · schema · media
+                  telegram (initData prüfen, Bot-API) · holidays · schema · media ·
+                  security (RLS-Migration gegen die Supabase Data API)
   admin/          account · employees · services · bookings · settings · google ·
                   telegram · gallery · closures · media · util
 db/schema.sql     Schema
-scripts/          migrate · seed · dev-api · telegram-setup · Tests
+db/migrations/    001_secure_rls.sql — RLS, Rechte, Policies (Kopie von lib/security.js)
+scripts/          migrate · seed · dev-api · telegram-setup · db-security-check · Tests
 src/css/input.css Tailwind-Quelle (Design-Tokens)
 public/assets/img/ leer — alle Bilder der Website liegen in der Datenbank
                   (Tabelle media), gepflegt in der Verwaltung
@@ -350,6 +355,102 @@ Drei Ebenen, weil eine nicht reicht:
 
 Verifiziert mit `scripts/test-race.js`: bei gleichzeitigen Anfragen gewinnt genau
 eine (`201`), die andere bekommt `409`.
+
+---
+
+## Datenbank-Sicherheit
+
+### Zugriffsweg
+
+```
+Website · Verwaltung · Telegram Mini App   (Browser)
+        │  nur /api/*  — kein supabase-js, kein anon-Key, keine DB-Zugangsdaten im Frontend
+        ▼
+Vercel Functions  (api/*, lib/*)           Anmeldung, Rollen, CSRF, initData-Signatur
+        │  pg über DATABASE_URL / POSTGRES_URL
+        ▼
+PostgreSQL (Supabase) als Eigentümer der Tabellen
+```
+
+Kein Client spricht die Datenbank direkt an. Die Supabase Data API
+(`https://<projekt>.supabase.co/rest/v1/`) wird nicht benutzt — war aber offen:
+Supabase gibt `anon` und `authenticated` standardmäßig alle Rechte auf jede
+Tabelle in `public`, und ohne Row Level Security konnte jeder mit dem öffentlichen
+anon-Key Passwort-Hashes, Sitzungen, Kundendaten und Termine lesen, ändern und
+löschen. `authenticated` ist nicht besser geschützt: über die offene
+Supabase-Auth-Registrierung kommt jeder mit dem anon-Key an diese Rolle.
+
+### Was die Migration tut
+
+`db/migrations/001_secure_rls.sql` (Quelle: `lib/security.js`), idempotent:
+
+| Schritt | Wirkung |
+|---|---|
+| RLS einschalten | auf jeder Tabelle in `public`, die der ausführenden Rolle gehört — ohne `FORCE` |
+| Rechte entziehen | `anon`, `authenticated`, `PUBLIC`: Tabelle, Spalten, Views, Sequenzen |
+| Policy `deny_data_api` | je Tabelle, `AS RESTRICTIVE FOR ALL TO anon, authenticated USING (false) WITH CHECK (false)` |
+| Default Privileges | künftige Tabellen/Sequenzen der Rolle bekommen `anon`/`authenticated` nicht mehr automatisch |
+
+Es gibt **keine** erlaubende Policy. Die restriktive Policy ist die zweite Sperre
+hinter den entzogenen Rechten: selbst wenn später jemand im Dashboard ein Recht
+vergibt und eine `USING (true)`-Policy anlegt, sieht `anon` keine Zeile
+(`scripts/test-db-security.js`, Abschnitt 5).
+
+**Das Backend ist nicht betroffen.** Es verbindet sich als Eigentümer der Tabellen
+(bei Supabase: `postgres`, zusätzlich mit BYPASSRLS), und für den Eigentümer gilt
+RLS ohne `FORCE` nicht. Die Migration prüft das selbst: Tabellen eines anderen
+Eigentümers überspringt sie mit WARNING, `FORCE` fasst sie nie an.
+
+Unverändert bleiben: `service_role` (serverseitiger Schlüssel mit BYPASSRLS, im
+Projekt unbenutzt), `USAGE` auf dem Schema, Funktionen und Erweiterungen, alle
+Tabellen, Spalten, Daten und Fremdschlüssel.
+
+### Wann sie läuft
+
+- **Automatisch nach dem Deploy**: `ensureSchema()` (lib/schema.js) ruft sie beim
+  ersten passenden Aufruf je Function-Instanz auf — auch für Tabellen, die erst
+  zur Laufzeit entstehen. Im Normalbetrieb liest sie nur den Katalog (wenige ms,
+  keine Sperren). Scheitert sie, bleibt die Website erreichbar, im Vercel-Log steht
+  `[db-security] Migration fehlgeschlagen`, neuer Versuch nach 5 Minuten.
+  Änderungen erscheinen dort als `[db-security] secure_rls: …`.
+- **`npm run db:migrate`**: nach `db/schema.sql`.
+- **Manuell** im Supabase SQL Editor: Inhalt von `db/migrations/001_secure_rls.sql`,
+  als die Rolle, mit der das Backend verbunden ist (`postgres`).
+
+### Prüfen
+
+Produktion, nur lesend (READ ONLY-Transaktion), mit den Werten aus Vercel:
+
+```bash
+POSTGRES_URL="…" npm run db:security-check
+```
+
+Zeigt Backend-Rolle samt BYPASSRLS, Eigentümer, RLS, Rechte von
+`anon`/`authenticated` je Tabelle, Policies, Default Privileges, Views,
+SECURITY DEFINER-Funktionen und Erweiterungen in `public`. Exit-Code 1, wenn eine
+Tabelle über die Data API erreichbar ist oder RLS das Backend treffen würde.
+
+Vollständiger Test gegen eine lokale Supabase-ähnliche Datenbank (Rollen `anon`,
+`authenticated`, `service_role`; Backend-Rolle ohne Superuser):
+
+```bash
+DATABASE_URL=postgresql://app:…@localhost:5434/barbershop \
+SECURITY_TEST_ADMIN_URL=postgresql://postgres:…@localhost:5434/barbershop \
+node scripts/test-db-security.js
+```
+
+Der Test lehnt entfernte Hosts ab. Er schreibt nur in zurückgerollten
+Transaktionen und legt kurz Probetabellen an.
+
+### Bekannte Restpunkte
+
+- `pgcrypto` und `btree_gist` liegen im Schema `public` (Advisor-Hinweis
+  „Extension in Public", WARN). Nicht verschoben: `btree_gist` trägt den
+  Doppelbuchungsschutz, und die Funktionen geben keine Daten preis.
+- `service_role` behält volle Rechte. Der Schlüssel darf nie ins Frontend.
+- Supabase Auth ist vermutlich noch aktiv (Registrierung mit anon-Key). Ohne
+  Tabellenrechte bringt das keinen Datenzugriff mehr; abschalten lässt es sich
+  im Dashboard unter Authentication, falls nicht gebraucht.
 
 ---
 

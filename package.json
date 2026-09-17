@@ -13,7 +13,8 @@
     "vercel-build": "npm run build",
     "db:migrate": "node scripts/migrate.js",
     "db:seed": "node scripts/seed.js",
-    "api": "node scripts/dev-api.js"
+    "api": "node scripts/dev-api.js",
+    "db:security-check": "node scripts/db-security-check.js"
   },
   "devDependencies": {
     "concurrently": "^9.1.0",

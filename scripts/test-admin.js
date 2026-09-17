@@ -428,6 +428,58 @@ if (holiday) {
   console.log('  ⏭  kein Feiertag in den nächsten 80 Tagen (außer sonntags) — Feiertagsprüfung übersprungen');
 }
 
+console.log('\n▸ 11. Leistungen je Mitarbeiter, Arbeitszeiten, Abwesenheiten');
+{
+  const activeServices = (await call(owner, '/api/admin/services')).body.services.filter((s) => s.status === 'ACTIVE');
+  const chosen = activeServices.slice(0, 2).map((s) => s.id);
+  const created = await call(owner, '/api/admin/employees', {
+    method: 'POST',
+    body: {
+      name: `Abwesenheitstest ${Date.now()}`,
+      serviceIds: chosen,
+      workingHours: [
+        { weekday: 1, start: '09:00', end: '17:00' },
+        { weekday: 1, start: '12:00', end: '12:30', isBreak: true },
+      ],
+    },
+  });
+  const tempId = created.body.employee?.id;
+  check('Mitarbeiter mit Leistungen und Arbeitszeiten angelegt', created.status === 201 && Boolean(tempId),
+    `(${created.status} ${created.body.error ?? ''})`);
+
+  const find = async () => (await call(owner, '/api/admin/employees')).body.employees.find((e) => e.id === tempId);
+  const listed = await find();
+  check('Leistungen je Mitarbeiter gespeichert (employee_service)',
+    JSON.stringify([...(listed?.serviceIds ?? [])].sort()) === JSON.stringify([...chosen].sort()),
+    JSON.stringify(listed?.serviceIds));
+  check('Arbeitszeit samt Pause gespeichert (working_hours)', listed?.workingHours?.length === 2,
+    JSON.stringify(listed?.workingHours));
+
+  const changed = await call(owner, `/api/admin/employees/${tempId}`, { method: 'PATCH', body: { serviceIds: [chosen[0]] } });
+  check('Leistungen je Mitarbeiter geändert', changed.status === 200 && (await find())?.serviceIds?.length === 1,
+    `(${changed.status})`);
+
+  const absence = await call(owner, `/api/admin/employees/${tempId}/absences`, {
+    method: 'POST',
+    body: { start: '2099-01-05T08:00:00Z', end: '2099-01-09T18:00:00Z', kind: 'VACATION', note: 'Test' },
+  });
+  const absenceId = absence.body.absence?.id;
+  check('Abwesenheit eingetragen (absence)', absence.status === 201 && Boolean(absenceId),
+    `(${absence.status} ${absence.body.error ?? ''})`);
+  check('Abwesenheit erscheint beim Mitarbeiter', (await find())?.absences?.some((a) => a.id === absenceId));
+  check('Mitarbeiter darf keine Abwesenheiten eintragen -> 401/403',
+    [401, 403].includes((await call(staff, `/api/admin/employees/${tempId}/absences`, {
+      method: 'POST', body: { start: '2099-02-01T08:00:00Z', end: '2099-02-02T08:00:00Z' },
+    })).status));
+  check('Ohne Anmeldung keine Abwesenheiten -> 401',
+    (await anon(`/api/admin/employees/${tempId}/absences`, { method: 'POST', body: {} })).status === 401);
+
+  const removedAbsence = await call(owner, `/api/admin/employees/${tempId}/absences/${absenceId}`, { method: 'DELETE' });
+  check('Abwesenheit gelöscht', removedAbsence.status === 200 && !(await find())?.absences?.some((a) => a.id === absenceId));
+  check('Testmitarbeiter ohne Termine wieder gelöscht',
+    (await call(owner, `/api/admin/employees/${tempId}`, { method: 'DELETE' })).status === 200);
+}
+
 console.log('\n' + '─'.repeat(48));
 console.log(`  ${pass} bestanden, ${fail} fehlgeschlagen`);
 console.log('  Hinweis: Testmitarbeiter „Testperson", das Testkonto und der');
