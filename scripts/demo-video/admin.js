@@ -22,7 +22,7 @@ const BLUR_JS = (list) => `
   const RE = new RegExp('(' + NAMES.map(n => n.replace(/[.*+?^\${}()|[\\]\\\\]/g, '\\\\$&')).join('|')
     + '|\\\\+43[\\\\d ]{6,}\\\\d|[\\\\w.+-]+@[\\\\w-]+\\\\.[\\\\w.]+)', 'g');
   const css = document.createElement('style');
-  css.textContent = '.__pii{filter:blur(5px);user-select:none} img[src*="704cf1fb"]{filter:blur(14px)}'
+  css.textContent = '.__pii{filter:blur(5px);user-select:none}'
     + ' input.__pii-in,textarea.__pii-in{color:transparent!important;text-shadow:0 0 9px rgba(255,255,255,.85)!important}';
   const scan = (root) => {
     const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);

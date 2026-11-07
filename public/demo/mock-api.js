@@ -174,7 +174,8 @@
     cut: '5c38b258-d241-41ab-bc43-2cb68fa45c14',
     interior: '40a2fa4b-c269-4dd8-9b73-5514a86237b9',
     cutWide: '52a6cb8f-d5b1-41b5-86b4-443b34ade31b',
-    barber: '704cf1fb-13c6-48a9-bd4d-205273424b47',
+    barber: 'd9c6da16-e5d3-4d56-8da1-da0a2fd82b06', // Pexels, Marcelo Verfe (Pexels-Lizenz)
+    barber2: '7d3abd7a-f3f9-4de0-8fb8-73745983611d', // Pexels, cottonbro studio (Pexels-Lizenz)
   };
 
   function slugify(value) {
@@ -279,7 +280,7 @@
       }),
       emp({
         name: 'Jonas Weber', role_label: { de: 'Barber', en: 'Barber' }, sort_order: 30,
-        google_calendar_id: calendars[3].id, experience_years: 4,
+        google_calendar_id: calendars[3].id, experience_years: 4, photo_media_id: MEDIA.barber2,
         headline: { de: 'Ruhige Hand, scharfer Blick', en: 'Steady hand, sharp eye' },
         bio: {
           de: 'Jonas nimmt sich Zeit für die Beratung und findet den Schnitt, der zu Haar und Alltag passt.',
