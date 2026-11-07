@@ -1,0 +1,13 @@
+# Portfolio-Demo: Vercel liefert nur die statische Website aus public/ aus.
+# Das alte Backend bleibt im Repository (wird neu geschrieben), wird aber
+# nicht als Vercel Function deployt — alle /api-Aufrufe beantwortet
+# public/demo/mock-api.js im Browser.
+api/
+lib/
+db/
+scripts/
+design-system/
+dist-demo/
+info.md
+promt.md
+.env*

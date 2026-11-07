@@ -4,12 +4,6 @@
   "outputDirectory": "public",
   "cleanUrls": true,
   "trailingSlash": false,
-  "rewrites": [
-    {
-      "source": "/api/admin/:resource/:rest(.*)",
-      "destination": "/api/admin/:resource?__rest=:rest"
-    }
-  ],
   "redirects": [
     {
       "source": "/preise.html",
@@ -77,35 +71,6 @@
       ]
     },
     {
-      "source": "/api/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store"
-        }
-      ]
-    },
-    {
-      "source": "/api/media",
-      "has": [{ "type": "query", "key": "id" }],
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, s-maxage=31536000, immutable"
-        }
-      ]
-    },
-    {
-      "source": "/api/media",
-      "has": [{ "type": "query", "key": "slot" }],
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=0, s-maxage=60, stale-while-revalidate=300"
-        }
-      ]
-    },
-    {
       "source": "/admin",
       "headers": [
         {
@@ -144,6 +109,15 @@
         {
           "key": "X-Frame-Options",
           "value": "ALLOWALL"
+        }
+      ]
+    },
+    {
+      "source": "/demo/media/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
         }
       ]
     }
