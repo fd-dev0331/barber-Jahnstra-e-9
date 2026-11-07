@@ -2,6 +2,8 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
+<script src="/demo/mock-api.js"></script>
+<script src="/assets/js/i18n.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Galerie – Bregenz Barbershop</title>
 <meta name="description" content="Arbeiten aus dem Bregenz Barbershop: Haarschnitte, Fades, Bartpflege und Konturen. Bilder aus dem Salon.">
@@ -33,8 +35,10 @@
       <a href="/#preise" class="font-sans text-sm font-semibold uppercase tracking-[0.08em] text-fg-body transition-colors hover:text-accent">Preise</a>
       <a href="/galerie.html" aria-current="page" class="font-sans text-sm font-semibold uppercase tracking-[0.08em] text-accent">Galerie</a>
       <a href="/#kontakt" class="font-sans text-sm font-semibold uppercase tracking-[0.08em] text-fg-body transition-colors hover:text-accent">Kontakt</a>
+      <div data-lang-switch></div>
       <a href="/booking.html" class="btn-primary">Termin buchen</a>
     </nav>
+    <div data-lang-switch class="ml-auto lg:hidden"></div>
     <button type="button" data-menu-toggle aria-expanded="false" aria-controls="mobile-menu"
             class="flex h-12 w-12 items-center justify-center rounded-md text-fg lg:hidden">
       <span class="sr-only" data-menu-label>Menü öffnen</span>
@@ -91,8 +95,7 @@
     <div data-gallery-empty hidden class="card text-center">
       <p class="font-sans text-lg font-semibold text-fg">Noch keine Bilder in der Galerie.</p>
       <p class="mt-2 text-[15px] text-fg-muted">Schau bald wieder vorbei.</p>
-      <a data-biz-href="instagram" target="_blank" rel="noopener noreferrer" $1Zu unserem Instagram
-      </a>
+      <a data-biz-href="instagram" target="_blank" rel="noopener noreferrer" class="btn-ghost mt-6">Zu unserem Instagram</a>
     </div>
 
     <div class="mt-12 flex flex-wrap gap-3">

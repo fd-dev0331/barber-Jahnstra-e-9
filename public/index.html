@@ -2,6 +2,8 @@
 <html lang="de">
   <head>
     <meta charset="utf-8" />
+    <script src="/demo/mock-api.js"></script>
+    <script src="/assets/js/i18n.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>
       Bregenz Barbershop – Friseur &amp; Barbier in Bregenz | Jahnstraße 9
@@ -99,9 +101,11 @@
             class="font-sans text-sm font-semibold uppercase tracking-[0.08em] text-fg-body transition-colors [text-shadow:0_1px_8px_rgba(0,0,0,0.75)] hover:text-accent"
             >Galerie</a
           >
+          <div data-lang-switch></div>
           <a href="/booking.html" class="btn-primary">Termin buchen</a>
         </nav>
 
+        <div data-lang-switch class="ml-auto lg:hidden"></div>
         <button
           type="button"
           data-menu-toggle
@@ -508,7 +512,7 @@
               </ul>
             </address>
 
-            <p class="mt-6 text-[15px] text-fg-muted">
+            <p class="mt-6 text-[15px] text-fg-muted" data-en="The &lt;strong class=&quot;font-semibold text-fg&quot;&gt;Bregenz Leutbühel&lt;/strong&gt; stop is just a four-minute walk from the salon. The salon is wheelchair accessible.">
               Die Station
               <strong class="font-semibold text-fg">Bregenz Leutbühel</strong>
               ist nur vier Gehminuten vom Salon entfernt. Der Salon ist

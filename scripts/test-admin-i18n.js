@@ -1,6 +1,6 @@
 /* Prüft die Übersetzungen der Verwaltung, ohne Server und ohne Browser.
 
-   1. DE, RU und TR haben exakt dieselben Schlüssel, kein Wert ist leer.
+   1. DE, EN, RU und TR haben exakt dieselben Schlüssel, kein Wert ist leer.
    2. Jeder Schlüssel, den Admin-JS (t/tn) oder Admin-HTML (data-i18n) benutzt, existiert.
    3. Schlüssel, die im Code zusammengesetzt werden (Status, Rollen, Fehlercodes des
       Backends …), sind vollständig vorhanden.
@@ -32,7 +32,7 @@ const htmlFiles = fs.readdirSync(ADMIN_HTML).filter((f) => f.endsWith('.html')).
 /* ------------------------------------------------------ benutzte Schlüssel */
 
 const NAMESPACES = ['common', 'nav', 'shell', 'roles', 'status', 'login', 'setup', 'validation', 'errors', 'holidays',
-  'dashboard', 'bookings', 'calendar', 'employees', 'services', 'gallery', 'business', 'google', 'settings'];
+  'dashboard', 'bookings', 'calendar', 'employees', 'services', 'gallery', 'business', 'google', 'settings', 'telegram'];
 const used = new Map(); // key -> Set(file)
 const use = (key, file) => {
   if (!used.has(key)) used.set(key, new Set());
@@ -97,7 +97,9 @@ if (listOnly) {
 /* ------------------------------------------------------------ Wörterbücher */
 
 const dictionaries = {};
-for (const lang of ['de', 'ru', 'tr']) {
+const LANGS = ['de', 'en', 'ru', 'tr'];
+const LOCALES = { de: 'de-AT', en: 'en-GB', ru: 'ru-RU', tr: 'tr-TR' };
+for (const lang of LANGS) {
   dictionaries[lang] = (await import(pathToFileURL(path.join(ADMIN_JS, 'i18n', `${lang}.js`)).href)).default;
 }
 
@@ -114,18 +116,18 @@ function flatten(node, prefix = '', out = new Map()) {
 
 const flat = Object.fromEntries(Object.entries(dictionaries).map(([lang, dict]) => [lang, flatten(dict)]));
 
-console.log('\n▸ 1. Gleiche Schlüssel in DE / RU / TR');
-for (const lang of ['ru', 'tr']) {
+console.log('\n▸ 1. Gleiche Schlüssel in DE / EN / RU / TR');
+for (const lang of LANGS.filter((l) => l !== 'de')) {
   const missing = [...flat.de.keys()].filter((k) => !flat[lang].has(k));
   const extra = [...flat[lang].keys()].filter((k) => !flat.de.has(k));
   check(`${lang.toUpperCase()} hat alle DE-Schlüssel`, !missing.length, missing.join(', '));
   check(`${lang.toUpperCase()} hat keine zusätzlichen Schlüssel`, !extra.length, extra.join(', '));
 }
-for (const lang of ['de', 'ru', 'tr']) {
+for (const lang of LANGS) {
   const empty = [...flat[lang]].filter(([, v]) => (typeof v === 'string' ? !v.trim() : !v?.other)).map(([k]) => k);
   check(`${lang.toUpperCase()}: keine leeren Werte`, !empty.length, empty.join(', '));
   const plurals = [...flat[lang]].filter(([, v]) => typeof v === 'object');
-  const required = new Intl.PluralRules({ de: 'de-AT', ru: 'ru-RU', tr: 'tr-TR' }[lang]).resolvedOptions().pluralCategories;
+  const required = new Intl.PluralRules(LOCALES[lang]).resolvedOptions().pluralCategories;
   const incomplete = plurals.filter(([, v]) => required.some((cat) => !v[cat] && !(cat !== 'other' && v.other && lang !== 'ru'))).map(([k]) => k);
   check(`${lang.toUpperCase()}: Pluralformen vollständig (${required.join('/')})`, !incomplete.length, incomplete.join(', '));
   // Platzhalter müssen in allen Sprachen dieselben sein.
@@ -138,9 +140,9 @@ for (const lang of ['de', 'ru', 'tr']) {
   }
 }
 const identical = [...flat.de].filter(([k, v]) => typeof v === 'string' && v.length > 3
-  && v === flat.ru.get(k) && v === flat.tr.get(k) && !/^[A-Z0-9 /().:·–-]+$/.test(v)
+  && v === flat.ru.get(k) && v === flat.tr.get(k) && v === flat.en.get(k) && !/^[A-Z0-9 /().:·–-]+$/.test(v)
   && !/^(Instagram|Google|Telegram|Dashboard|Details)$/.test(v)).map(([k]) => k);
-check('Keine Texte, die in RU/TR einfach deutsch geblieben sind', !identical.length, identical.join(', '));
+check('Keine Texte, die in EN/RU/TR einfach deutsch geblieben sind', !identical.length, identical.join(', '));
 
 console.log('\n▸ 2. Jeder benutzte Schlüssel existiert');
 const unknown = [...used].filter(([key]) => !flat.de.has(key)).map(([key, files]) => `${key} (${[...files].join(', ')})`);
@@ -203,8 +205,12 @@ async function freshI18n(options) {
 check('Browser ru-RU -> RU', (await freshI18n({ languages: ['ru-RU', 'en'] })).mod.getLanguage() === 'ru');
 check('Browser tr -> TR', (await freshI18n({ languages: ['tr'] })).mod.getLanguage() === 'tr');
 check('Browser de-AT -> DE', (await freshI18n({ languages: ['de-AT'] })).mod.getLanguage() === 'de');
-check('Browser en-US/fr -> Fallback DE', (await freshI18n({ languages: ['en-US', 'fr'] })).mod.getLanguage() === 'de');
-check('Browser en, dann ru -> RU (erste unterstützte)', (await freshI18n({ languages: ['en', 'ru'] })).mod.getLanguage() === 'ru');
+check('Browser de-DE, dann en -> DE', (await freshI18n({ languages: ['de-DE', 'en'] })).mod.getLanguage() === 'de');
+check('Browser en-US -> EN', (await freshI18n({ languages: ['en-US'] })).mod.getLanguage() === 'en');
+check('Browser fr/es (nicht unterstützt) -> Fallback EN', (await freshI18n({ languages: ['fr-FR', 'es'] })).mod.getLanguage() === 'en');
+check('Browser fr, dann ru -> RU (erste unterstützte)', (await freshI18n({ languages: ['fr', 'ru'] })).mod.getLanguage() === 'ru');
+check('Browser en, dann ru -> EN (erste unterstützte)', (await freshI18n({ languages: ['en', 'ru'] })).mod.getLanguage() === 'en');
+check('Leere Browserliste -> EN', (await freshI18n({ languages: [''] })).mod.getLanguage() === 'en');
 check('Gespeicherte Wahl TR schlägt Browser RU', (await freshI18n({ stored: 'tr', languages: ['ru'] })).mod.getLanguage() === 'tr');
 check('Ungültiger gespeicherter Wert -> Erkennung', (await freshI18n({ stored: 'xx', languages: ['tr-TR'] })).mod.getLanguage() === 'tr');
 
@@ -214,6 +220,8 @@ check('Telegram-Sprache TR schlägt Browser RU',
   (await freshI18n({ languages: ['ru-RU'], telegram: 'tr' })).mod.getLanguage() === 'tr');
 check('Gespeicherte Wahl schlägt die Telegram-Sprache',
   (await freshI18n({ stored: 'de', languages: ['ru'], telegram: 'tr' })).mod.getLanguage() === 'de');
+check('Telegram-Sprache EN schlägt Browser DE',
+  (await freshI18n({ languages: ['de-AT'], telegram: 'en' })).mod.getLanguage() === 'en');
 check('Unbekannte Telegram-Sprache -> Browsersprache',
   (await freshI18n({ languages: ['tr-TR'], telegram: 'uk' })).mod.getLanguage() === 'tr');
 
@@ -229,17 +237,23 @@ const plural = dictionaries.ru.bookings.count;
 check('RU-Plural 1 / 3 / 5', ru.tn('bookings.count', 1) === plural.one.replace('{count}', '1')
   && ru.tn('bookings.count', 3) === plural.few.replace('{count}', '3')
   && ru.tn('bookings.count', 5) === plural.many.replace('{count}', '5'));
+const en = (await freshI18n({ stored: 'en' })).mod;
+check('EN-Plural 1 / 2', en.tn('bookings.count', 1) === '1 booking' && en.tn('bookings.count', 2) === '2 bookings');
+check('EN: Locale en-GB, Sprachwahl Deutsch · English · Русский · Türkçe',
+  en.getLocale() === 'en-GB' && en.LANGUAGES.map((l) => l.code).join() === 'de,en,ru,tr');
 check('Platzhalter werden ersetzt', !ru.t('bookings.statusChanged', { status: 'X' }).includes('{status}'));
 
-console.log('\n▸ 5. Öffentliche Website bleibt deutsch und ohne Sprachwahl');
+/* Die öffentliche Website hat ein eigenes, kleines Wörterbuch (assets/js/i18n.js,
+   de/en) — sie lädt aber nichts aus der Verwaltung. */
+console.log('\n▸ 5. Öffentliche Website lädt nichts aus der Verwaltung');
 for (const page of ['index.html', 'booking.html', 'galerie.html']) {
   const html = read(path.join(ROOT, 'public', page));
-  check(`${page}: lang="de", kein Admin-Skript, keine Sprachwahl`,
-    /<html lang="de"/.test(html) && !/assets\/js\/admin|admin\.css|data-lang|admin_language/.test(html));
+  check(`${page}: lang="de" im Quelltext, kein Admin-Skript`,
+    /<html lang="de"/.test(html) && !/assets\/js\/admin|admin\.css/.test(html));
 }
 for (const file of ['site.js', 'home.js', 'booking.js', 'gallery.js']) {
   const source = read(path.join(ROOT, 'public/assets/js', file));
-  check(`${file}: importiert nichts aus der Verwaltung`, !/admin\/|i18n|admin_language/.test(source));
+  check(`${file}: importiert nichts aus der Verwaltung`, !/assets\/js\/admin|admin\/i18n/.test(source));
 }
 
 console.log(`\n${'─'.repeat(48)}\n  ${pass} bestanden, ${fail} fehlgeschlagen`);

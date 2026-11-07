@@ -12,8 +12,9 @@
 
   const esc = window.BB.esc;
 
-  const DAY_NAMES = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
-  const DAY_SHORT = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+  const T = window.BB.t;
+  const DAY_NAMES = window.I18N?.days.long ?? ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
+  const DAY_SHORT = window.I18N?.days.short ?? ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
   const DAY_SCHEMA = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const WEEK = [1, 2, 3, 4, 5, 6, 0];
 
@@ -74,7 +75,7 @@
   function summaryLines() {
     const groups = [];
     for (const day of WEEK) {
-      const key = (hours?.[day] || []).map(([s, e]) => `${s}–${e}`).join(', ') || 'geschlossen';
+      const key = (hours?.[day] || []).map(([s, e]) => `${s}–${e}`).join(', ') || T('geschlossen');
       const last = groups[groups.length - 1];
       if (last && last.key === key) last.days.push(day);
       else groups.push({ key, days: [day] });
@@ -92,7 +93,7 @@
             <dt>${DAY_NAMES[day]}</dt>
             ${intervals.length
               ? `<dd class="tnum text-right">${intervals.map(([s, e]) => `${esc(s)} – ${esc(e)}`).join('<br />')}</dd>`
-              : '<dd class="text-fg-muted">Geschlossen</dd>'}
+              : `<dd class="text-fg-muted">${T('Geschlossen')}</dd>`}
           </div>`;
       }).join('');
     }
@@ -112,7 +113,7 @@
       const icon = isOpen
         ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>'
         : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6M15 9l-6 6"/></svg>';
-      const label = isOpen ? 'Jetzt geöffnet' : holiday ? `Heute geschlossen – ${esc(holiday)}` : 'Gerade geschlossen';
+      const label = isOpen ? T('Jetzt geöffnet') : holiday ? T('Heute geschlossen – {name}', { name: esc(holiday) }) : T('Gerade geschlossen');
       badge.innerHTML = `${icon}<span>${label}</span>`;
       badge.style.background = isOpen ? 'rgba(74,222,128,.16)' : 'rgba(248,113,113,.16)';
       badge.style.color = isOpen ? '#4ADE80' : '#F87171';
@@ -124,7 +125,7 @@
      Aktive Leistungen, gruppiert nach Kategorie in der Reihenfolge aus der
      Verwaltung. Markup wie im statischen HTML. */
   function serviceCard(service) {
-    const meta = [`${service.durationMinutes} Min.`];
+    const meta = [T('{n} Min.', { n: service.durationMinutes })];
     if (service.employees?.length) meta.push(service.employees.join(', '));
     return `<li class="card card-hover flex flex-col gap-2">
         <div class="flex items-start justify-between gap-4">
@@ -133,7 +134,7 @@
         </div>
         ${service.description ? `<p class="text-[15px] text-fg-muted">${esc(service.description)}</p>` : ''}
         <p class="text-[13px] font-medium uppercase tracking-[0.08em] text-fg-muted">${esc(meta.join(' · '))}</p>
-        <a href="/booking.html?service=${encodeURIComponent(service.slug)}" class="btn-secondary mt-2 self-start">Termin buchen</a>
+        <a href="/booking.html?service=${encodeURIComponent(service.slug)}" class="btn-secondary mt-2 self-start">${T('Termin buchen')}</a>
       </li>`;
   }
 
@@ -145,12 +146,12 @@
     const box = document.querySelector('[data-services]');
     if (!box) return;
     if (!services.length) {
-      box.innerHTML = '<p class="mt-12 text-fg-muted">Aktuell sind keine Leistungen online buchbar. Ruf uns gerne an.</p>';
+      box.innerHTML = `<p class="mt-12 text-fg-muted">${T('Aktuell sind keine Leistungen online buchbar. Ruf uns gerne an.')}</p>`;
       return;
     }
     const blocks = [
-      ['Angebote', services.filter((s) => s.isOffer)],
-      ['Leistungen', services.filter((s) => !s.isOffer)],
+      [T('Angebote'), services.filter((s) => s.isOffer)],
+      [T('Leistungen'), services.filter((s) => !s.isOffer)],
     ].filter(([, items]) => items.length);
 
     box.innerHTML = blocks.map(([title, items], index) => `
@@ -226,25 +227,25 @@
   function teamSlide(member, index, total) {
     const tiles = [];
     if (member.languages?.length) {
-      tiles.push(['Sprachen', String(member.languages.length), member.languages.join(' · ')]);
+      tiles.push([T('Sprachen'), String(member.languages.length), member.languages.join(' · ')]);
     }
     if (member.workdays?.length) {
-      tiles.push(['Im Salon', `${member.workdays.length} ${member.workdays.length === 1 ? 'Tag' : 'Tage'}`, workdaysText(member.workdays)]);
+      tiles.push([T('Im Salon'), T(member.workdays.length === 1 ? '{n} Tag' : '{n} Tage', { n: member.workdays.length }), workdaysText(member.workdays)]);
     }
     if (Number.isInteger(member.experienceYears) && member.experienceYears > 0) {
-      tiles.push(['Erfahrung', `${member.experienceYears} ${member.experienceYears === 1 ? 'Jahr' : 'Jahre'}`, null]);
+      tiles.push([T('Erfahrung'), T(member.experienceYears === 1 ? '{n} Jahr' : '{n} Jahre', { n: member.experienceYears }), null]);
     }
     const paragraphs = String(member.bio || '').split(/\n{2,}/).map((p) => p.trim()).filter(Boolean);
     const kicker = member.headline
       ? [member.role, member.name].filter(Boolean).join(' · ')
-      : (member.role || 'Unser Team');
+      : (member.role || T('Unser Team'));
 
     const photo = member.photoUrl
       ? `<img src="${esc(member.photoUrl)}" alt="${esc(member.name)}" width="1050" height="1400" loading="lazy" decoding="async"
-           class="aspect-[3/4] w-full rounded-lg border border-line object-cover" />`
-      : `<div class="grid aspect-[3/4] w-full place-items-center rounded-lg border border-line bg-surface font-display text-7xl font-bold uppercase text-accent" aria-hidden="true">${esc(initials(member.name))}</div>`;
+           class="aspect-[3/4] w-full rounded-lg border border-line object-cover md:max-h-[min(640px,calc(100vh-180px))]" />`
+      : `<div class="grid aspect-[3/4] w-full place-items-center rounded-lg border border-line bg-surface font-display text-7xl md:max-h-[min(640px,calc(100vh-180px))] font-bold uppercase text-accent" aria-hidden="true">${esc(initials(member.name))}</div>`;
 
-    return `<article data-team-slide aria-roledescription="slide" aria-label="${index + 1} von ${total}: ${esc(member.name)}"
+    return `<article data-team-slide aria-roledescription="slide" aria-label="${T('{i} von {total}: {name}', { i: index + 1, total, name: esc(member.name) })}"
         class="grid w-full shrink-0 snap-start items-center gap-10 md:grid-cols-2 md:gap-16">
         <div class="order-2 md:order-1">
           <p class="kicker">${esc(kicker)}</p>
@@ -283,7 +284,7 @@
 
     // Punkte mit 44-px-Trefferfläche; sichtbar ist nur der kleine Kreis.
     dots.innerHTML = members.map((member, i) => `
-      <button type="button" data-team-dot="${i}" class="grid h-11 w-11 place-items-center" aria-label="${esc(member.name)} anzeigen">
+      <button type="button" data-team-dot="${i}" class="grid h-11 w-11 place-items-center" aria-label="${T('{name} anzeigen', { name: esc(member.name) })}">
         <span class="h-3 w-3 rounded-full border border-accent transition-colors"></span>
       </button>`).join('');
 
@@ -350,7 +351,7 @@
     if (!mapWrap || mapWrap.querySelector('iframe')) return;
     const frame = document.createElement('iframe');
     frame.src = mapSrc();
-    frame.title = `Karte: ${address}`;
+    frame.title = T('Karte: {address}', { address });
     frame.loading = 'lazy';
     frame.referrerPolicy = 'no-referrer-when-downgrade';
     frame.className = 'absolute inset-0 h-full w-full border-0';
@@ -365,7 +366,7 @@
     const frame = mapWrap?.querySelector('iframe');
     if (frame && frame.src !== mapSrc()) {
       frame.src = mapSrc();
-      frame.title = `Karte: ${address}`;
+      frame.title = T('Karte: {address}', { address });
     }
   }
 
@@ -390,7 +391,7 @@
       /* Ohne Antwort gibt es nichts zu zeigen. Statt der Platzhalterflächen
          steht dann ein Satz, der sagt, was los ist — keine erfundenen Zeiten
          und keine Preise von gestern. */
-      const note = 'Diese Angaben konnten gerade nicht geladen werden. Bitte lade die Seite neu.';
+      const note = T('Diese Angaben konnten gerade nicht geladen werden. Bitte lade die Seite neu.');
       const services = document.querySelector('[data-services]');
       if (services) services.innerHTML = `<p class="mt-12 text-fg-muted">${note}</p>`;
       if (hoursList) hoursList.innerHTML = `<p class="text-fg-muted">${note}</p>`;
@@ -423,7 +424,7 @@
             (r) => `
             <li class="card">
               <p class="text-accent" aria-hidden="true">${stars(r.rating)}</p>
-              <p class="sr-only">${esc(r.rating)} von 5 Sternen</p>
+              <p class="sr-only">${T('{rating} von 5 Sternen', { rating: esc(r.rating) })}</p>
               <blockquote class="mt-3 text-[15px] text-fg-body">${esc(r.text)}</blockquote>
               <p class="mt-4 text-[13px] uppercase tracking-[0.12em] text-fg-muted">${esc(r.author)}</p>
             </li>`
@@ -433,7 +434,7 @@
         if (data.rating && data.total) {
           reviewSummary.querySelector('[data-reviews-stars]').textContent = stars(data.rating);
           reviewSummary.querySelector('[data-reviews-rating]').textContent =
-            Number(data.rating).toLocaleString('de-AT', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+            Number(data.rating).toLocaleString(window.BB.locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
           reviewSummary.querySelector('[data-reviews-count]').textContent = String(data.total);
           reviewSummary.hidden = false;
         }

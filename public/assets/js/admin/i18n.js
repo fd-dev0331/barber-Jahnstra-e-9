@@ -3,26 +3,35 @@
    Die öffentliche Website ist nur deutsch und lädt diese Datei nie: sie liegt
    unter /assets/js/admin/ und wird nur von den Admin-Seiten importiert.
 
-   Alle sichtbaren Texte stehen in i18n/de.js, i18n/ru.js und i18n/tr.js. Im Code
-   steht nur der Schlüssel, nie der Text selbst und nie eine Sprachweiche.
+   Alle sichtbaren Texte stehen in i18n/de.js, i18n/en.js, i18n/ru.js und
+   i18n/tr.js. Im Code steht nur der Schlüssel, nie der Text selbst und nie eine
+   Sprachweiche.
 
    Sprache: gespeicherte Wahl (localStorage "admin_language") > Sprache des
-   Telegram-Kontos, wenn die Verwaltung als Mini App läuft > Browsersprache
-   (de/ru/tr) > Deutsch. Gespeichert wird nur eine Wahl, die jemand selbst trifft. */
+   Telegram-Kontos, wenn die Verwaltung als Mini App läuft > Browsersprache:
+   die erste unterstützte aus der Liste (de/en/ru/tr), sonst Englisch — wer
+   weder Deutsch noch Russisch noch Türkisch eingestellt hat, liest eher Englisch.
+   Gespeichert wird nur eine Wahl, die jemand selbst trifft. Fehlt ein Schlüssel
+   (sollte nie passieren, der Test prüft es), gilt Deutsch als Referenz. */
 import de from './i18n/de.js';
+import en from './i18n/en.js';
 import ru from './i18n/ru.js';
 import tr from './i18n/tr.js';
 import { telegramLanguageHint } from './telegram.js';
 
 export const LANGUAGES = [
   { code: 'de', label: 'Deutsch', locale: 'de-AT' },
+  { code: 'en', label: 'English', locale: 'en-GB' },
   { code: 'ru', label: 'Русский', locale: 'ru-RU' },
   { code: 'tr', label: 'Türkçe', locale: 'tr-TR' },
 ];
 
-const DICTIONARIES = { de, ru, tr };
+const DICTIONARIES = { de, en, ru, tr };
 export const STORAGE_KEY = 'admin_language';
+/** Referenz für fehlende Schlüssel. */
 const FALLBACK = 'de';
+/** Sprache, wenn weder Wahl noch Telegram noch Browser eine unterstützte nennen. */
+const DEFAULT_LANGUAGE = 'en';
 
 function readStored() {
   try {
@@ -32,13 +41,13 @@ function readStored() {
   }
 }
 
-/** Erste unterstützte Sprache aus der Browser-Liste, sonst Deutsch. */
+/** Erste unterstützte Sprache aus der Browser-Liste, sonst Englisch. */
 export function detectLanguage(list = navigator.languages?.length ? navigator.languages : [navigator.language]) {
   for (const tag of list) {
     const base = String(tag ?? '').toLowerCase().split(/[-_]/)[0];
     if (DICTIONARIES[base]) return base;
   }
-  return FALLBACK;
+  return DEFAULT_LANGUAGE;
 }
 
 let current = (() => {
@@ -62,7 +71,7 @@ function interpolate(value, params) {
   return value.replace(/\{(\w+)\}/g, (match, name) => (params[name] ?? match));
 }
 
-/** Gibt es diesen Schlüssel? (Alle drei Wörterbücher haben dieselben Schlüssel —
+/** Gibt es diesen Schlüssel? (Alle Wörterbücher haben dieselben Schlüssel —
     scripts/test-admin-i18n.js prüft das.) */
 export const has = (key) => lookup(DICTIONARIES[FALLBACK], key) !== undefined;
 
@@ -77,7 +86,7 @@ export function t(key, params) {
   return interpolate(value, params);
 }
 
-/** Mengenabhängiger Text; Pluralformen nach Intl.PluralRules (ru: one/few/many). */
+/** Mengenabhängiger Text; Pluralformen nach Intl.PluralRules (en/de/tr: one/other, ru: one/few/many). */
 export function tn(key, count, params = {}) {
   const forms = lookup(DICTIONARIES[current], key) ?? lookup(DICTIONARIES[FALLBACK], key);
   if (!forms || typeof forms !== 'object') {

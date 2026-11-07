@@ -529,7 +529,7 @@ export default {
     linkedEmployeeHint: 'Bir çalışan hesabının kendi randevularını görebilmesi ve ekleyebilmesi için gereklidir.',
     employeeLinkRequired: 'Çalışan hesabı için eşleştirilmiş bir çalışan gerekir.',
     language: 'Yönetim paneli dili',
-    languageHint: 'Yalnızca yönetim paneli için geçerlidir ve bu tarayıcıda saklanır. Web sitesi Almanca kalır.',
+    languageHint: 'Yalnızca yönetim paneli için geçerlidir ve bu tarayıcıda saklanır. Web sitesinin kendi DE | EN seçicisi vardır.',
     languageSaved: 'Dil kaydedildi.',
     security: 'Güvenlik',
     currentPassword: 'Mevcut şifre',

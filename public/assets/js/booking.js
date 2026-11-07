@@ -9,7 +9,9 @@
   const $ = (sel, root = document) => root.querySelector(sel);
   const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-  const STEP_NAMES = ['Leistung', 'Mitarbeiter', 'Termin', 'Ihre Daten', 'Bestätigung'];
+  const T = window.BB.t;
+  const LOCALE = window.BB.locale;
+  const STEP_NAMES = ['Leistung', 'Mitarbeiter', 'Termin', 'Ihre Daten', 'Bestätigung'].map((s) => T(s));
 
   const state = {
     step: 1,
@@ -25,16 +27,15 @@
   /* ---------------- Anzeige-Helfer ---------------- */
   // de-AT liefert von Haus aus "€ 25,00". Der Kunde schreibt auf seiner eigenen
   // Seite "25,00 €" — das ist auch die Vorgabe im Design-System.
-  const fmtPrice = (cents) =>
-    `${new Intl.NumberFormat('de-AT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(cents / 100)}\u00A0€`;
+  const fmtPrice = (cents) => window.BB.price(cents);
 
   const fmtDateLong = (iso) =>
-    new Intl.DateTimeFormat('de-AT', {
+    new Intl.DateTimeFormat(LOCALE, {
       timeZone: TZ, weekday: 'short', day: '2-digit', month: 'short', year: 'numeric',
     }).format(new Date(`${iso}T12:00:00`));
 
   const fmtTime = (isoInstant) =>
-    new Intl.DateTimeFormat('de-AT', { timeZone: TZ, hour: '2-digit', minute: '2-digit', hour12: false })
+    new Intl.DateTimeFormat(LOCALE, { timeZone: TZ, hour: '2-digit', minute: '2-digit', hour12: false })
       .format(new Date(isoInstant));
 
   /** Heutiges Datum in Wien als YYYY-MM-DD — nicht die Gerätezeit des Besuchers. */
@@ -91,9 +92,7 @@
   $('[data-global-retry]').addEventListener('click', () => { clearGlobalError(); retryFn?.(); });
 
   /* Nie interne Details zeigen (info.md §35). */
-  const FRIENDLY =
-    'Die Terminverfügbarkeit ist gerade nicht abrufbar. Bitte versuch es in einem Moment noch einmal ' +
-    'oder ruf uns an: 0681 20397906.';
+  const FRIENDLY = T('Die Terminverfügbarkeit ist gerade nicht abrufbar. Bitte versuch es in einem Moment noch einmal oder ruf uns an.');
 
   /* ---------------- Schritt 1: Leistungen ---------------- */
   async function loadServices() {
@@ -117,7 +116,7 @@
                 <span class="tnum shrink-0 font-semibold text-accent">${fmtPrice(s.priceCents)}</span>
               </span>
               ${s.description ? `<span class="mt-1 block text-[15px] text-fg-muted">${esc(s.description)}</span>` : ''}
-              <span class="mt-2 block text-[13px] font-medium uppercase tracking-[0.08em] text-fg-muted">${esc(s.durationMinutes)} Min.</span>
+              <span class="mt-2 block text-[13px] font-medium uppercase tracking-[0.08em] text-fg-muted">${T('{n} Min.', { n: esc(s.durationMinutes) })}</span>
             </button>
           </li>`
         )
@@ -251,13 +250,13 @@
         // Leerzustand statt leerem Raster: mit Grund (Feiertag, Schließtag, Ruhetag)
         // und Hinweis auf den nächsten freien Tag. Buchen geht an diesem Tag nicht.
         const reason = data?.closure
-          ? `Am ${fmtDateLong(state.date)} ist der Salon geschlossen (${data.closure.name}). An diesem Tag sind keine Termine möglich.`
+          ? T('Am {date} ist der Salon geschlossen ({name}). An diesem Tag sind keine Termine möglich.', { date: fmtDateLong(state.date), name: data.closure.name })
           : data?.closed
-            ? 'An diesem Tag hat der Salon geschlossen.'
-            : 'An diesem Tag sind keine Termine mehr frei.';
+            ? T('An diesem Tag hat der Salon geschlossen.')
+            : T('An diesem Tag sind keine Termine mehr frei.');
         $('[data-slots-empty-text]').textContent = reason;
         $('[data-next-free]').textContent = data?.nextAvailableDate
-          ? `Der nächste freie Tag ist ${fmtDateLong(data.nextAvailableDate)}.`
+          ? T('Der nächste freie Tag ist {date}.', { date: fmtDateLong(data.nextAvailableDate) })
           : '';
         empty.hidden = false;
         live.textContent = reason;
@@ -265,7 +264,7 @@
       }
 
       renderSlots(slots);
-      live.textContent = `${slots.filter((s) => s.available).length} freie Zeiten gefunden.`;
+      live.textContent = T('{n} freie Zeiten gefunden.', { n: slots.filter((s) => s.available).length });
     } catch {
       if (request === slotsRequest) showGlobalError(FRIENDLY, loadSlots);
     } finally {
@@ -282,11 +281,11 @@
         if (!s.available) {
           return `<button type="button" disabled aria-disabled="true"
                     class="tnum min-h-[48px] cursor-not-allowed rounded-sm border border-line bg-[#252422] text-fg-muted line-through"
-                    aria-label="${time} Uhr, belegt">${time}</button>`;
+                    aria-label="${T('{time} Uhr, belegt', { time })}">${time}</button>`;
         }
         return `<button type="button" data-slot="${esc(s.start)}" aria-pressed="false"
                   class="tnum min-h-[48px] cursor-pointer rounded-sm border border-line-strong bg-surface text-fg transition-colors hover:bg-surface-2"
-                  aria-label="${time} Uhr, frei">${time}</button>`;
+                  aria-label="${T('{time} Uhr, frei', { time })}">${time}</button>`;
       })
       .join('');
     grid.hidden = false;
@@ -313,12 +312,12 @@
 
   function renderSummary() {
     $('[data-summary]').innerHTML = `
-      <div class="flex justify-between gap-4"><dt class="text-fg-muted">Leistung</dt><dd class="text-right text-fg">${esc(state.service.name)}</dd></div>
-      <div class="flex justify-between gap-4"><dt class="text-fg-muted">Bei</dt><dd class="text-right text-fg">${esc(state.employee.name)}</dd></div>
-      <div class="flex justify-between gap-4"><dt class="text-fg-muted">Datum</dt><dd class="tnum text-right text-fg">${fmtDateLong(state.date)}</dd></div>
-      <div class="flex justify-between gap-4"><dt class="text-fg-muted">Uhrzeit</dt><dd class="tnum text-right text-fg">${fmtTime(state.slot)} Uhr</dd></div>
-      <div class="flex justify-between gap-4"><dt class="text-fg-muted">Dauer</dt><dd class="tnum text-right text-fg">${esc(state.service.durationMinutes)} Min.</dd></div>
-      <div class="flex justify-between gap-4"><dt class="text-fg-muted">Preis</dt><dd class="tnum text-right font-semibold text-accent">${fmtPrice(state.service.priceCents)}</dd></div>`;
+      <div class="flex justify-between gap-4"><dt class="text-fg-muted">${T('Leistung')}</dt><dd class="text-right text-fg">${esc(state.service.name)}</dd></div>
+      <div class="flex justify-between gap-4"><dt class="text-fg-muted">${T('Bei')}</dt><dd class="text-right text-fg">${esc(state.employee.name)}</dd></div>
+      <div class="flex justify-between gap-4"><dt class="text-fg-muted">${T('Datum')}</dt><dd class="tnum text-right text-fg">${fmtDateLong(state.date)}</dd></div>
+      <div class="flex justify-between gap-4"><dt class="text-fg-muted">${T('Uhrzeit')}</dt><dd class="tnum text-right text-fg">${T('{time} Uhr', { time: fmtTime(state.slot) })}</dd></div>
+      <div class="flex justify-between gap-4"><dt class="text-fg-muted">${T('Dauer')}</dt><dd class="tnum text-right text-fg">${T('{n} Min.', { n: esc(state.service.durationMinutes) })}</dd></div>
+      <div class="flex justify-between gap-4"><dt class="text-fg-muted">${T('Preis')}</dt><dd class="tnum text-right font-semibold text-accent">${fmtPrice(state.service.priceCents)}</dd></div>`;
   }
 
   /* ---------------- Schritt 4: Absenden ---------------- */
@@ -343,10 +342,10 @@
     const phone = $('#customer-phone');
     const email = $('#customer-email');
 
-    setFieldError(name, name.value.trim().length >= 2 ? '' : 'Bitte gib deinen Namen an.');
-    setFieldError(phone, phone.value.replace(/[\s()/-]/g, '').length >= 6 ? '' : 'Bitte gib eine erreichbare Telefonnummer an.');
+    setFieldError(name, name.value.trim().length >= 2 ? '' : T('Bitte gib deinen Namen an.'));
+    setFieldError(phone, phone.value.replace(/[\s()/-]/g, '').length >= 6 ? '' : T('Bitte gib eine erreichbare Telefonnummer an.'));
     setFieldError(email, !email.value.trim() || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.value.trim())
-      ? '' : 'Diese E-Mail-Adresse sieht nicht richtig aus.');
+      ? '' : T('Diese E-Mail-Adresse sieht nicht richtig aus.'));
 
     for (const input of [name, phone, email]) {
       if (input.getAttribute('aria-invalid') === 'true') { firstInvalid = firstInvalid || input; }
@@ -367,7 +366,7 @@
     const submit = $('[data-submit]');
     const label = $('[data-submit-label]');
     submit.disabled = true;                       // verhindert Doppel-Absenden
-    label.textContent = 'Wird gebucht …';
+    label.textContent = T('Wird gebucht …');
     clearGlobalError();
 
     try {
@@ -395,7 +394,7 @@
            geladen und der Fokus wandert zu den Zeiten. */
         const message = err.body?.error === 'closed_day' && err.body.message
           ? err.body.message
-          : 'Dieser Termin ist leider nicht mehr frei. Bitte wähle eine andere Uhrzeit.';
+          : T('Dieser Termin ist leider nicht mehr frei. Bitte wähle eine andere Uhrzeit.');
         state.slot = null;
         $('[data-next-3]').disabled = true;
         goTo(3);
@@ -406,12 +405,12 @@
         $('[data-slots]').focus?.();
       } else {
         showGlobalError(
-          'Die Buchung konnte nicht abgeschlossen werden. Bitte versuch es noch einmal oder ruf uns an: 0681 20397906.'
+          T('Die Buchung konnte nicht abgeschlossen werden. Bitte versuch es noch einmal oder ruf uns an.')
         );
       }
     } finally {
       submit.disabled = false;
-      label.textContent = 'Termin verbindlich buchen';
+      label.textContent = T('Termin verbindlich buchen');
     }
   });
 
@@ -420,11 +419,11 @@
     const b = state.booking;
     const start = b?.start || state.slot;
     $('[data-confirmation]').innerHTML = `
-      <div class="flex justify-between gap-4"><dt class="text-fg-muted">Leistung</dt><dd class="text-right text-fg">${esc(state.service.name)}</dd></div>
-      <div class="flex justify-between gap-4"><dt class="text-fg-muted">Bei</dt><dd class="text-right text-fg">${esc(state.employee.name)}</dd></div>
-      <div class="flex justify-between gap-4"><dt class="text-fg-muted">Datum</dt><dd class="tnum text-right text-fg">${fmtDateLong(start.slice(0, 10))}</dd></div>
-      <div class="flex justify-between gap-4"><dt class="text-fg-muted">Uhrzeit</dt><dd class="tnum text-right text-fg">${fmtTime(start)} Uhr</dd></div>
-      ${b?.reference ? `<div class="flex justify-between gap-4"><dt class="text-fg-muted">Referenz</dt><dd class="tnum text-right text-fg">${esc(b.reference)}</dd></div>` : ''}`;
+      <div class="flex justify-between gap-4"><dt class="text-fg-muted">${T('Leistung')}</dt><dd class="text-right text-fg">${esc(state.service.name)}</dd></div>
+      <div class="flex justify-between gap-4"><dt class="text-fg-muted">${T('Bei')}</dt><dd class="text-right text-fg">${esc(state.employee.name)}</dd></div>
+      <div class="flex justify-between gap-4"><dt class="text-fg-muted">${T('Datum')}</dt><dd class="tnum text-right text-fg">${fmtDateLong(start.slice(0, 10))}</dd></div>
+      <div class="flex justify-between gap-4"><dt class="text-fg-muted">${T('Uhrzeit')}</dt><dd class="tnum text-right text-fg">${T('{time} Uhr', { time: fmtTime(start) })}</dd></div>
+      ${b?.reference ? `<div class="flex justify-between gap-4"><dt class="text-fg-muted">${T('Referenz')}</dt><dd class="tnum text-right text-fg">${esc(b.reference)}</dd></div>` : ''}`;
   }
 
   /* ---------------- Start ---------------- */

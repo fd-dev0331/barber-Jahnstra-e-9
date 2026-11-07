@@ -30,7 +30,7 @@ docker exec it-simulator-db psql -U postgres -c "CREATE DATABASE barbershop"
 node scripts/test-booking.js      # 22 Prüfungen: Verfügbarkeit, Buchung, Validierung
 node scripts/test-admin.js        # 79 Prüfungen: Setup, Anmeldung, Rechte, Mitarbeiter, Leistungen,
                                   #   Galerie, Bilder, Feiertage und Schließtage
-node scripts/test-admin-i18n.js   # 70 Prüfungen: DE/RU/TR vollständig, Spracherkennung, Website bleibt deutsch
+node scripts/test-admin-i18n.js   # 82 Prüfungen: DE/EN/RU/TR vollständig, Spracherkennung, Website bleibt deutsch
 node scripts/test-website.js      # 31 Prüfungen: keine Beispieldaten im HTML, Bilder und Angebote
                                   #   aus der Verwaltung
 node scripts/test-telegram.js     # 29 Prüfungen: Mini App — Signatur, Verknüpfung, Bearer-Sitzung
@@ -62,7 +62,7 @@ public/           Ausgelieferte Website (Vercel outputDirectory)
   assets/js/      site.js (gemeinsam) · home.js · gallery.js · booking.js
   assets/js/admin/ core.js (API, Formate) · shell.js (Kopfzeile, Navigation,
                   Sprachwahl) · ui.js (Dialoge, Zustände, Formularprüfung) ·
-                  telegram.js (Mini App) · i18n.js + i18n/{de,ru,tr}.js ·
+                  telegram.js (Mini App) · i18n.js + i18n/{de,en,ru,tr}.js ·
                   eine Datei je Admin-Seite
   assets/css/     site.css (Website) und admin.css (Verwaltung) — beide gebaut
 api/              Vercel Functions
@@ -160,9 +160,10 @@ Inhaber machen.
 | `/admin/google` | ADMIN+ | Konto verbinden/neu verbinden/trennen, verfügbare Kalender, Kalender je Mitarbeiter |
 | `/admin/settings` | alle | Konto, Sprache, Passwort, Abmelden; Benutzerkonten nur für den Inhaber |
 
-**Sprachen der Verwaltung.** Deutsch, Русский, Türkçe — umschaltbar in der
-Kopfzeile, auf jeder Breite sichtbar. Die Wahl liegt in `localStorage`
-(`admin_language`); ohne Wahl gilt die Browsersprache, sonst Deutsch. Alle Texte
+**Sprachen der Verwaltung.** Deutsch, English, Русский, Türkçe — umschaltbar in
+der Kopfzeile, auf jeder Breite sichtbar. Die Wahl liegt in `localStorage`
+(`admin_language`); ohne Wahl gilt die Sprache des Telegram-Kontos (Mini App),
+dann die Browsersprache (de/en/ru/tr), sonst Englisch. Alle Texte
 stehen in `public/assets/js/admin/i18n/`; Fehlermeldungen der API werden über
 ihren Code übersetzt. **Die öffentliche Website bleibt ausschließlich deutsch**
 und lädt weder die Übersetzungen noch `admin.css`.

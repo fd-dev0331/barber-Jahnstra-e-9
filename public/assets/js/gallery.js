@@ -9,6 +9,7 @@
   if (!grid || !dialog) return;
 
   const esc = window.BB.esc;
+  const T = window.BB.t;
   const loading = document.querySelector('[data-gallery-loading]');
   const empty = document.querySelector('[data-gallery-empty]');
 
@@ -22,7 +23,7 @@
       items = (Array.isArray(data?.items) ? data.items.filter((i) => i?.src) : []).map((i) => ({
         src: i.thumbnail || i.src,
         full: i.src,
-        alt: i.alt || 'Arbeit aus dem Bregenz Barbershop',
+        alt: i.alt || T('Arbeit aus dem Bregenz Barbershop'),
         type: i.type || 'IMAGE',
         permalink: i.permalink || null,
       }));
@@ -50,7 +51,7 @@
         <li>
           <button type="button" class="group relative block w-full overflow-hidden rounded-sm border border-line"
                   data-lightbox-open data-index="${i}"
-                  aria-label="Bild ${i + 1} von ${items.length} vergrößern">
+                  aria-label="${T('Bild {n} von {total} vergrößern', { n: i + 1, total: items.length })}">
             <img src="${esc(it.src)}" alt="${esc(it.alt)}" width="800" height="800"
                  ${i < 4 ? '' : 'loading="lazy"'} decoding="async"
                  class="aspect-square w-full object-cover transition-opacity duration-200 group-hover:opacity-80">

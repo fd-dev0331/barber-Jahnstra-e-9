@@ -2,6 +2,8 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
+<script src="/demo/mock-api.js"></script>
+<script src="/assets/js/i18n.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Termin buchen – Bregenz Barbershop</title>
 <meta name="description" content="Online einen Termin im Bregenz Barbershop buchen: Leistung wählen, freie Zeit aussuchen, fertig.">
@@ -25,15 +27,18 @@
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
       Zurück zur Website
     </a>
-    <a data-biz-href="phone" class="tnum inline-flex min-h-[48px] items-center text-sm font-medium text-fg-muted transition-colors hover:text-accent">
-      <span data-biz-text="phone"></span>
-    </a>
+    <div class="flex items-center gap-3">
+      <a data-biz-href="phone" class="tnum hidden min-h-[48px] items-center text-sm font-medium text-fg-muted transition-colors hover:text-accent sm:inline-flex">
+        <span data-biz-text="phone"></span>
+      </a>
+      <div data-lang-switch></div>
+    </div>
   </div>
 </header>
 
 <main id="main" class="mx-auto w-full max-w-[560px] px-4 pb-24 pt-8">
 
-  <h1 class="font-sans text-2xl font-semibold text-fg">Termin buchen</h1>
+  <h1 class="font-sans text-2xl font-semibold text-fg" data-en="Book an appointment">Termin buchen</h1>
 
   <!-- Fortschritt: Text + Balken, immer sichtbar. -->
   <div class="mt-6" data-progress>

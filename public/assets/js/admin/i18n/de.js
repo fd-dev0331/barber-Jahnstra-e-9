@@ -1,5 +1,5 @@
 /* Deutsch — Referenz für alle Schlüssel der Verwaltung.
-   RU und TR müssen exakt dieselben Schlüssel haben (scripts/test-admin-i18n.js). */
+   EN, RU und TR müssen exakt dieselben Schlüssel haben (scripts/test-admin-i18n.js). */
 export default {
   common: {
     skipToContent: 'Zum Inhalt springen',
@@ -530,7 +530,7 @@ export default {
     linkedEmployeeHint: 'Nötig, damit ein Mitarbeiterkonto seine eigenen Termine sieht und eintragen kann.',
     employeeLinkRequired: 'Ein Mitarbeiterkonto braucht einen verknüpften Mitarbeiter.',
     language: 'Sprache der Verwaltung',
-    languageHint: 'Gilt nur für diese Verwaltung und wird in diesem Browser gespeichert. Die Website bleibt deutsch.',
+    languageHint: 'Gilt nur für diese Verwaltung und wird in diesem Browser gespeichert. Die Website hat einen eigenen Umschalter DE | EN.',
     languageSaved: 'Sprache gespeichert.',
     security: 'Sicherheit',
     currentPassword: 'Aktuelles Passwort',

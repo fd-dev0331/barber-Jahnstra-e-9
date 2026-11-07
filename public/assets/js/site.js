@@ -3,6 +3,7 @@
 (() => {
   'use strict';
 
+  const T = window.I18N?.t ?? ((s, p) => (p ? s.replace(/\{(\w+)\}/g, (m, k) => p[k] ?? m) : s));
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* ---------- Footer year ---------- */
@@ -41,7 +42,7 @@
     const setOpen = (open) => {
       panel.hidden = !open;
       toggle.setAttribute('aria-expanded', String(open));
-      if (label) label.textContent = open ? 'Menü schließen' : 'Menü öffnen';
+      if (label) label.textContent = T(open ? 'Menü schließen' : 'Menü öffnen');
       if (iconOpen) iconOpen.hidden = open;
       if (iconClose) iconClose.hidden = !open;
       document.documentElement.style.overflow = open ? 'hidden' : '';
@@ -177,10 +178,14 @@
     reduceMotion,
     /** Preisformat wie auf der Kundenseite: 25,00 € (nicht "€ 25,00"). */
     price(cents) {
+      if (window.I18N) return window.I18N.price(cents);
       const n = new Intl.NumberFormat('de-AT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
         .format(cents / 100);
       return `${n}\u00A0€`;
     },
+    /** Übersetzung (i18n.js); ohne sie bleibt der deutsche Text. */
+    t: T,
+    locale: window.I18N?.locale ?? 'de-AT',
     /** Escape untrusted strings before they touch innerHTML. */
     esc(value) {
       return String(value ?? '').replace(/[&<>"']/g, (c) =>
@@ -211,7 +216,7 @@
     return businessRequest;
   };
 
-  /** "0681 20397906" -> "tel:+4368120397906": österreichische Inlandsnummer. */
+  /** "0660 1234567" -> "tel:+436601234567": österreichische Inlandsnummer. */
   window.BB.telHref = (phone) => {
     let digits = String(phone ?? '').replace(/[^\d+]/g, '');
     if (digits.startsWith('00')) digits = `+${digits.slice(2)}`;
